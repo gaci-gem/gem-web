@@ -22,19 +22,27 @@
                                 <app-evento-info-card [evento]="evento"></app-evento-info-card>
                             </div>
 
-                            <!-- Toggle observador — colocado entre el título y la sección Requisitos -->
-                            <div class="my-3 d-flex align-items-center justify-content-end">
-                                <button
-                                    class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center rounded-pill"
-                                    [class.btn-outline-success]="esObservador" (click)="onToggleObservador()"
-                                    [disabled]="togglingObservador" title="Seguir/Dejar de seguir evento">
-                                    <ng-icon name="lucideEye" />
-                                    @if (togglingObservador) {
-                                    <span class="ms-2">Procesando...</span>
-                                    } @else {
-                                    <span class="ms-2">{{ esObservador ? 'Siguiendo' : 'Seguir' }}</span>
-                                    }
-                                </button>
+                            <div>
+                                <div class="my-3 d-flex align-items-center justify-content-between">
+                                    <button
+                                        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center rounded-pill"
+                                        (click)="compartirEvento()"
+                                        [disabled]="togglingObservador" title="Compartir evento">
+                                        <ng-icon name="lucideShare2" />
+                                    </button>
+
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center rounded-pill"
+                                        [class.btn-outline-success]="esObservador" (click)="onToggleObservador()"
+                                        [disabled]="togglingObservador" title="Seguir/Dejar de seguir evento">
+                                        <ng-icon name="lucideEye" />
+                                        @if (togglingObservador) {
+                                        <span class="ms-2">Procesando...</span>
+                                        } @else {
+                                        <span class="ms-2">{{ esObservador ? 'Siguiendo' : 'Seguir' }}</span>
+                                        }
+                                    </button>
+                                </div>
                             </div>
 
                             <app-ui-card title="Requisitos" [isTogglable]="true" [initialCollapsed]="true"

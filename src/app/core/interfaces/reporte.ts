@@ -17,6 +17,7 @@ export interface Reporte {
 
 export enum ReporteTipo {
     HORAS_MENSUALES="HORAS_MENSUALES",
+    HORAS_RANGO_FECHAS="HORAS_RANGO_FECHAS",
     HORAS_POR_PROYECTO="HORAS_POR_PROYECTO",
     EVENTOS_CERRADOS="EVENTOS_CERRADOS",
     FACTURACION_MENSUAL="FACTURACION_MENSUAL",
@@ -50,6 +51,8 @@ export function getReporteTipoDescripcion(tipo: ReporteTipo): string {
     switch (tipo) {
         case ReporteTipo.HORAS_MENSUALES:
             return "Horas Mensuales";
+        case ReporteTipo.HORAS_RANGO_FECHAS:
+            return "Horas Rango Fechas";
         case ReporteTipo.HORAS_POR_PROYECTO:
             return "Horas por Proyecto";
         case ReporteTipo.EVENTOS_CERRADOS:
@@ -58,6 +61,23 @@ export function getReporteTipoDescripcion(tipo: ReporteTipo): string {
             return "Facturación Mensual";
         default:
             return "Tipo Desconocido";
+    }
+}
+
+export function getReporteParametrosSugerencia(tipo: ReporteTipo): string | undefined {
+    switch (tipo) {
+        case ReporteTipo.HORAS_MENSUALES:
+            return '{"mes": 2, "anio": 2026}';
+        case ReporteTipo.HORAS_RANGO_FECHAS:
+            return '{"desde": "2026-02-01", "hasta": "2026-02-28"}';
+        case ReporteTipo.HORAS_POR_PROYECTO:
+            return '{"proyectoId": 1, "desde": "2026-02-01", "hasta": "2026-02-28"}';
+        case ReporteTipo.EVENTOS_CERRADOS:
+            return '{"desde": "2026-02-01", "hasta": "2026-02-28"}';
+        case ReporteTipo.FACTURACION_MENSUAL:
+            return undefined;
+        default:
+            return undefined;
     }
 }
 

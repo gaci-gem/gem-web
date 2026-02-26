@@ -37,8 +37,10 @@ export class RegistroHoraService {
     );
   }
 
-  getHorasGenerales(fechaFiltro:Date): Observable<UsuarioHorasGenerales[]> {
-    return this.http.get<UsuarioHorasGenerales[]>(`${this.URL_COMPLETA}/usuario/usuario/horasGenerales?fecha=${fechaFiltro.toISOString()}`);
+  getHorasGenerales(desde: Date, hasta: Date): Observable<UsuarioHorasGenerales[]> {
+    return this.http.get<UsuarioHorasGenerales[]>(
+      `${this.URL_COMPLETA}/usuario/usuario/horasGenerales?desde=${desde.toISOString()}&hasta=${hasta.toISOString()}`
+    );
   }
 
   create(registro:RegistroHora): Observable<RegistroHora> {
@@ -51,5 +53,9 @@ export class RegistroHoraService {
 
   delete(registroId:number): Observable<RegistroHora> {
     return this.http.delete<RegistroHora>(`${this.URL_COMPLETA}/registro-hora/${registroId}`);
+  }
+
+  exportExcel(desde: Date, hasta: Date): Observable<Blob> {
+    return this.http.get(`${this.URL_COMPLETA}/registro-hora/importacion/export?fechaDesde=${desde.toISOString()}&fechaHasta=${hasta.toISOString()}`, { responseType: 'blob' });
   }
 }

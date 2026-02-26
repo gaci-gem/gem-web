@@ -1,39 +1,37 @@
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, ComponentRef, inject, ViewChild, ViewContainerRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BadgeClickComponent } from '@app/components/badge-click';
+import { EventoCronometroComponent } from '@app/components/evento-cronometro';
+import { PrioridadIconComponent } from '@app/components/priority-icon';
+import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { UiCard } from '@app/components/ui-card';
+import { modalConfig } from '@/app/types/modals';
+import { parseIsoAsLocal } from '@/app/utils/datetime-utils';
+import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
+import { PermisoClave } from '@core/interfaces/rol';
+import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
+import { DrawerService } from '@core/services/drawer.service';
+import { EventoAccionesService } from '@core/services/evento-acciones';
+import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
 import { EventoService } from '@core/services/evento';
 import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
+import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgIcon } from '@ng-icons/core';
+import { finalize } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Table, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
-import { ToolbarModule } from 'primeng/toolbar';
-import { ModalSel } from './components/modal-sel/modal-sel';
-import { modalConfig } from '@/app/types/modals';
-import { EventoAccionesService } from '@core/services/evento-acciones';
-import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
-import { DrawerService } from '@core/services/drawer.service';
-
-import { CommonModule } from '@angular/common';
-import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
-import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TooltipModule } from 'primeng/tooltip';
-import { parseIsoAsLocal } from '@/app/utils/datetime-utils';
-import { PrioridadIconComponent } from '@app/components/priority-icon';
-import { EventoCronometroComponent } from '@app/components/evento-cronometro';
-import { DatePickerModule } from 'primeng/datepicker';
-import { FormsModule } from '@angular/forms';
-import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
+import { ToolbarModule } from 'primeng/toolbar';
 import { EventoCrud } from '../evento-crud/evento-crud';
-import { getTimestamp } from '@/app/utils/time-utils';
-import { finalize } from 'rxjs';
-import { PermisoClave } from '@core/interfaces/rol';
+import { ModalSel } from './components/modal-sel/modal-sel';
 import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propio';
 
 @Component({
@@ -65,46 +63,6 @@ import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propi
   styleUrl: './eventos-usuario.scss'
 })
 export class EventosUsuario extends TrabajarCon<Evento> {
-  protected override exportarExcelImpl(): void {
-    this.eventoService.exportarExcel().subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `export_eventos_${getTimestamp()}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    });
-  }
-  protected override procesarExcel(file: File): void {
-    const form = new FormData();
-    form.append('file', file);
-
-    this.loadingService.show();
-    this.eventoService.importarExcel(form).pipe(
-      finalize(() => {
-        this.loadingService.hide();
-      })
-    ).subscribe({
-      next: () => this.afterChange('Eventos importados correctamente.'),
-      error: (err) => this.showError(err?.error?.message || 'Error al importar eventos.')
-    });
-  }
-  protected override descargarPlantilla(): void {
-    this.eventoService.descargarPlantilla().subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'plantilla_eventos.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    });
-  }
   private eventoService = inject(EventoService);
   private eventoAccionesService = inject(EventoAccionesService);
   private dialogService = inject(DialogService);
@@ -125,6 +83,15 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   eventoEnTrabajo: EventoCompleto | null = null;
   tiempoInicioTrabajo: Date | null = null;
 
+  constructor() {
+    super(
+      inject(ChangeDetectorRef),
+      inject(MessageService),
+      inject(ConfirmationService)
+    );
+    this.permisoClave = PermisoClave.EVENTO;
+  }
+
   override ngOnInit(): void {
     setTimeout(() => {
       this.inicializarFiltroFecha();
@@ -144,13 +111,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     });
   }
 
-  constructor() {
-    super(
-      inject(ChangeDetectorRef),
-      inject(MessageService),
-      inject(ConfirmationService)
-    );
-    this.permisoClave = PermisoClave.EVENTO;
+  ngOnDestroy(): void {
   }
 
   private inicializarFiltroFecha(): void {
@@ -187,7 +148,12 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
 
-    this.eventoService.getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params).subscribe({
+    this.eventoService.getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params)
+    .pipe(finalize(() => {
+      this.loadingService.hide();
+      this.cdr.detectChanges();
+    }))
+    .subscribe({
       next: (res) => {
         console.log(res);
         setTimeout(() => {
@@ -202,13 +168,53 @@ export class EventosUsuario extends TrabajarCon<Evento> {
           if (this.table) {
             this.table.reset();
           }
-          this.cdr.detectChanges();
-          this.loadingService.hide();
         });
       },
       error: () => {
         this.showError('Error al cargar los eventos.');
+      }
+    });
+  }
+
+  protected override exportarExcelImpl(): void {
+    this.eventoService.exportarExcel().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export_eventos_${getTimestamp()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    });
+  }
+
+  protected override procesarExcel(file: File): void {
+    const form = new FormData();
+    form.append('file', file);
+
+    this.loadingService.show();
+    this.eventoService.importarExcel(form).pipe(
+      finalize(() => {
         this.loadingService.hide();
+      })
+    ).subscribe({
+      next: () => this.afterChange('Eventos importados correctamente.'),
+      error: (err) => this.showError(err?.error?.message || 'Error al importar eventos.')
+    });
+  }
+
+  protected override descargarPlantilla(): void {
+    this.eventoService.descargarPlantilla().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'plantilla_eventos.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     });
   }
@@ -512,9 +518,6 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         // Si no hay evento en trabajo o hay error, no hacer nada
       }
     });
-  }
-
-  ngOnDestroy(): void {
   }
 
   abrirEventoDrawer(evento: EventoCompleto) {

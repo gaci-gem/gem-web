@@ -7,8 +7,25 @@
                 <div card-body>
                     <p-toolbar styleClass="mb-4 gap-2">
                         <ng-template pTemplate="left">
+                            <p-datepicker
+                                id="filtroFechas"
+                                [(ngModel)]="dateRangeFilter"
+                                selectionMode="range"
+                                [iconDisplay]="'input'"
+                                [showIcon]="true"
+                                [showButtonBar]="true"
+                                inputId="filtroFechas"
+                                (ngModelChange)="onFechaChange()"
+                                (onClearClick)="onClearFecha()"
+                            ></p-datepicker>
                         </ng-template>
                         <ng-template pTemplate="right">
+                        <app-control-trabajar-con
+                            [mostrarNuevo]="false"
+                            (plantilla)="getPlantilla()"
+                            (exportarExcel)="exportarExcel()"
+                            (importar)="importarExcel($event)"
+                        ></app-control-trabajar-con>
                         </ng-template>
                     </p-toolbar>
                     <p-table
@@ -30,8 +47,6 @@
                                     <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
                                 </span>
                                 <div class="flex align-items-center gap-1" style="margin:auto 10px">
-                                    <label for="filtroFechas" style="margin-right: 5px;">Fecha: </label>
-                                    <p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month" dateFormat="mm/yy" [readonlyInput]="true" (onClose)="consultarRegistros(dateFilter)"></p-datepicker>
                                 </div>
                             </div>
                         </ng-template>

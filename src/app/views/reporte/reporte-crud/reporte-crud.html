@@ -3,7 +3,7 @@
   <form class="row g-3 needs-validation" [formGroup]="form" (ngSubmit)="accion($event)" novalidate>
     <div class="col-md-6">
       <label for="tipo" class="form-label">Tipo de Reporte</label>
-      <select id="tipo" class="form-select" formControlName="tipo" required>
+      <select id="tipo" class="form-select" formControlName="tipo" (change)="onTipoChange()" required>
         <option value="" disabled selected>Seleccione tipo</option>
         @for (tipo of reporteTipos; track tipo) {
           <option [value]="tipo">
@@ -23,7 +23,7 @@
         type="text"
         formControlName="parametros"
         class="form-control"
-        placeholder="Parámetros (opcional)"
+        placeholder="Parámetros JSON (opcional)"
       />
     </div>
 

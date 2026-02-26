@@ -475,4 +475,23 @@ export class Evento implements OnInit {
     return await firstValueFrom(this.parametroService.getParametroActivo('NOTION_ENABLED'));
   }
 
+  compartirEvento() {
+    const baseUrl = window.location.origin;
+    const eventoUrl = `${baseUrl}/evento/evento/${this.eventoId}`;
+    
+    navigator.clipboard.writeText(eventoUrl).then(() => {
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'URL copiada', 
+        detail: 'El enlace del evento se copió al portapapeles' 
+      });
+    }).catch((err) => {
+      console.error('Error al copiar al portapapeles:', err);
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'No se pudo copiar el enlace al portapapeles' 
+      });
+    });
+  }
 }

@@ -1,25 +1,26 @@
+import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TrabajarCon, UiCard } from '@app/components/index';
+import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
+import { modalConfig } from '@/app/types/modals';
+import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
+import { getTimestamp } from '@/app/utils/time-utils';
+import { ShortcutDirective } from '@core/directive/shortcut';
+import { PermisoClave } from '@core/interfaces/rol';
 import { RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { HoraCrud } from '../hora-crud/hora-crud';
-import { modalConfig } from '@/app/types/modals';
-import { ShortcutDirective } from '@core/directive/shortcut';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToolbarModule } from 'primeng/toolbar';
 import { NgIcon } from '@ng-icons/core';
-import { TableModule } from 'primeng/table';
-import { TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
-import { CommonModule, DatePipe } from '@angular/common';
-import { DatePickerModule } from 'primeng/datepicker';
-import { ButtonModule } from 'primeng/button';
-import { FormsModule } from '@angular/forms';
-import { PermisoClave } from '@core/interfaces/rol';
 import { finalize } from 'rxjs';
-import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DatePickerModule } from 'primeng/datepicker';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
+import { ToastModule } from 'primeng/toast';
+import { ToolbarModule } from 'primeng/toolbar';
+import { HoraCrud } from '../hora-crud/hora-crud';
 
 @Component({
   selector: 'app-horas',
@@ -32,7 +33,8 @@ import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
     DatePickerModule,
     ButtonModule,
     CommonModule,
-    FormsModule
+    FormsModule,
+    ControlTrabajarCon,
   ],
   providers: [
     DialogService,
@@ -43,24 +45,16 @@ import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
   styleUrl: './horas.scss'
 })
 export class Horas extends TrabajarCon<RegistroHora> {
-  protected override exportarExcelImpl(): void {
-    throw new Error('Method not implemented.');
-  }
-  protected override procesarExcel(file: File): void {
-    throw new Error('Method not implemented.');
-  }
-  protected override descargarPlantilla(): void {
-    throw new Error('Method not implemented.');
-  }
   private registroHoraService = inject(RegistroHoraService);
   private dialogService = inject(DialogService);
+
   ref!: DynamicDialogRef | null;
-  getFechaLocal=getFechaLocal
+  getFechaLocal = getFechaLocal;
 
   registrosHorasGenerales!: UsuarioHorasGenerales[];
   registrosHorasGeneralesFiltradas!: UsuarioHorasGenerales[];
 
-  dateFilter = new Date();
+  dateRangeFilter: Date[] | undefined;
 
   constructor() {
     super(
@@ -69,10 +63,43 @@ export class Horas extends TrabajarCon<RegistroHora> {
       inject(ConfirmationService)
     );
     this.permisoClave = PermisoClave.HORAS_GENERALES;
+    this.inicializarFiltroFecha();
+  }
+
+  protected override exportarExcelImpl(): void {
+    if (this.dateRangeFilter && this.dateRangeFilter.length === 2 && this.dateRangeFilter[0] && this.dateRangeFilter[1]) {
+      const [desde, hasta] = this.dateRangeFilter;
+      this.registroHoraService.exportExcel(desde, hasta).subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `export_horas_${getTimestamp()}.xlsx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      });
+    }
+  }
+
+  protected override procesarExcel(file: File): void {
+    throw new Error('Method not implemented.');
+  }
+
+  protected override descargarPlantilla(): void {
+    throw new Error('Method not implemented.');
   }
 
   protected loadItems(): void {
-    this.consultarRegistros(this.dateFilter);
+    this.onFechaChange();
+  }
+
+  private inicializarFiltroFecha(): void {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    this.dateRangeFilter = [inicioMes, finMes];
   }
 
   alta(registroHora: RegistroHora): void {
@@ -117,9 +144,20 @@ export class Horas extends TrabajarCon<RegistroHora> {
     });
   }
 
-  consultarRegistros(fechaFiltro: Date) {
+  onFechaChange(): void {
+    if (this.dateRangeFilter && this.dateRangeFilter.length === 2 && this.dateRangeFilter[0] && this.dateRangeFilter[1]) {
+      this.consultarRegistros(this.dateRangeFilter[0], this.dateRangeFilter[1]);
+    }
+  }
+
+  onClearFecha(): void {
+    this.inicializarFiltroFecha();
+    this.onFechaChange();
+  }
+
+  consultarRegistros(desde: Date, hasta: Date) {
     this.loadingService.show();
-    this.registroHoraService.getHorasGenerales(fechaFiltro).pipe(
+    this.registroHoraService.getHorasGenerales(desde, hasta).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
@@ -151,10 +189,4 @@ export class Horas extends TrabajarCon<RegistroHora> {
       error: () => this.showError('Error al cargar los registros de Hora.')
     });
   }
-
-  aplicarFiltroFecha(fechaSel: any) {
-    const aux = new Date(fechaSel);
-    this.consultarRegistros(aux);
-  }
-  
 }

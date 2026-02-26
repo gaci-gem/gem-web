@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
-import { Reporte, ReporteEstado, ReporteTipo, getReporteTipoDescripcion } from '@core/interfaces/reporte';
+import { Reporte, ReporteEstado, ReporteTipo, getReporteParametrosSugerencia, getReporteTipoDescripcion } from '@core/interfaces/reporte';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -41,6 +41,12 @@ export class ReporteCrud extends CrudFormModal<Reporte> {
   }
 
   protected override setupEditMode(): void {
+  }
+
+  onTipoChange(): void {
+    const tipo = this.get('tipo')?.value as ReporteTipo;
+    const sugerencia = tipo ? getReporteParametrosSugerencia(tipo) : undefined;
+    this.get('parametros')?.setValue(sugerencia ?? '');
   }
 
   protected toModel(): Reporte {
