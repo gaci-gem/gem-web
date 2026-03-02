@@ -15,6 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TextareaModule } from 'primeng/textarea';
 import { EventoDrawerComponent } from '@/app/views/evento/evento-drawer/evento-drawer';
+import { parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
 
 @Component({
@@ -386,29 +387,42 @@ export class EventoCronometroComponent implements OnInit, OnDestroy {
     this.eventoAccionesService.obtenerEventoEnTrabajo(this.usuarioActivo?.id ?? '').subscribe({
       next: (evento: any) => {
         if (evento && evento.registroTiempo) {
-          const fechaInicio = new Date(evento.registroTiempo.inicio);
-          const ahora = new Date();
-          
-          const tiempoInicio = new Date(
-            ahora.getFullYear(),
-            ahora.getMonth(),
-            ahora.getDate(),
-            fechaInicio.getHours(),
-            fechaInicio.getMinutes(),
-            fechaInicio.getSeconds()
-          );
-          
-          if (tiempoInicio.getTime() > ahora.getTime()) {
-            tiempoInicio.setDate(tiempoInicio.getDate() - 1);
-          }
-          
+          const tiempoInicio = this.resolverTiempoInicio(evento.registroTiempo.inicio);
           this.eventoTrabajoService.setEventoEnTrabajo(evento, tiempoInicio);
+          return;
         }
+
+        this.eventoTrabajoService.limpiarEvento();
       },
       error: () => {
-        // Si no hay evento en trabajo o hay error, no hacer nada
+        this.eventoTrabajoService.limpiarEvento();
       }
     });
+  }
+
+  private resolverTiempoInicio(inicio: string | Date): Date {
+    if (typeof inicio === 'string' && /^1970-01-01T/.test(inicio)) {
+      const match = inicio.match(/T(\d{2}):(\d{2}):(\d{2})/);
+      if (match) {
+        const ahora = new Date();
+        const tiempoInicio = new Date(
+          ahora.getFullYear(),
+          ahora.getMonth(),
+          ahora.getDate(),
+          parseInt(match[1], 10),
+          parseInt(match[2], 10),
+          parseInt(match[3], 10)
+        );
+
+        if (tiempoInicio.getTime() > ahora.getTime()) {
+          tiempoInicio.setDate(tiempoInicio.getDate() - 1);
+        }
+
+        return tiempoInicio;
+      }
+    }
+
+    return parseIsoAsLocal(inicio);
   }
 
   private iniciarCronometro(): void {
