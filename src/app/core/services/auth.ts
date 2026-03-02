@@ -5,6 +5,8 @@ import { Usuario } from '@core/interfaces/usuario';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { UserStorageService } from './user-storage';
 import { PermisosService } from './permisos';
+import { EventoTrabajoService } from './evento-trabajo.service';
+import { HeartbeatService } from './heartbeat.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,8 @@ export class AuthService {
     private http: HttpClient,
     private userStorage: UserStorageService,
     private permisosService: PermisosService,
+    private eventoTrabajoService: EventoTrabajoService,
+    private heartbeatService: HeartbeatService,
   ) { }
   URL_COMPLETA = environment.BASE_URL;
 
@@ -70,16 +74,20 @@ export class AuthService {
   login(credentials: any, recordar:boolean=false): Observable<any> {
     return this.http.post(`${this.URL_COMPLETA}/auth/login`, credentials).pipe(
       tap((res: any) => {
+        this.eventoTrabajoService.limpiarEvento();
         this.setTokens(res.accessToken, res.refreshToken, recordar);
         this.userStorage.setUsuario(res.usuario, recordar);
         if (res.permisos) {
           this.permisosService.setPermisos(res.permisos, recordar);
         }
+        this.heartbeatService.start();
       })
     )
   }
 
   logout(): void {
+    this.heartbeatService.stop();
+    this.eventoTrabajoService.limpiarEvento();
     this.clearTokens();
     this.userStorage.clearUsuario()
     this.permisosService.clearPermisos();
