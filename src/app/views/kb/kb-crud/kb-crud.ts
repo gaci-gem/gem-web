@@ -102,7 +102,7 @@ export class KbCrud extends CrudFormModal<kb> implements OnInit {
       estado: formValue.estado,
       uso_actual: formValue.uso_actual,
       migrada: formValue.migrada,
-      migradaDesdeKbId: formValue.migrada ? formValue.migradaDesdeKbId : null,
+      migradaDesdeKbId: formValue.migrada ? Number(formValue.migradaDesdeKbId) : null,
       activo: formValue.activo
     };
     
