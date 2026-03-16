@@ -60,7 +60,7 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="inicio"
+            <input type="time" lang="es-ES" step="60" class="form-control" formControlName="inicio"
               [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
             @if (hora.errors?.['overlap']) {
             <div class="invalid-feedback">
@@ -76,7 +76,7 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="fin"
+            <input type="time" lang="es-ES" step="60" class="form-control" formControlName="fin"
               [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
             @if (hora.errors?.['overlap']) {
             <div class="invalid-feedback">

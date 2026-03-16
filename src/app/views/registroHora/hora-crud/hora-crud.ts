@@ -141,11 +141,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       ),
       inicio: new FormControl<string | null>(
         hora?.inicio != null ? String(hora.inicio) : null,
-        [Validators.required]
+        [Validators.required, this.timeFormatValidator.bind(this)]
       ),
       fin: new FormControl<string | null>(
         hora?.fin != null ? String(hora.fin) : null,
-        [Validators.required]
+        [Validators.required, this.timeFormatValidator.bind(this)]
       ),
       detalle: new FormControl<string | null>(
         hora?.detalle != null ? String(hora.detalle) : null,
@@ -186,7 +186,20 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         inicio: horaControl.get('inicio')?.value,
         fin: horaControl.get('fin')?.value
       }))
-      .filter(h => h.inicio && h.fin && h.inicio <= h.fin);
+      .filter(h => {
+        if (!h.inicio || !h.fin) {
+          return false;
+        }
+
+        if (!this.isValid24hTime(h.inicio) || !this.isValid24hTime(h.fin)) {
+          return false;
+        }
+
+        const inicio = this.timeToMinutes(h.inicio);
+        const fin = this.timeToMinutes(h.fin);
+
+        return inicio !== null && fin !== null && inicio <= fin;
+      });
 
     // Verificar superposiciones
     for (let i = 0; i < horarios.length; i++) {
@@ -199,6 +212,10 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         const fin1 = this.timeToMinutes(horario1.fin);
         const inicio2 = this.timeToMinutes(horario2.inicio);
         const fin2 = this.timeToMinutes(horario2.fin);
+
+        if (inicio1 === null || fin1 === null || inicio2 === null || fin2 === null) {
+          continue;
+        }
 
         // Verificar si hay superposición (excluyendo los extremos)
         if ((inicio1 < fin2 && fin1 > inicio2)) {
@@ -222,9 +239,27 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return null;
   }
 
-  private timeToMinutes(time: string): number {
+  private timeToMinutes(time: string): number | null {
+    if (!this.isValid24hTime(time)) {
+      return null;
+    }
+
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  private isValid24hTime(time: string): boolean {
+    return /^([01]\d|2[0-3]):([0-5]\d)$/.test(time);
+  }
+
+  private timeFormatValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+
+    if (!value) {
+      return null;
+    }
+
+    return this.isValid24hTime(String(value)) ? null : { invalidTimeFormat: true };
   }
 
   // Validador para verificar que fin sea mayor que inicio
@@ -236,11 +271,16 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       return null;
     }
 
-    const inicioMinutes = inicio.split(':').map(Number);
-    const finMinutes = fin.split(':').map(Number);
-    
-    const inicioTotal = inicioMinutes[0] * 60 + inicioMinutes[1];
-    const finTotal = finMinutes[0] * 60 + finMinutes[1];
+    if (!this.isValid24hTime(inicio) || !this.isValid24hTime(fin)) {
+      return { invalidTimeFormat: true };
+    }
+
+    const inicioTotal = this.timeToMinutes(inicio);
+    const finTotal = this.timeToMinutes(fin);
+
+    if (inicioTotal === null || finTotal === null) {
+      return { invalidTimeFormat: true };
+    }
 
     if (finTotal <= inicioTotal) {
       return { invalidTimeRange: true };

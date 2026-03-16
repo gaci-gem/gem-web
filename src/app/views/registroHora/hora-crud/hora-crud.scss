@@ -1,0 +1,7 @@
+input[type='time'][lang='es-ES']::-webkit-datetime-edit-ampm-field {
+	display: none;
+}
+
+input[type='time'][lang='es-ES']::-webkit-datetime-edit-text {
+	padding: 0 0.1em;
+}

@@ -39,8 +39,11 @@ export class ItemAdjuntoComponent {
     // if (mime.includes('jpeg')) return this.iconosTipo['jpeg'];
     if (mime.includes('image')) return this.iconosTipo['png'];
     if (mime.includes('xlsx')) return this.iconosTipo['xlsx'];
+    if (mime.includes('xls')) return this.iconosTipo['xlsx'];
+    if (mime.includes('ods')) return this.iconosTipo['xlsx'];
     if (mime.includes('docx')) return this.iconosTipo['docx'];
     if (mime.includes('doc')) return this.iconosTipo['doc'];
+    if (mime.includes('odt')) return this.iconosTipo['doc'];
     if (mime.includes('txt')) return this.iconosTipo['txt'];
     return this.iconosTipo['default'];
   }
