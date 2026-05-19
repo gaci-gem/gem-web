@@ -66,7 +66,8 @@
                                         [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
                                 </td>
                                 <td hidden>{{ registro.id }}</td>
-                                <td>{{ registro.fecha | date:'dd MMMM yy'}}</td>
+                                <!-- <td>{{ registro.fecha | date:'EEEE, dd MMMM yy'}}</td> -->
+                                <td>{{ registro.fecha | date:'fullDate'}}</td>
                                 <td>{{ registro.usuario.usuario }}</td>
                                 <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>

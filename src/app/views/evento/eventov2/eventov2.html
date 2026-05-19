@@ -1,0 +1,45 @@
+<div class="container-fluid py-3 evento-v2-page">
+	<div class="row g-3">
+		<div class="col-12">
+			@if (evento) {
+				<app-evento-v2-header [evento]="evento" [estimacionDetalle]="estimacionDetalle" />
+			} @else if (loadingEvento) {
+				<div class="card border p-3 text-body-secondary">Cargando evento...</div>
+			} @else {
+				<div class="card border p-3 text-danger">{{ errorEvento || 'No se pudo cargar el evento.' }}</div>
+			}
+
+			@if (etapas && etapas.length > 0) {
+				<app-evento-v2-stages [etapas]="etapas" [etapaActualSecuencia]="etapaActualSecuencia" />
+			}
+		</div>
+
+		<div class="col-12 col-xl-7" #detailsSection>
+			<app-evento-v2-details-files
+				[requisitos]="requisitos"
+				[documentacion]="documentacion"
+				[adjuntos]="adjuntos"
+				[eventoId]="eventoId"
+				[loadingRequisitos]="loadingRequisitos"
+				[loadingAdjuntos]="loadingAdjuntos"
+				[errorRequisitos]="errorRequisitos"
+				[errorAdjuntos]="errorAdjuntos"
+				(refreshAdjuntos)="onRefreshAdjuntos()"
+				(refreshRequisitos)="onRefreshRequisitos()"
+				(refreshDocumentacion)="loadEventoBase()"
+			/>
+		</div>
+
+		<div class="col-12 col-xl-5" #activitySection style="padding-top: 40px;">
+			<div class="card border h-100 p-3 bg-body">
+				<app-evento-v2-activity
+					[actividades]="actividades"
+					[loading]="loadingActividad"
+					[error]="errorActividad"
+					(publicarComentario)="onPublicarComentario($event)"
+					(refreshActividad)="onRefreshActividad()"
+				/>
+			</div>
+		</div>
+	</div>
+</div>

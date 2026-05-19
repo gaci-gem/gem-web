@@ -1,0 +1,35 @@
+<div class="mention-textarea-wrapper">
+  <textarea
+    #textareaRef
+    class="form-control"
+    [rows]="rows"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [value]="value"
+    (input)="onInput()"
+    (keydown)="onKeydown($event)"
+  ></textarea>
+
+  @if (showDropdown) {
+    <ul class="mention-dropdown list-unstyled mb-0" role="listbox">
+      @for (opt of filteredOptions; track opt.id; let i = $index) {
+        <li
+          class="mention-option"
+          [class.mention-option--active]="i === activeIndex"
+          role="option"
+          (mousedown)="selectOption(opt)"
+        >
+          @if (opt.color) {
+            <span class="mention-avatar" [style.background]="opt.color">
+              {{ getInitials(opt.value) }}
+            </span>
+          }
+          <span class="mention-label">{{ opt.label }}</span>
+          @if (opt.sublabel) {
+            <span class="mention-sublabel">{{ opt.sublabel }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

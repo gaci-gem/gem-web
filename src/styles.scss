@@ -19,6 +19,24 @@
 
   --p-datatable-header-cell-background: var(--ins-card-bg);
   --p-datatable-row-background: var(--ins-card-bg);
+
+  --p-inputtext-background: var(--ins-secondary-bg);
+  --p-inputtext-hover-background: var(--ins-secondary-bg);
+  --p-inputtext-focus-background: var(--ins-secondary-bg);
+  --p-inputtext-filled-background: var(--ins-secondary-bg);
+  --p-inputtext-filled-hover-background: var(--ins-secondary-bg);
+  --p-inputtext-filled-focus-background: var(--ins-secondary-bg);
+}
+
+.p-datepicker {
+  .p-inputtext {
+    width: 100%;
+    background: var(--ins-secondary-bg) !important;
+  }
+}
+
+.p-inputtext.p-variant-filled {
+  background: var(--ins-secondary-bg) !important;
 }
 
 // Forzar que el slash-menu y otros popovers se rendericen en z-index alto

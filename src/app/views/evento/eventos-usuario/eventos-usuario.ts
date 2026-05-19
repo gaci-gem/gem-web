@@ -22,7 +22,7 @@ import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage'
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -33,6 +33,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { EventoCrud } from '../evento-crud/evento-crud';
 import { ModalSel } from './components/modal-sel/modal-sel';
 import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propio';
+import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 
 @Component({
   selector: 'app-eventos-usuario',
@@ -53,6 +54,7 @@ import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propi
     DatePickerModule,
     FormsModule,
     ControlTrabajarCon,
+    ContextMenuModule,
   ],
   providers: [
     DialogService,
@@ -71,6 +73,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   private eventoTrabajoService = inject(EventoTrabajoService);
   private drawerService = inject(DrawerService);
   @ViewChild('dt') table!: Table;
+  @ViewChild('cm') cm!: ContextMenu;
   private selecionarEventoPropio!: DynamicDialogRef | null;
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
@@ -78,6 +81,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   eventos: EventoCompleto[] = [];
   
   filtroFecha: Date[] | undefined;
+  
+  selectedEvento: EventoCompleto | null = null;
+  menuItems: MenuItem[] = [];
   
   // Simplificar las propiedades del evento en trabajo
   eventoEnTrabajo: EventoCompleto | null = null;
@@ -109,6 +115,82 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       this.tiempoInicioTrabajo = tiempo;
       this.cdr.detectChanges();
     });
+
+  }
+
+  onContextMenu(event: MouseEvent, evento: EventoCompleto): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.selectedEvento = evento;
+    this.buildContextMenu(evento);
+    setTimeout(() => this.cm.show(event));
+  }
+
+  buildContextMenu(e: EventoCompleto): void {
+    const items: MenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'pi pi-eye',
+        command: () => this.abrirEventoDrawer(e)
+      }
+    ];
+
+    if (!e.cerrado && !e.tipo?.propio) {
+      const accionItems: MenuItem[] = [];
+
+      if (e.etapaSiguiente) {
+        if (e.etapaActualData?.deAutoriza) {
+          accionItems.push({
+            label: 'Autorizar',
+            icon: 'pi pi-check-circle',
+            command: () => this.mostrarModalCrud(e, 'AUT')
+          });
+        } else {
+          accionItems.push({
+            label: 'Avanzar',
+            icon: 'pi pi-forward',
+            command: () => this.mostrarModalCrud(e, 'AVZ')
+          });
+        }
+      }
+
+      if (e.etapaAnterior) {
+        if (e.etapaActualData?.deAutoriza) {
+          accionItems.push({
+            label: 'Rechazar',
+            icon: 'pi pi-ban',
+            command: () => this.mostrarModalCrud(e, 'REC')
+          });
+        } else {
+          accionItems.push({
+            label: 'Retroceder',
+            icon: 'pi pi-backward',
+            command: () => this.mostrarModalCrud(e, 'RTO')
+          });
+        }
+      }
+
+      accionItems.push({
+        label: 'Reasignar',
+        icon: 'pi pi-arrow-right-arrow-left',
+        command: () => this.mostrarModalCrud(e, 'RAS')
+      });
+
+      items.push({ separator: true }, ...accionItems);
+    }
+
+    if (!this.eventoEnTrabajo) {
+      items.push(
+        { separator: true },
+        {
+          label: 'Tomar Evento',
+          icon: 'pi pi-play',
+          command: () => this.tomarEvento(e)
+        }
+      );
+    }
+
+    this.menuItems.splice(0, this.menuItems.length, ...items);
   }
 
   ngOnDestroy(): void {

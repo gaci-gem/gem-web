@@ -1,5 +1,4 @@
 import { modalConfig } from '@/app/types/modals';
-import { formatTime } from '@/app/utils/datetime-utils';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CrudFormModal, LoadingSpinnerComponent } from '@app/components/index';
@@ -10,6 +9,7 @@ import { RegistroHoraService } from '@core/services/registro-hora';
 import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
 import { NgIcon } from '@ng-icons/core';
 import { MessageService } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { EventoSelect } from '../../evento/evento-select/evento-select';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -20,6 +20,7 @@ import { FiltroActivo } from '@/app/constants/filtros_activo';
   imports: [
     ReactiveFormsModule,
     ToastModule,
+    DatePickerModule,
     NgIcon,
     LoadingSpinnerComponent,
   ],
@@ -87,15 +88,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
 
     this.horasFormArray.clear();
     data.horas?.forEach(hora => {
-      const inicioStr = hora.inicio ? formatTime(hora.inicio) : '';
-      const finStr = hora.fin ? formatTime(hora.fin) : '';
-
       this.horasFormArray.push(this.createHoraForm({
         id: hora.id != null ? Number(hora.id) : undefined,
         registroId: hora.registroId != null ? Number(hora.registroId) : undefined,
         eventoId: hora.eventoId != null ? String(hora.eventoId) : undefined,
-        inicio: inicioStr,
-        fin: finStr,
+        inicio: hora.inicio,
+        fin: hora.fin,
         detalle: hora.detalle != null ? String(hora.detalle) : undefined
       }));
     });
@@ -113,8 +111,8 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         // id: h.id != null ? Number(h.id) : null,
         // registroId: h.registroId != null ? Number(h.registroId) : null,
         eventoId: h.eventoId != null ? String(h.eventoId) : null,
-        inicio: h.inicio != null ? String(h.inicio) : null,
-        fin: h.fin != null ? String(h.fin) : null,
+        inicio: this.formatControlTime(h.inicio),
+        fin: this.formatControlTime(h.fin),
         detalle: h.detalle != null ? String(h.detalle) : null
       }))
     };
@@ -122,7 +120,9 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
 
   accion(event: Event) {
     event.preventDefault();
-    console.log(event)
+    console.log('accion submit - estado previo', this.horasFormArray.value);
+    this.normalizeAllTimeControls();
+    console.log('accion submit - estado normalizado', this.horasFormArray.value);
     this.submit();
   }
 
@@ -139,12 +139,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         hora?.eventoId != null ? String(hora.eventoId) : null,
         [Validators.required]
       ),
-      inicio: new FormControl<string | null>(
-        hora?.inicio != null ? String(hora.inicio) : null,
+      inicio: new FormControl<Date | null>(
+        this.coerceTimeControlValue(hora?.inicio),
         [Validators.required]
       ),
-      fin: new FormControl<string | null>(
-        hora?.fin != null ? String(hora.fin) : null,
+      fin: new FormControl<Date | null>(
+        this.coerceTimeControlValue(hora?.fin),
         [Validators.required]
       ),
       detalle: new FormControl<string | null>(
@@ -161,6 +161,171 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     });
 
     return horaForm;
+  }
+
+  onPrimeTimeBlur(horaControl: AbstractControl, field: 'inicio' | 'fin', event?: Event): void {
+    console.log('onPrimeTimeBlur', { field, value: horaControl.get(field)?.value });
+    const control = horaControl.get(field);
+    console.log('Control encontrado:', !!control);
+    if (!control) {
+      return;
+    }
+
+    const rawValue = this.getEventInputValue(event);
+  const candidateValue = rawValue ?? control.value;
+  const normalized = this.normalizeTimeValue(candidateValue);
+    const normalizedDate = this.coerceTimeControlValue(normalized);
+    console.log('Valor raw del input:', rawValue);
+    console.log('Valor candidato:', candidateValue);
+    console.log('Valor normalizado:', normalized);
+    console.log('Valor normalizado Date:', normalizedDate);
+
+    if (normalizedDate && !this.areDatesEqual(control.value, normalizedDate)) {
+      control.setValue(normalizedDate);
+      control.markAsDirty();
+      control.markAsTouched();
+    }
+
+    this.horasFormArray.updateValueAndValidity();
+  }
+
+  private normalizeAllTimeControls(): void {
+    console.log('normalizeAllTimeControls - before', this.horasFormArray.value);
+    this.horasFormArray.controls.forEach((horaControl, index) => {
+      this.normalizeFieldValue(horaControl, 'inicio', index);
+      this.normalizeFieldValue(horaControl, 'fin', index);
+    });
+    this.horasFormArray.updateValueAndValidity();
+    console.log('normalizeAllTimeControls - after', this.horasFormArray.value);
+  }
+
+  private normalizeFieldValue(horaControl: AbstractControl, field: 'inicio' | 'fin', index: number): void {
+    const control = horaControl.get(field);
+    console.log('normalizeFieldValue', { field, exists: !!control, value: control?.value });
+    if (!control) {
+      return;
+    }
+
+    const rawInputValue = this.getTimeInputRawValue(index, field);
+    const normalized = this.normalizeTimeValue(rawInputValue ?? control.value);
+    const normalizedDate = this.coerceTimeControlValue(normalized);
+    console.log('normalizeFieldValue normalizado', { field, rawInputValue, normalized, normalizedDate });
+    if (normalizedDate && !this.areDatesEqual(control.value, normalizedDate)) {
+      control.setValue(normalizedDate);
+      control.markAsDirty();
+      control.markAsTouched();
+    }
+  }
+
+  private normalizeTimeValue(value: unknown): string | null {
+    if (value == null) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : this.formatDateAsTime(value);
+    }
+
+    const raw = String(value).trim();
+    if (!raw) {
+      return null;
+    }
+
+    if (/^\d{3}$/.test(raw)) {
+      const hours = Number(raw.slice(0, 2));
+      const minutes = Math.min(Number(raw.slice(2)) * 10, 59);
+      if (hours >= 0 && hours <= 23 && minutes >= 0) {
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      }
+      return raw;
+    }
+
+    if (/^\d{4}$/.test(raw)) {
+      const hours = Number(raw.slice(0, 2));
+      const minutes = Math.min(Number(raw.slice(2)), 59);
+      if (hours >= 0 && hours <= 23 && minutes >= 0) {
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      }
+      return raw;
+    }
+
+    // Acepta formatos como "17", "17:", "17:3", "10:--" y los lleva a HH:mm.
+    const fallbackMatch = raw.match(/^(\d{1,2}):--$/);
+    if (fallbackMatch) {
+      const hours = Number(fallbackMatch[1]);
+      if (!Number.isNaN(hours) && hours >= 0 && hours <= 23) {
+        return `${String(hours).padStart(2, '0')}:00`;
+      }
+      return raw;
+    }
+
+    const match = raw.match(/^(\d{1,2})(?::(\d{0,2}))?$/);
+    if (!match) {
+      return raw;
+    }
+
+    const hours = Number(match[1]);
+    if (Number.isNaN(hours) || hours < 0 || hours > 23) {
+      return raw;
+    }
+
+    const minutesPart = match[2] ?? '';
+    const minutes = minutesPart === ''
+      ? 0
+      : minutesPart.length === 1
+        ? Math.min(Number(minutesPart) * 10, 59)
+        : Math.min(Number(minutesPart), 59);
+    if (Number.isNaN(minutes) || minutes < 0) {
+      return raw;
+    }
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
+
+  getTimeInputId(index: number, field: 'inicio' | 'fin'): string {
+    return `hora-${field}-${index}`;
+  }
+
+  private getTimeInputRawValue(index: number, field: 'inicio' | 'fin'): string | null {
+    const input = document.getElementById(this.getTimeInputId(index, field)) as HTMLInputElement | null;
+    return input?.value?.trim() || null;
+  }
+
+  private getEventInputValue(event?: Event): string | null {
+    const target = ((event as any)?.target ?? (event as any)?.originalEvent?.target) as HTMLInputElement | null;
+    return target?.value?.trim() || null;
+  }
+
+  private coerceTimeControlValue(value: unknown): Date | null {
+    const normalized = this.normalizeTimeValue(value);
+    if (!normalized) {
+      return null;
+    }
+
+    const [hours, minutes] = normalized.split(':').map(Number);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return null;
+    }
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  }
+
+  private formatControlTime(value: unknown): string | null {
+    const normalized = this.normalizeTimeValue(value);
+    return normalized ? normalized : null;
+  }
+
+  private formatDateAsTime(value: Date): string {
+    return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+  }
+
+  private areDatesEqual(left: unknown, right: Date): boolean {
+    return left instanceof Date
+      && !Number.isNaN(left.getTime())
+      && left.getHours() === right.getHours()
+      && left.getMinutes() === right.getMinutes();
   }
 
   addHora() {
@@ -186,7 +351,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         inicio: horaControl.get('inicio')?.value,
         fin: horaControl.get('fin')?.value
       }))
-      .filter(h => h.inicio && h.fin && h.inicio <= h.fin);
+      .filter(h => this.timeToMinutes(h.inicio) != null && this.timeToMinutes(h.fin) != null);
 
     // Verificar superposiciones
     for (let i = 0; i < horarios.length; i++) {
@@ -199,6 +364,10 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         const fin1 = this.timeToMinutes(horario1.fin);
         const inicio2 = this.timeToMinutes(horario2.inicio);
         const fin2 = this.timeToMinutes(horario2.fin);
+
+        if (inicio1 == null || fin1 == null || inicio2 == null || fin2 == null) {
+          continue;
+        }
 
         // Verificar si hay superposición (excluyendo los extremos)
         if ((inicio1 < fin2 && fin1 > inicio2)) {
@@ -222,8 +391,13 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return null;
   }
 
-  private timeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
+  private timeToMinutes(time: unknown): number | null {
+    const normalized = this.normalizeTimeValue(time);
+    if (!normalized) {
+      return null;
+    }
+
+    const [hours, minutes] = normalized.split(':').map(Number);
     return hours * 60 + minutes;
   }
 
@@ -236,11 +410,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       return null;
     }
 
-    const inicioMinutes = inicio.split(':').map(Number);
-    const finMinutes = fin.split(':').map(Number);
-    
-    const inicioTotal = inicioMinutes[0] * 60 + inicioMinutes[1];
-    const finTotal = finMinutes[0] * 60 + finMinutes[1];
+    const inicioTotal = this.timeToMinutes(inicio);
+    const finTotal = this.timeToMinutes(fin);
+
+    if (inicioTotal == null || finTotal == null) {
+      return null;
+    }
 
     if (finTotal <= inicioTotal) {
       return { invalidTimeRange: true };

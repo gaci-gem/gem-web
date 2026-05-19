@@ -60,8 +60,17 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="inicio"
-              [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
+            <p-datepicker
+              [inputId]="getTimeInputId($index, 'inicio')"
+              formControlName="inicio"
+              [timeOnly]="true"
+              hourFormat="24"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [showButtonBar]="true"
+              [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+              (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"
+            ></p-datepicker>
             @if (hora.errors?.['overlap']) {
             <div class="invalid-feedback">
               Horario superpuesto
@@ -76,8 +85,17 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="fin"
-              [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
+            <p-datepicker
+              [inputId]="getTimeInputId($index, 'fin')"
+              formControlName="fin"
+              [timeOnly]="true"
+              hourFormat="24"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [showButtonBar]="true"
+              [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+              (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"
+            ></p-datepicker>
             @if (hora.errors?.['overlap']) {
             <div class="invalid-feedback">
               Horario superpuesto

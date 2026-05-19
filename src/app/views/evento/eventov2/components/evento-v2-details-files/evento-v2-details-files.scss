@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .card {
+  border-color: var(--ins-border-color);
+}
+
+.requisitos-table-wrap {
+  border: 1px solid var(--ins-border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.requisitos-table thead th {
+  background: var(--ins-secondary-bg);
+  color: var(--ins-heading-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.requisitos-table td,
+.requisitos-table th {
+  border-color: var(--ins-border-color);
+}
+
+.req-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--ins-danger-border-subtle);
+  background: var(--ins-danger-bg-subtle);
+  color: var(--ins-danger-text-emphasis);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+}
+
+.req-status--ok {
+  border-color: var(--ins-success-border-subtle);
+  background: var(--ins-success-bg-subtle);
+  color: var(--ins-success-text-emphasis);
+}

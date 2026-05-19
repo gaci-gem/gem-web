@@ -43,6 +43,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
+                    <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
                     <p-table
                         #dt
                         [value]="eventos"
@@ -126,7 +127,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-evento>
-                            <tr style="min-height: 55px" [class.table-success]="eventoEnTrabajo?.id === evento.id">
+                            <tr style="min-height: 55px" [class.table-success]="eventoEnTrabajo?.id === evento.id" (contextmenu)="onContextMenu($event, evento)">
                                 <td pFrozenColumn>
                                     @if (!eventoEnTrabajo || eventoEnTrabajo.id !== evento.id) {
                                         <button 

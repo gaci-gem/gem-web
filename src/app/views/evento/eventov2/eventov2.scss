@@ -1,0 +1,13 @@
+.evento-v2-page {
+	min-height: 100%;
+}
+
+:host {
+	display: block;
+}
+
+:host ::ng-deep .card-v2 {
+	border: 1px solid var(--ins-border-color);
+	border-radius: 0.5rem;
+	background: var(--ins-body-bg);
+}

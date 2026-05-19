@@ -5,6 +5,9 @@ import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Evento_requisito, Evento_requisito_completo, EventoCompleto, EventoDocumentacion, formatEventoNumero, VidaEvento } from '@core/interfaces/evento';
 import { EventoService } from '@core/services/evento';
+import { TipoEventoService } from '@core/services/tipo-evento';
+import { TipoEventoTimeline } from '@core/interfaces/tipo-evento';
+import { TimelineEtapasComponent } from './components/timeline-etapas/timeline-etapas';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -51,7 +54,7 @@ import { ParametroService } from '@core/services/parametros';
     NgIcon,
     FormsModule,
     LoadingSpinnerComponent,
-    ItemDocumentacion
+    ItemDocumentacion,
 ],
   providers: [
     DialogService,
@@ -82,8 +85,13 @@ export class Evento implements OnInit {
   permisoClave = PermisoClave.EVENTO;
 
   private eventoService = inject(EventoService);
+  private tipoEventoService = inject(TipoEventoService);
   evento!: EventoCompleto;
   cargandoEvento: boolean = false;
+
+  // Timeline del evento
+  timeline: TipoEventoTimeline | null = null;
+  cargandoTimeline: boolean = false;
 
   // estado para observar/seguir el evento
   esObservador: boolean = false;
@@ -204,7 +212,10 @@ export class Evento implements OnInit {
     // this.loadingService.show();
     this.cargandoEvento = true;
     this.eventoService.getByIdCompleto(this.eventoId).pipe(
-      finalize(() => this.cargandoEvento = false)
+      finalize(() => {
+        this.cargandoEvento = false
+        this.cdr.detectChanges();
+      })
     ).subscribe(
       {
         next: (res: any) => {
@@ -220,13 +231,32 @@ export class Evento implements OnInit {
           } else {
             this.esObservador = false;
           }
-          this.cdr.detectChanges();
+          // Cargar timeline del tipo de evento
+          if (this.evento.tipo?.codigo) {
+            this.getTimeline(this.evento.tipo.codigo);
+          }
         },
         error: (err: any) => {
           console.error('Error fetching evento:', err);
         }
       }
     );
+  }
+
+  getTimeline(tipoEventoCodigo: string) {
+    this.cargandoTimeline = true;
+    this.tipoEventoService.getTimeline(tipoEventoCodigo).pipe(
+      finalize(() => {
+        this.cargandoTimeline = false;
+      })
+    ).subscribe({
+      next: (timeline: TipoEventoTimeline) => {
+        // this.timeline = timeline;
+      },
+      error: (err: any) => {
+        console.error('Error fetching timeline:', err);
+      }
+    });
   }
 
   onToggleObservador() {
@@ -464,9 +494,9 @@ export class Evento implements OnInit {
   }
 
   getRequerimientoDisabled(req: any): boolean {
-    // console.log(this.evento.etapaActualData.id, req.etapa.id, this.evento.usuarioActual.id, this.usuarioActivo?.id);
+    // console.log(this.evento.etapaActualData?.id, req.etapa.id, this.evento.usuarioActual.id, this.usuarioActivo?.id);
     return (
-      this.evento.etapaActualData.id < req.etapa.id ||
+      (this.evento.etapaActualData?.id ?? -1) < req.etapa.id ||
       this.evento.usuarioActual.id !== this.usuarioActivo?.id
     );
   }

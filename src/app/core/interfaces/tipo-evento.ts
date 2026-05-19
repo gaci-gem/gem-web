@@ -17,3 +17,22 @@ export interface TipoEventoEtapa {
   etapaSecuencia: number;
   rollbackSec?: number;
 }
+
+export interface TipoEventoTimeline {
+  tipoEventoCodigo: string;
+  descripcion: string;
+  etapas: TipoEventoTimelineEtapa[];
+}
+
+export interface TipoEventoTimelineEtapa {
+  id: number;
+  nombre: string;
+  secuencia: number;
+  deAutoriza: boolean;
+  deArchivo: boolean;
+  rolPreferido: string;
+  rollback?: {
+    secuencia: number;
+    nombre: string;
+  };
+}

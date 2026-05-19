@@ -97,7 +97,8 @@
                                                         <p-button type="button" pRipple [pRowToggler]="registro" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
                                                     </td>
                                                     <td hidden>{{ registro.id }}</td>
-                                                    <td>{{ getFechaLocal(registro.fecha) | date:'dd MMMM yy'}}</td>
+                                                    <!-- <td>{{ getFechaLocal(registro.fecha) | date:'dd MMMM yy'}}</td> -->
+                                                    <td>{{ getFechaLocal(registro.fecha) | date:'fullDate'}}</td>
                                                     <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
                                                     <td>{{ registro.horasTotalesFormateadas }} hs.</td>
                                                 </tr>

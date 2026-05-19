@@ -1,7 +1,7 @@
 import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { TipoEvento } from '@core/interfaces/tipo-evento';
+import { TipoEvento, TipoEventoTimeline } from '@core/interfaces/tipo-evento';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -17,6 +17,10 @@ export class TipoEventoService {
 
   getById(id: string): Observable<TipoEvento> {
     return this.http.get<TipoEvento>(`${this.URL_COMPLETA}/tipo-evento/${id}`);
+  }
+
+  getTimeline(codigo: string): Observable<TipoEventoTimeline> {
+    return this.http.get<TipoEventoTimeline>(`${this.URL_COMPLETA}/tipo-evento/${codigo}/timeline`);
   }
 
   create(tipoEvento:TipoEvento): Observable<TipoEvento> {

@@ -51,7 +51,7 @@
           <app-loading-spinner></app-loading-spinner>
         } @else {
           <div class="table-responsive">
-            <p-contextMenu #cm [model]="menuItems"></p-contextMenu>
+            <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
             <p-table 
               [value]="permisosDisponibles" 
               stripedRows

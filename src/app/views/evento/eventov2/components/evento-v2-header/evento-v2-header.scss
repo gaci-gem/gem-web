@@ -1,0 +1,120 @@
+.evento-header {
+  padding: 1.25rem;
+}
+
+.evento-header__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--ins-border-color);
+  padding-bottom: 1rem;
+}
+
+.evento-header__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.evento-code {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.evento-title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.evento-header__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.evento-header__info-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.info-label {
+  display: block;
+  color: var(--ins-secondary-color);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.info-value {
+  margin: 0;
+  font-size: 0.82rem;
+
+  &--sub {
+    margin-top: 0.25rem;
+    color: var(--ins-secondary-color);
+    font-size: 0.72rem;
+  }
+}
+
+.info-date-input {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--ins-body-bg);
+  border-color: var(--ins-border-color);
+  color: var(--ins-body-color);
+  max-width: 160px;
+}
+
+.prioridad-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.prioridad-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.prioridad-sublabel {
+  font-size: 0.65rem;
+  color: var(--ins-secondary-color);
+  font-weight: 600;
+}
+
+@media (max-width: 992px) {
+  .evento-header__top {
+    flex-direction: column;
+  }
+
+  .evento-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .evento-header__info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .evento-header__info-grid {
+    grid-template-columns: 1fr;
+  }
+}

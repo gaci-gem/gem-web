@@ -1,0 +1,97 @@
+<section class="h-100">
+  <h5 class="mb-3 fw-semibold">Detalles y Archivos</h5>
+
+  <app-ui-card title="Documentación" [isTogglable]="true" [initialCollapsed]="false" class="mt-3">
+    <button card-actions class="btn btn-icon btn-outline-info" (click)="onLinkDocumentacion()" title="Adjuntar documentación">
+      <ng-icon name="lucideLink"></ng-icon>
+    </button>
+    <div card-body>
+      @if (documentacion.length > 0) {
+        @for (doc of documentacion; track doc.id) {
+          <app-item-documentacion
+            [documento]="doc"
+            [puedeEliminar]="true"
+            (eliminar)="onEliminarDocumento($event)"
+            (togglePrincipal)="onTogglePrincipalDocumento($event)"
+          ></app-item-documentacion>
+        }
+      } @else {
+        <p class="mb-0 text-body-secondary">No hay documentación asociada.</p>
+      }
+    </div>
+  </app-ui-card>
+
+  <app-ui-card title="Archivos Adjuntos" [isTogglable]="true" [initialCollapsed]="false" class="mt-3">
+    <button card-actions class="btn btn-icon btn-outline-info" (click)="onUploadAdjunto()" title="Subir adjunto">
+      <ng-icon name="lucideCloudUpload"></ng-icon>
+    </button>
+    <button card-actions pButton type="button" label="Refrescar" icon="pi pi-refresh" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshAdjuntos.emit()"></button>
+    <div card-body>
+      @if (loadingAdjuntos) {
+        <div class="border rounded p-3 bg-body-tertiary text-center small text-body-secondary">
+          Cargando adjuntos...
+        </div>
+      } @else if (errorAdjuntos) {
+        <div class="border rounded p-3 text-center small text-danger">
+          {{ errorAdjuntos }}
+        </div>
+      } @else if (adjuntos.length > 0) {
+        @for (adjunto of adjuntos; track adjunto.id) {
+          <app-item-adjunto
+            [adjunto]="adjunto"
+            [puedeEliminar]="true"
+            (eliminar)="onEliminarAdjunto($event)"
+          ></app-item-adjunto>
+        }
+      } @else {
+        <p class="mb-0 text-body-secondary">No hay archivos adjuntos.</p>
+      }
+    </div>
+  </app-ui-card>
+
+  
+  <app-ui-card title="Requisitos" [isTogglable]="true" [initialCollapsed]="false">
+    <button card-actions pButton type="button" label="Refrescar" icon="pi pi-refresh" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshRequisitos.emit()"></button>
+    <div card-body>
+      @if (loadingRequisitos) {
+        <div class="border rounded p-3 bg-body-tertiary text-center small text-body-secondary">
+          Cargando requisitos...
+        </div>
+      } @else if (errorRequisitos) {
+        <div class="border rounded p-3 text-center small text-danger">
+          {{ errorRequisitos }}
+        </div>
+      } @else if (requisitos.length > 0) {
+        <div class="table-responsive requisitos-table-wrap">
+          <table class="table table-sm align-middle mb-0 requisitos-table">
+            <thead>
+              <tr>
+                <th style="width: 8%"></th>
+                <th style="width: 30%">Requisito</th>
+                <th style="width: 24%">Etapa</th>
+                <th style="width: 38%">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (req of requisitos; track req.requisito + req.etapa) {
+                <tr>
+                  <td>
+                    <span class="req-status" [class.req-status--ok]="req.cumplido">{{ req.cumplido ? 'OK' : 'NO' }}</span>
+                  </td>
+                  <td>{{ req.requisito }}</td>
+                  <td>{{ req.etapa }}</td>
+                  <td>{{ req.valor || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="border rounded p-3 bg-body-tertiary text-center small text-body-secondary">
+          El tipo de evento no tiene requisitos específicos asignados en esta etapa.
+        </div>
+      }
+    </div>
+  </app-ui-card>
+
+</section>

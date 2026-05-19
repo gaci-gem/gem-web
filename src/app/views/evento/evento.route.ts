@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router'
 import { Eventos } from './eventos/eventos'
 import { EventosUsuario } from './eventos-usuario/eventos-usuario'
-import { Evento } from './evento/evento'
+import { Eventov2 } from './eventov2/eventov2'
 
 export const  EVENTOS_ROUTES: Routes = [
   {
@@ -16,8 +16,7 @@ export const  EVENTOS_ROUTES: Routes = [
   },
   {
     path: 'evento/evento/:id',
-    component: Evento,
+    component: Eventov2,
     data: { title: 'Evento' },
   },
-
 ]
