@@ -120,9 +120,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
 
   accion(event: Event) {
     event.preventDefault();
-    console.log('accion submit - estado previo', this.horasFormArray.value);
     this.normalizeAllTimeControls();
-    console.log('accion submit - estado normalizado', this.horasFormArray.value);
     this.submit();
   }
 
@@ -150,7 +148,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       detalle: new FormControl<string | null>(
         hora?.detalle != null ? String(hora.detalle) : null,
       ),
-    }, { validators: this.timeRangeValidator });
+    }, { validators: this.timeRangeValidator.bind(this) });
 
     // Agregar validación cuando cambian los valores de tiempo
     horaForm.get('inicio')?.valueChanges.subscribe(() => {
@@ -164,21 +162,15 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   onPrimeTimeBlur(horaControl: AbstractControl, field: 'inicio' | 'fin', event?: Event): void {
-    console.log('onPrimeTimeBlur', { field, value: horaControl.get(field)?.value });
     const control = horaControl.get(field);
-    console.log('Control encontrado:', !!control);
     if (!control) {
       return;
     }
 
     const rawValue = this.getEventInputValue(event);
-  const candidateValue = rawValue ?? control.value;
-  const normalized = this.normalizeTimeValue(candidateValue);
+    const candidateValue = rawValue ?? control.value;
+    const normalized = this.normalizeTimeValue(candidateValue);
     const normalizedDate = this.coerceTimeControlValue(normalized);
-    console.log('Valor raw del input:', rawValue);
-    console.log('Valor candidato:', candidateValue);
-    console.log('Valor normalizado:', normalized);
-    console.log('Valor normalizado Date:', normalizedDate);
 
     if (normalizedDate && !this.areDatesEqual(control.value, normalizedDate)) {
       control.setValue(normalizedDate);
@@ -190,18 +182,15 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   private normalizeAllTimeControls(): void {
-    console.log('normalizeAllTimeControls - before', this.horasFormArray.value);
     this.horasFormArray.controls.forEach((horaControl, index) => {
       this.normalizeFieldValue(horaControl, 'inicio', index);
       this.normalizeFieldValue(horaControl, 'fin', index);
     });
     this.horasFormArray.updateValueAndValidity();
-    console.log('normalizeAllTimeControls - after', this.horasFormArray.value);
   }
 
   private normalizeFieldValue(horaControl: AbstractControl, field: 'inicio' | 'fin', index: number): void {
     const control = horaControl.get(field);
-    console.log('normalizeFieldValue', { field, exists: !!control, value: control?.value });
     if (!control) {
       return;
     }
@@ -209,7 +198,6 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     const rawInputValue = this.getTimeInputRawValue(index, field);
     const normalized = this.normalizeTimeValue(rawInputValue ?? control.value);
     const normalizedDate = this.coerceTimeControlValue(normalized);
-    console.log('normalizeFieldValue normalizado', { field, rawInputValue, normalized, normalizedDate });
     if (normalizedDate && !this.areDatesEqual(control.value, normalizedDate)) {
       control.setValue(normalizedDate);
       control.markAsDirty();

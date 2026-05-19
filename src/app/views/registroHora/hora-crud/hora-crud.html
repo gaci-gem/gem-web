@@ -72,12 +72,12 @@
               (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"
             ></p-datepicker>
             @if (hora.errors?.['overlap']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Horario superpuesto
             </div>
             }
             @if (hora.errors?.['invalidTimeRange']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Hora inválida
             </div>
             }
@@ -97,12 +97,12 @@
               (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"
             ></p-datepicker>
             @if (hora.errors?.['overlap']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Horario superpuesto
             </div>
             }
             @if (hora.errors?.['invalidTimeRange']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Fin debe ser mayor que inicio
             </div>
             }
