@@ -30,6 +30,7 @@ export class EventoV2HeaderComponent {
 
   @Input({ required: true }) evento!: EventoCompleto;
   @Input() estimacionDetalle!: EstimacionDetalle | null;
+  @Input() horasTrabajadas!: any | null;
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
   esObservador = false;
@@ -116,5 +117,14 @@ export class EventoV2HeaderComponent {
     }
 
     this.esObservador = this.evento.observadores.some((o: any) => o?.usuarioId === usuarioId || o?.id === usuarioId);
+  }
+
+  getColorForCodigo(codigo: string): string {
+    const map: Record<string, string> = {
+      DEV: '#2196F3', TEST: '#4CAF50', ANAL: '#FF9800',
+      REV: '#9C27B0', DESIGN: '#E91E63', ADMIN: '#607D8B',
+      MEET: '#795548', OTHER: '#9E9E9E',
+    };
+    return map[codigo] || '#9E9E9E';
   }
 }

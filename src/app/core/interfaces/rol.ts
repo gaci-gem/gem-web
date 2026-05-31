@@ -80,7 +80,8 @@ export enum PermisoClave {
   ROL = 'ROL',
   REPORTE = 'REP',
   SISTEMA = 'SYS',
-  KB = 'KB'
+  KB = 'KB',
+  TIPO_TRABAJO = 'TTR'
 }
 
 // Array vacío de permisos para inicialización
@@ -216,6 +217,16 @@ export const permisosData: PermisoConfig[] = [
       { accion: 'CREAR', label: 'Crear reportes', habilitado: true },
       { accion: 'MODIFICAR', label: 'Modificar reportes', habilitado: true },
       { accion: 'ELIMINAR', label: 'Eliminar reportes', habilitado: true }
+    ]
+  },
+  {
+    clave: PermisoClave.TIPO_TRABAJO,
+    descripcion: 'Tipos de Trabajo (Categorías de Horas)',
+    acciones: [
+      { accion: 'LEER', label: 'Ver tipos de trabajo', habilitado: true },
+      { accion: 'CREAR', label: 'Crear tipos de trabajo', habilitado: true },
+      { accion: 'MODIFICAR', label: 'Modificar tipos de trabajo', habilitado: true },
+      { accion: 'ELIMINAR', label: 'Eliminar tipos de trabajo', habilitado: true }
     ]
   }
 ];

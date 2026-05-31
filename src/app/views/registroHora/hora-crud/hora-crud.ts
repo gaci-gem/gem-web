@@ -1,12 +1,23 @@
 import { modalConfig } from '@/app/types/modals';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormArray,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { CrudFormModal, LoadingSpinnerComponent } from '@app/components/index';
 import { Evento } from '@core/interfaces/evento';
-import { Hora, RegistroHora } from '@core/interfaces/registro-hora';
+import { Categoria, Hora, RegistroHora } from '@core/interfaces/registro-hora';
 import { EventoService } from '@core/services/evento';
 import { RegistroHoraService } from '@core/services/registro-hora';
-import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
+import {
+  UserStorageService,
+  UsuarioLogeado,
+} from '@core/services/user-storage';
 import { NgIcon } from '@ng-icons/core';
 import { MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -14,6 +25,8 @@ import { ToastModule } from 'primeng/toast';
 import { EventoSelect } from '../../evento/evento-select/evento-select';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
+import { SelectModule } from 'primeng/select';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-hora-crud',
@@ -23,16 +36,16 @@ import { FiltroActivo } from '@/app/constants/filtros_activo';
     DatePickerModule,
     NgIcon,
     LoadingSpinnerComponent,
+    SelectModule,
   ],
-  providers: [
-    MessageService,
-  ],
+  providers: [MessageService],
   templateUrl: './hora-crud.html',
-  styleUrl: './hora-crud.scss'
+  styleUrl: './hora-crud.scss',
 })
 export class HoraCrud extends CrudFormModal<RegistroHora> {
   protected modalSel!: DynamicDialogRef | null;
-  private eventoService = inject(EventoService)
+  private eventoService = inject(EventoService);
+  private registroHoraService = inject(RegistroHoraService);
   private userStorageService = inject(UserStorageService);
   private dialogService = inject(DialogService);
   private cdr = inject(ChangeDetectorRef);
@@ -42,34 +55,57 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   eventos!: Evento[];
   eventosFiltrados!: Evento[];
 
+  categorias: Categoria[] = [];
+  categoriaSugerida: Categoria | null = null;
+
   loading: boolean = false;
   private dataLoadedCount = 0;
-  private totalDataToLoad = 1;
+  private totalDataToLoad = 2;
 
   override ngOnInit(): void {
     super.ngOnInit();
 
     if (this.modo === 'M') {
       this.loading = true;
-      // this.loadingService.show();
     }
 
+    // Categorías sugerida desde el config (evento)
+    if (this.config.data?.categoriaSugerida) {
+      this.categoriaSugerida = this.config.data.categoriaSugerida;
+    }
+
+    // Cargar categorías desde el backend
+    this.registroHoraService
+      .getCategorias()
+      .pipe(finalize(() => this.cdr.detectChanges()))
+      .subscribe({
+        next: (cats) => {
+          this.categorias = cats;
+          this.checkAndSetupEditMode();
+        },
+        error: () => {
+          this.showError('Error', 'Error al cargar las categorías.');
+          this.checkAndSetupEditMode();
+        },
+      });
+
+    // Cargar eventos
     this.eventoService.getAll(FiltroActivo.FALSE).subscribe({
       next: (res: any) => {
-        this.eventos = res
+        this.eventos = res;
         this.checkAndSetupEditMode();
       },
-      error: () => this.showError('Error', 'Error al cargar los eventos.')
-    })
+      error: () => this.showError('Error', 'Error al cargar los eventos.'),
+    });
   }
 
   protected buildForm(): FormGroup {
     const today = new Date().toISOString().slice(0, 10);
     return new FormGroup({
-      id: new FormControl('',),
+      id: new FormControl(''),
       fecha: new FormControl(today, [Validators.required]),
       usuarioId: new FormControl(this.usuarioActivo?.id, [Validators.required]),
-      horas: new FormArray([], this.noOverlapValidator.bind(this))
+      horas: new FormArray([], this.noOverlapValidator.bind(this)),
     });
   }
 
@@ -78,29 +114,37 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   protected populateForm(data: RegistroHora): void {
-    const fechaStr = data.fecha ? new Date(data.fecha).toISOString().slice(0, 10) : '';
+    const fechaStr = data.fecha
+      ? new Date(data.fecha).toISOString().slice(0, 10)
+      : '';
     this.form.patchValue({
       id: data.id,
       fecha: fechaStr,
       usuarioId: data.usuarioId,
-      horas: []
+      horas: [],
     });
 
     this.horasFormArray.clear();
-    data.horas?.forEach(hora => {
-      this.horasFormArray.push(this.createHoraForm({
-        id: hora.id != null ? Number(hora.id) : undefined,
-        registroId: hora.registroId != null ? Number(hora.registroId) : undefined,
-        eventoId: hora.eventoId != null ? String(hora.eventoId) : undefined,
-        inicio: hora.inicio,
-        fin: hora.fin,
-        detalle: hora.detalle != null ? String(hora.detalle) : undefined
-      }));
+    data.horas?.forEach((hora) => {
+      this.horasFormArray.push(
+        this.createHoraForm({
+          id: hora.id != null ? Number(hora.id) : undefined,
+          registroId:
+            hora.registroId != null ? Number(hora.registroId) : undefined,
+          eventoId: hora.eventoId != null ? String(hora.eventoId) : undefined,
+          inicio: hora.inicio,
+          fin: hora.fin,
+          detalle: hora.detalle != null ? String(hora.detalle) : undefined,
+          categoriaCodigo:
+            hora.categoriaCodigo != null
+              ? String(hora.categoriaCodigo)
+              : undefined,
+        }),
+      );
     });
   }
 
-  protected override setupEditMode(): void {
-  }
+  protected override setupEditMode(): void {}
 
   protected toModel(): RegistroHora {
     return {
@@ -113,8 +157,10 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         eventoId: h.eventoId != null ? String(h.eventoId) : null,
         inicio: this.formatControlTime(h.inicio),
         fin: this.formatControlTime(h.fin),
-        detalle: h.detalle != null ? String(h.detalle) : null
-      }))
+        detalle: h.detalle != null ? String(h.detalle) : null,
+        categoriaCodigo:
+          h.categoriaCodigo != null ? String(h.categoriaCodigo) : null,
+      })),
     };
   }
 
@@ -125,30 +171,36 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   private createHoraForm(hora?: Partial<Hora>): FormGroup {
-    const horaForm = new FormGroup({
-      // obligamos a number (o null)
-      id: new FormControl<number | null>(
-        hora?.id != null ? Number(hora.id) : null,
-      ),
-      registroId: new FormControl<number | null>(
-        hora?.registroId != null ? Number(hora.registroId) : null,
-      ),
-      eventoId: new FormControl<string | null>(
-        hora?.eventoId != null ? String(hora.eventoId) : null,
-        [Validators.required]
-      ),
-      inicio: new FormControl<Date | null>(
-        this.coerceTimeControlValue(hora?.inicio),
-        [Validators.required]
-      ),
-      fin: new FormControl<Date | null>(
-        this.coerceTimeControlValue(hora?.fin),
-        [Validators.required]
-      ),
-      detalle: new FormControl<string | null>(
-        hora?.detalle != null ? String(hora.detalle) : null,
-      ),
-    }, { validators: this.timeRangeValidator.bind(this) });
+    const horaForm = new FormGroup(
+      {
+        // obligamos a number (o null)
+        id: new FormControl<number | null>(
+          hora?.id != null ? Number(hora.id) : null,
+        ),
+        registroId: new FormControl<number | null>(
+          hora?.registroId != null ? Number(hora.registroId) : null,
+        ),
+        eventoId: new FormControl<string | null>(
+          hora?.eventoId != null ? String(hora.eventoId) : null,
+          [Validators.required],
+        ),
+        inicio: new FormControl<Date | null>(
+          this.coerceTimeControlValue(hora?.inicio),
+          [Validators.required],
+        ),
+        fin: new FormControl<Date | null>(
+          this.coerceTimeControlValue(hora?.fin),
+          [Validators.required],
+        ),
+        detalle: new FormControl<string | null>(
+          hora?.detalle != null ? String(hora.detalle) : null,
+        ),
+        categoriaCodigo: new FormControl<string | null>(
+          hora?.categoriaCodigo != null ? String(hora.categoriaCodigo) : null,
+        ),
+      },
+      { validators: this.timeRangeValidator.bind(this) },
+    );
 
     // Agregar validación cuando cambian los valores de tiempo
     horaForm.get('inicio')?.valueChanges.subscribe(() => {
@@ -158,10 +210,21 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       this.horasFormArray.updateValueAndValidity();
     });
 
+    // Cuando cambia el evento seleccionado, buscar categoriaSugerida
+    horaForm.get('eventoId')?.valueChanges.subscribe((eventoId) => {
+      if (eventoId) {
+        this.cargarCategoriaSugeridaDeEvento(String(eventoId));
+      }
+    });
+
     return horaForm;
   }
 
-  onPrimeTimeBlur(horaControl: AbstractControl, field: 'inicio' | 'fin', event?: Event): void {
+  onPrimeTimeBlur(
+    horaControl: AbstractControl,
+    field: 'inicio' | 'fin',
+    event?: Event,
+  ): void {
     const control = horaControl.get(field);
     if (!control) {
       return;
@@ -189,7 +252,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     this.horasFormArray.updateValueAndValidity();
   }
 
-  private normalizeFieldValue(horaControl: AbstractControl, field: 'inicio' | 'fin', index: number): void {
+  private normalizeFieldValue(
+    horaControl: AbstractControl,
+    field: 'inicio' | 'fin',
+    index: number,
+  ): void {
     const control = horaControl.get(field);
     if (!control) {
       return;
@@ -211,7 +278,9 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     }
 
     if (value instanceof Date) {
-      return Number.isNaN(value.getTime()) ? null : this.formatDateAsTime(value);
+      return Number.isNaN(value.getTime())
+        ? null
+        : this.formatDateAsTime(value);
     }
 
     const raw = String(value).trim();
@@ -258,11 +327,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     }
 
     const minutesPart = match[2] ?? '';
-    const minutes = minutesPart === ''
-      ? 0
-      : minutesPart.length === 1
-        ? Math.min(Number(minutesPart) * 10, 59)
-        : Math.min(Number(minutesPart), 59);
+    const minutes =
+      minutesPart === ''
+        ? 0
+        : minutesPart.length === 1
+          ? Math.min(Number(minutesPart) * 10, 59)
+          : Math.min(Number(minutesPart), 59);
     if (Number.isNaN(minutes) || minutes < 0) {
       return raw;
     }
@@ -274,13 +344,19 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return `hora-${field}-${index}`;
   }
 
-  private getTimeInputRawValue(index: number, field: 'inicio' | 'fin'): string | null {
-    const input = document.getElementById(this.getTimeInputId(index, field)) as HTMLInputElement | null;
+  private getTimeInputRawValue(
+    index: number,
+    field: 'inicio' | 'fin',
+  ): string | null {
+    const input = document.getElementById(
+      this.getTimeInputId(index, field),
+    ) as HTMLInputElement | null;
     return input?.value?.trim() || null;
   }
 
   private getEventInputValue(event?: Event): string | null {
-    const target = ((event as any)?.target ?? (event as any)?.originalEvent?.target) as HTMLInputElement | null;
+    const target = ((event as any)?.target ??
+      (event as any)?.originalEvent?.target) as HTMLInputElement | null;
     return target?.value?.trim() || null;
   }
 
@@ -310,14 +386,22 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   private areDatesEqual(left: unknown, right: Date): boolean {
-    return left instanceof Date
-      && !Number.isNaN(left.getTime())
-      && left.getHours() === right.getHours()
-      && left.getMinutes() === right.getMinutes();
+    return (
+      left instanceof Date &&
+      !Number.isNaN(left.getTime()) &&
+      left.getHours() === right.getHours() &&
+      left.getMinutes() === right.getMinutes()
+    );
   }
 
   addHora() {
-    this.horasFormArray.push(this.createHoraForm());
+    const horaData =
+      this.horasFormArray.length === 0 &&
+      this.modo === 'A' &&
+      this.categoriaSugerida
+        ? { categoriaCodigo: this.categoriaSugerida.codigo }
+        : undefined;
+    this.horasFormArray.push(this.createHoraForm(horaData as any));
   }
 
   removeHora(index: number) {
@@ -326,9 +410,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   // Validador personalizado para evitar superposición de horarios
-  private noOverlapValidator(control: AbstractControl): ValidationErrors | null {
+  private noOverlapValidator(
+    control: AbstractControl,
+  ): ValidationErrors | null {
     const horasArray = control as FormArray;
-    
+
     if (!horasArray || horasArray.length <= 1) {
       return null;
     }
@@ -337,9 +423,13 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       .map((horaControl, index) => ({
         index,
         inicio: horaControl.get('inicio')?.value,
-        fin: horaControl.get('fin')?.value
+        fin: horaControl.get('fin')?.value,
       }))
-      .filter(h => this.timeToMinutes(h.inicio) != null && this.timeToMinutes(h.fin) != null);
+      .filter(
+        (h) =>
+          this.timeToMinutes(h.inicio) != null &&
+          this.timeToMinutes(h.fin) != null,
+      );
 
     // Verificar superposiciones
     for (let i = 0; i < horarios.length; i++) {
@@ -353,12 +443,17 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         const inicio2 = this.timeToMinutes(horario2.inicio);
         const fin2 = this.timeToMinutes(horario2.fin);
 
-        if (inicio1 == null || fin1 == null || inicio2 == null || fin2 == null) {
+        if (
+          inicio1 == null ||
+          fin1 == null ||
+          inicio2 == null ||
+          fin2 == null
+        ) {
           continue;
         }
 
         // Verificar si hay superposición (excluyendo los extremos)
-        if ((inicio1 < fin2 && fin1 > inicio2)) {
+        if (inicio1 < fin2 && fin1 > inicio2) {
           // Marcar error en ambos controles
           horasArray.at(horario1.index).setErrors({ overlap: true });
           horasArray.at(horario2.index).setErrors({ overlap: true });
@@ -368,7 +463,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     }
 
     // Limpiar errores de superposición si no hay conflictos
-    horasArray.controls.forEach(control => {
+    horasArray.controls.forEach((control) => {
       const errors = control.errors;
       if (errors && errors['overlap']) {
         delete errors['overlap'];
@@ -412,32 +507,79 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return null;
   }
 
-  modalSelEvento(hora:any, event: Event) {
+  modalSelEvento(hora: any, event: Event) {
     event.preventDefault();
     this.modalSel = this.dialogService.open(EventoSelect, {
       ...modalConfig,
-      header: "Seleccionar Evento",
+      header: 'Seleccionar Evento',
       data: {
-        filtroEvento: FiltroActivo.FALSE
-      }
+        filtroEvento: FiltroActivo.FALSE,
+      },
     });
 
     if (!this.modalSel) return;
 
     this.modalSel.onClose.subscribe((result: any) => {
       if (!result) return;
+
+      let newHora: any = {
+        eventoId: result.id,
+      };
+      if (result.etapaActualData?.categoriaSugerida) {
+        newHora = {
+          ...newHora,
+          categoriaCodigo: result.etapaActualData.categoriaSugerida.codigo,
+        };
+      }
+
       hora.patchValue({
-        eventoId: result.id
-      })
+        ...newHora,
+      });
     });
   }
-  
+
+  /**
+   * Obtiene la categoría sugerida de un evento desde el backend
+   * y la aplica a las filas de hora que no tengan categoría asignada.
+   */
+  private cargarCategoriaSugeridaDeEvento(eventoId: string): void {
+    this.eventoService.getByIdCompleto(eventoId).subscribe({
+      next: (evento) => {
+        if (evento.categoriaSugerida) {
+          this.categoriaSugerida = {
+            codigo: evento.categoriaSugerida.codigo,
+            descripcion: evento.categoriaSugerida.descripcion,
+            color: evento.categoriaSugerida.color,
+            activo: evento.categoriaSugerida.activo ?? true,
+          };
+
+          // Aplicar a todas las filas que no tengan categoría
+          this.horasFormArray.controls.forEach((horaControl) => {
+            const catControl = horaControl.get('categoriaCodigo');
+            if (catControl && !catControl.value) {
+              catControl.setValue(this.categoriaSugerida!.codigo);
+            }
+          });
+        }
+      },
+      error: () => {
+        // Silently fail — no es crítico
+      },
+    });
+  }
+
   private checkAndSetupEditMode() {
     this.dataLoadedCount++;
     if (this.dataLoadedCount === this.totalDataToLoad) {
+      // eventoIdPreseleccionado: si tenemos categorías cargadas y evento preseleccionado,
+      // auto-aplicar la categoriaSugerida al primer row
+      const eventoIdPre = this.config.data?.eventoIdPreseleccionado;
+      if (eventoIdPre && this.modo === 'A') {
+        this.cargarCategoriaSugeridaDeEvento(eventoIdPre);
+      }
+
       if (this.modo === 'M') {
         this.setupEditMode();
-        // Usar setTimeout para evitar el error NG0100
         setTimeout(() => {
           this.loading = false;
           this.cdr.detectChanges();
@@ -445,5 +587,4 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       }
     }
   }
-
 }

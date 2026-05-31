@@ -10,6 +10,17 @@
   </ng-template>
 </p-popover>
 
+<p-popover #opHoras appendTo="body">
+  <ng-template #content>
+    @for(hor of horasTrabajadas?.categorias; track hor) {
+      <div class="d-flex justify-content-between gap-3">
+        <span><span class="categoria-dot" [style.background]="hor.color"></span> {{ hor.descripcion.length > 30 ? (hor.descripcion | slice:0:30) + '...' : hor.descripcion }}</span>
+        <span class="text-nowrap">{{hor.totalHoras}} Hs.</span>
+      </div>
+    }
+  </ng-template>
+</p-popover>
+
 <section class="evento-header card-v2">
   <!-- Top: código + estado + título + acciones -->
   <div class="evento-header__top">
@@ -74,6 +85,19 @@
         <div class="d-flex align-items-center">
           <p class="info-value">{{ estimacionDetalle?.totalEstimacion }} Hs.</p>
           <span #infoTrigger class="ms-2 d-inline-flex" style="color: var(--ins-secondary-color); cursor: pointer;" (click)="op.show($event, infoTrigger)">
+            <ng-icon name="lucideCircleAlert" style="pointer-events: none"></ng-icon>
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Horas Trabajadas -->
+    @if (horasTrabajadas) {
+      <div class="info-cell">
+        <span class="info-label">HORAS TRABAJADAS</span>
+        <div class="d-flex align-items-center">
+          <p class="info-value">{{ horasTrabajadas.totalGeneral }} Hs.</p>
+          <span #infoTriggerHoras class="ms-2 d-inline-flex" style="color: var(--ins-secondary-color); cursor: pointer;" (click)="opHoras.show($event, infoTriggerHoras)">
             <ng-icon name="lucideCircleAlert" style="pointer-events: none"></ng-icon>
           </span>
         </div>

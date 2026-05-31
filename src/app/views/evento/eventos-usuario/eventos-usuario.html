@@ -47,6 +47,7 @@
                     <p-table
                         #dt
                         [value]="eventos"
+                        [(selection)]="selectedEventos"
                         [rows]="10"
                         [paginator]="true"
                         [globalFilterFields]="['id', 'tipo.codigo', 'numero', 'evento', 'titulo', 'etapaActualData.nombre', 'cliente.sigla', 'cliente.nombre', 'producto.sigla', 'producto.nombre', 'producto.entornoCodigo', 'modulo.codigo', 'modulo.nombre', 'usuarioActual.usuario']"
@@ -59,6 +60,8 @@
                         size="small"
                         [scrollable]="true" [resizableColumns]="true"
                         sortField="prioridadFin" [sortOrder]="-1"
+                        selectionMode="multiple"
+                        [metaKeySelection]="true"
                     >
                         <ng-template pTemplate="caption">
                             <div class="flex align-items-center justify-content-between" style="display: flex;">
@@ -127,7 +130,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-evento>
-                            <tr style="min-height: 55px" [class.table-success]="eventoEnTrabajo?.id === evento.id" (contextmenu)="onContextMenu($event, evento)">
+                            <tr style="min-height: 55px" [pSelectableRow]="evento" [class.table-success]="eventoEnTrabajo?.id === evento.id" (contextmenu)="onContextMenu($event, evento)">
                                 <td pFrozenColumn>
                                     @if (!eventoEnTrabajo || eventoEnTrabajo.id !== evento.id) {
                                         <button 

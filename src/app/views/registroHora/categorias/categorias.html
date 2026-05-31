@@ -1,0 +1,92 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 mt-3">
+            <app-ui-card title="Tipos de Trabajo">
+                <div card-body>
+                    <p-toolbar>
+                        <ng-template pTemplate="left">
+                        </ng-template>
+                        <ng-template pTemplate="right">
+                            @if (can(PermisoAccion.CREAR)) {
+                                <button
+                                    class="btn btn-ghost-success btn-md"
+                                    (click)="mostrarModalCrud(null, 'A')"
+                                    [appShortcut]="SHORTCUTS.NUEVO"
+                                    (appShortcutTrigger)="mostrarModalCrud(null, 'A')"
+                                >
+                                    Nuevo Tipo de Trabajo
+                                </button>
+                            }
+                        </ng-template>
+                    </p-toolbar>
+                    <p-table
+                        #dt
+                        [value]="categorias"
+                        [rows]="10"
+                        [paginator]="true"
+                        [globalFilterFields]="['codigo', 'descripcion', 'color']"
+                        [tableStyle]="{ 'min-width': '50rem' }"
+                        [rowHover]="true"
+                        dataKey="codigo"
+                        currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
+                        [showCurrentPageReport]="true"
+                        size="small"
+                    >
+                        <ng-template pTemplate="caption">
+                            <div class="flex align-items-center justify-content-between" style="display: flex;">
+                                <span class="p-input-icon-left">
+                                    <i class="pi pi-search"></i>
+                                    <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext" type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
+                                </span>
+                                <button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff"/></button>
+                            </div>
+                        </ng-template>
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
+                                <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon><p-columnFilter type="text" field="descripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
+                                <th pSortableColumn="color">Color <p-sortIcon field="color"></p-sortIcon></th>
+                                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                                <th></th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-categoria>
+                            <tr>
+                                <td>
+                                    <strong>{{ categoria.codigo }}</strong>
+                                </td>
+                                <td>{{ categoria.descripcion }}</td>
+                                <td>
+                                    <span class="categoria-dot" [style.background]="categoria.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span>
+                                    {{ categoria.color }}
+                                </td>
+                                <td>
+                                    @if (categoria.activo) {
+                                        <span class="badge bg-success">Sí</span>
+                                    } @else {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td class="d-flex justify-content-end">
+                                    @if (can(PermisoAccion.MODIFICAR)) {
+                                        <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(categoria, 'M')"><ng-icon name="lucidePencil"/></button>
+                                    }
+                                    @if (can(PermisoAccion.ELIMINAR)) {
+                                        <button class="btn btn-ghost-danger" (click)="delete(categoria, 'el tipo de trabajo')"><ng-icon name="lucideTrash2"/></button>
+                                    }
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="summary">
+                            <div class="flex align-items-center justify-content-between">En total hay {{ categorias ? categorias.length : 0 }} tipos de trabajo.</div>
+                        </ng-template>
+                    </p-table>
+
+                </div>
+            </app-ui-card>
+
+        </div>
+    </div>
+</div>

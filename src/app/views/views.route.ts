@@ -101,6 +101,13 @@ export const VIEWS_ROUTES: Routes = [
   {
     path: '',
     loadChildren: () =>
+      import('./registroHora/categoria.route').then((mod) => mod.CATEGORIAS_ROUTES),
+    data: { permisoClave: PermisoClave.TIPO_TRABAJO },
+    canActivate: [PermisoVerGuard]
+  },
+  {
+    path: '',
+    loadChildren: () =>
       import('./archivos/archivos.route').then((mod) => mod.ARCHIVOS_ROUTES),
   },
 

@@ -74,6 +74,7 @@ export class Eventos extends TrabajarCon<Evento> {
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
 
   eventos: EventoCompleto[] = [];
+  selectedEventos: EventoCompleto[] = [];
 
   filtroFecha: Date[] | undefined;
 

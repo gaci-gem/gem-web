@@ -46,3 +46,11 @@
   background: var(--ins-success-bg-subtle);
   color: var(--ins-success-text-emphasis);
 }
+
+.categoria-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  vertical-align: middle;
+}

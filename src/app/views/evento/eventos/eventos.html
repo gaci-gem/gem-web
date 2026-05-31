@@ -42,6 +42,7 @@
           <p-table
             #dt
             [value]="eventos"
+            [(selection)]="selectedEventos"
             [rows]="10"
             [paginator]="true"
             [globalFilterFields]="[ 'id', 'tipo.codigo', 'numero', 'evento', 'titulo', 'etapaActualData.nombre', 'cliente.sigla', 'cliente.nombre', 'producto.sigla', 'producto.nombre', 'producto.entornoCodigo', 'modulo.codigo', 'modulo.nombre', 'usuarioActual.usuario' ]"
@@ -53,6 +54,8 @@
             size="small"
             [scrollable]="true"
             [resizableColumns]="true"
+            selectionMode="multiple"
+            [metaKeySelection]="true"
           >
             <ng-template pTemplate="caption">
                 <div class="flex align-items-center justify-content-between" style="display: flex" >
@@ -119,7 +122,7 @@
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-evento>
-              <tr style="min-height: 55px">
+                            <tr style="min-height: 55px" [pSelectableRow]="evento">
                 <td hidden>{{ evento?.id }}</td>
                 <td hidden>{{ evento?.tipo?.id }}</td>
                 <td hidden>{{ evento?.numero }}</td>

@@ -31,3 +31,5 @@ export const appDescription: string =
   'Simple is best admin dashboard template. Perfect for building CRM, CMS, project management tools, and custom web apps with clean UI, responsive design, and powerful features.'
 
 export const basePath: string = ''
+
+export * from './tipo-trabajo'

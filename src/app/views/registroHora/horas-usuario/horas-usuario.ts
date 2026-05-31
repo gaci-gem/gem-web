@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon, UiCard } from '@app/components/index';
-import { RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
+import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
+import { Categoria, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -62,6 +63,8 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
 
+  categoriasMap: Map<string, Categoria> = new Map();
+
   registrosHoras!: RegistroHora[];
   registrosHorasFiltradas!: RegistroHora[];
 
@@ -76,7 +79,20 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   }
 
   protected loadItems(): void {
+    this.cargarCategorias();
     this.consultarRegistros(this.dateFilter);
+  }
+
+  private cargarCategorias(): void {
+    if (this.categoriasMap.size > 0) return;
+    this.registroHoraService.getCategorias().subscribe(cats => {
+      cats.forEach(c => this.categoriasMap.set(c.codigo, c));
+    });
+  }
+
+  getCategoriaInfo(codigo: string | null | undefined): Categoria | null {
+    if (!codigo) return null;
+    return this.categoriasMap.get(codigo) ?? null;
   }
 
   alta(registroHora: RegistroHora): void {
@@ -135,6 +151,7 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
             ...h,
             inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
             fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
+            categoriaCodigo: h?.categoriaCodigo || null,
             eventoTxt: formatEventoNumero(h.evento?.tipoCodigo!, h.evento?.numero!)
           }))
         })) as any;

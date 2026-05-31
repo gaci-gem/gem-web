@@ -67,11 +67,7 @@
                                 <td><span class="badge " style="min-width: 40%;" [ngClass]="tipoEvento.facturable ? 'text-bg-success' : 'text-bg-danger'">{{ tipoEvento.facturable | booleanLabel:'si-no' }}</span></td>
                                 <!-- <td><input type="color" name="color" value="{{ tipoEvento.color }}" disabled></td> -->
                                 <td>
-                                    <app-badge-click
-                                        [backgroundColor]="tipoEvento.color"
-                                        width="2.5rem"
-                                        height="inherit"
-                                    ></app-badge-click>
+                                    <span [style.background]="tipoEvento.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span>
                                 </td>
                                 <td class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {

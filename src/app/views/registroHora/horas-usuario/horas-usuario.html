@@ -86,7 +86,7 @@
                         </ng-template>
                         <ng-template #expandedrow let-horas>
                             <tr>
-                                <td colspan="6">
+                                 <td colspan="7">
                                     <div class="p-3">
                                         <p-table [value]="horas.horas" dataKey="id">
                                             <ng-template pTemplate="header">
@@ -96,20 +96,28 @@
                                 <th pSortableColumn="final" pFrozenColumn>Final </th>
                                 <th pSortableColumn="evento">Evento </th>
                                 <!-- <th pSortableColumn="total">Total </th> -->
-                                <th pSortableColumn="detalle">Detalle</th>
-                                <th pSortableColumn="diferencia">Diferencia</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-hora>
-                            <tr>
-                                <td hidden>{{ hora.id }}</td>
-                                <td pFrozenColumn>{{ hora.inicio | date:'HH:mm'}}</td>
-                                <td pFrozenColumn>{{ hora.fin | date:'HH:mm'}}</td>
-                                <td>{{ hora.eventoTxt }} | {{hora.evento.titulo}}</td>
-                                <!-- <td>{{ hora.total | totalComoNumero}}</td> -->
-                                <td>{{ hora.detalle }}</td>
-                                <!-- <td>{{ hora.diferencia | number:'.0-2' }} hs.</td> -->
-                                <td>{{ hora.diferenciaFormateada }} hs.</td>
+                                 <th pSortableColumn="detalle">Detalle</th>
+                                 <th>Categoría</th>
+                                 <th pSortableColumn="diferencia">Diferencia</th>
+                             </tr>
+                         </ng-template>
+                         <ng-template pTemplate="body" let-hora>
+                             <tr>
+                                 <td hidden>{{ hora.id }}</td>
+                                 <td pFrozenColumn>{{ hora.inicio | date:'HH:mm'}}</td>
+                                 <td pFrozenColumn>{{ hora.fin | date:'HH:mm'}}</td>
+                                 <td>{{ hora.eventoTxt }} | {{hora.evento.titulo}}</td>
+                                 <!-- <td>{{ hora.total | totalComoNumero}}</td> -->
+                                 <td>{{ hora.detalle }}</td>
+                                <td>
+                                    <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge">
+                                        <span class="categoria-dot" [style.background]="cat.color"></span>
+                                        {{ cat.descripcion }}
+                                    </span>
+                                    <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
+                                </td>
+                                 <!-- <td>{{ hora.diferencia | number:'.0-2' }} hs.</td> -->
+                                 <td>{{ hora.diferenciaFormateada }} hs.</td>
                             </tr>
                         </ng-template>
                     </p-table>

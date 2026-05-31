@@ -1,196 +1,46 @@
-<p-confirmDialog></p-confirmDialog>
-<p-toast></p-toast>
-@if (cargandoEvento) {
-<app-loading-spinner></app-loading-spinner>
-}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-12 mt-3">
-            @if (evento) {
-            <div class="evento-drawer-row">
-                <div style="flex:2;min-width:0;">
-                    <app-ui-card title="" [withTitle]="false">
-                        <div card-body>
-                            <div class="d-flex justify-content-between">
-                                <p class="m-0">{{ evento.evento }}</p>
-                                <p class="m-0">{{getEstadoDescCorto(evento.estado!)}}</p>
-                            </div>
-                            <h1>{{evento.titulo}}</h1>
+<div class="container-fluid py-3 evento-v2-page">
+	<div class="row g-3">
+		<div class="col-12">
+			@if (evento) {
+				<app-evento-v2-header [evento]="evento" [estimacionDetalle]="estimacionDetalle" [horasTrabajadas]="porCategoriaData" />
+			} @else if (loadingEvento) {
+				<div class="card border p-3 text-body-secondary">Cargando evento...</div>
+			} @else {
+				<div class="card border p-3 text-danger">{{ errorEvento || 'No se pudo cargar el evento.' }}</div>
+			}
 
-                            <!-- Aside para pantallas pequeñas: entre el título y la card de adjuntos -->
-                            <div class="d-block d-lg-none mb-3">
-                                <app-evento-info-card [evento]="evento"></app-evento-info-card>
-                            </div>
+			@if (etapas && etapas.length > 0) {
+				<app-evento-v2-stages [etapas]="etapas" [etapaActualSecuencia]="etapaActualSecuencia" />
+			}
+		</div>
 
-                            <div>
-                                <div class="my-3 d-flex align-items-center justify-content-between">
-                                    <button
-                                        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center rounded-pill"
-                                        (click)="compartirEvento()"
-                                        [disabled]="togglingObservador" title="Compartir evento">
-                                        <ng-icon name="lucideShare2" />
-                                    </button>
+		<div class="col-12 col-xl-7" #detailsSection>
+		<app-evento-v2-details-files
+			[requisitos]="requisitos"
+			[documentacion]="documentacion"
+			[adjuntos]="adjuntos"
+			[eventoId]="eventoId"
+			[loadingRequisitos]="loadingRequisitos"
+			[loadingAdjuntos]="loadingAdjuntos"
+			[errorRequisitos]="errorRequisitos"
+			[errorAdjuntos]="errorAdjuntos"
+			(refreshAdjuntos)="onRefreshAdjuntos()"
+			(refreshRequisitos)="onRefreshRequisitos()"
+			(refreshDocumentacion)="loadEventoBase()"
+			(cargarHoras)="onCargarHoras()"
+		/>
+		</div>
 
-                                    <button
-                                        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center rounded-pill"
-                                        [class.btn-outline-success]="esObservador" (click)="onToggleObservador()"
-                                        [disabled]="togglingObservador" title="Seguir/Dejar de seguir evento">
-                                        <ng-icon name="lucideEye" />
-                                        @if (togglingObservador) {
-                                        <span class="ms-2">Procesando...</span>
-                                        } @else {
-                                        <span class="ms-2">{{ esObservador ? 'Siguiendo' : 'Seguir' }}</span>
-                                        }
-                                    </button>
-                                </div>
-                            </div>
-
-                            <app-ui-card title="Requisitos" [isTogglable]="true" [initialCollapsed]="true"
-                                [isReloadable]="true" [reloading]="requisitosReloading"
-                                (reloadCard)="onReloadRequisitos()">
-                                <div card-body>
-
-                                    @if (requisitos && requisitos.length > 0) {
-                                    <p-table [value]="requisitos" dataKey="requisito.id"
-                                        [tableStyle]="{ 'min-width': '30rem' }" [scrollable]="true"
-                                        styleClass="p-datatable-sm p-datatable-gridlines">
-                                        <ng-template #header>
-                                            <tr>
-                                                <th style="width:10%"></th>
-                                                <th style="width:20%">Evento</th>
-                                                <th style="width:20%">Requisito</th>
-                                                <th style="width:50%">Valor</th>
-                                            </tr>
-                                        </ng-template>
-                                        <ng-template #body let-req>
-                                            <tr>
-                                                <td class="align-middle">
-                                                    <span>
-                                                        @if (req.cumplido) { ✅ } @else { ❌ }
-                                                    </span>
-                                                </td>
-                                                <td class="align-middle">{{ req.requisito.descripcion }}</td>
-                                                <td class="align-middle">{{ req.etapa.nombre }}</td>
-                                                <td class="align-middle">
-                                                    @if (evento.cerrado || !canModificarRequisitos()) {
-                                                    @if (req.cumplimiento?.valor) {
-                                                    {{ req.cumplimiento?.valor }}
-                                                    } @else {
-                                                    -
-                                                    }
-                                                    } @else {
-                                                    <div [pEditableColumn]="req.cumplimiento?.valor"
-                                                        pEditableColumnField="code">
-                                                        <p-cellEditor>
-                                                            <ng-template #input>
-                                                                <input [type]="getType(req)"
-                                                                    [(ngModel)]="req.cumplimiento.valor"
-                                                                    class="form-control form-control-sm"
-                                                                    (change)="onActualizarRequisito(req, $event)" />
-                                                            </ng-template>
-                                                            <ng-template #output>
-                                                                @if (req.cumplimiento?.valor) {
-                                                                {{ req.cumplimiento?.valor }}
-                                                                } @else {
-                                                                -
-                                                                }
-                                                            </ng-template>
-                                                        </p-cellEditor>
-                                                    </div>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        </ng-template>
-                                    </p-table>
-                                    } @else {
-                                    <p>El tipo de evento no tiene requisitos.</p>
-                                    }
-
-                                </div>
-                            </app-ui-card>
-
-                            @if (documentacionActiva) {
-                                <app-ui-card title="Documentacion" [isTogglable]="true" [initialCollapsed]="true"
-                                    [isReloadable]="true" [reloading]="documentacionReloading" (reloadCard)="onReloadDocumentacion()">
-    
-                                    <button card-actions class="btn btn-icon btn-outline-info" (click)="onLinkDocumentacion()"
-                                        [disabled]="documentacionReloading">
-                                        <ng-icon name="lucideLink" />
-                                    </button>
-    
-                                    <div card-body>
-                                        @if (documentacion && documentacion.length > 0) {
-                                            @for (documento of documentacion; track $index) {
-                                                <app-item-documentacion [documento]="documento"
-                                                    [puedeEliminar]="can(PermisoAccion.DOC_ELIMINAR)"
-                                                    (eliminar)="onEliminarDocumento($event)"
-                                                    (togglePrincipal)="onTogglePrincipalDocumento($event)"
-                                                ></app-item-documentacion>
-                                            }
-                                        } @else {
-                                            <p>No hay documentacion asociada.</p>
-                                        }
-                                    </div>
-                                </app-ui-card>
-                            }
-
-                            <app-ui-card title="Adjuntos" [isTogglable]="true" [initialCollapsed]="true"
-                                [isReloadable]="true" [reloading]="adjuntosReloading" (reloadCard)="onReloadAdjuntos()">
-                                <button card-actions class="btn btn-icon btn-outline-info" (click)="onUploadAdjunto()"
-                                    [disabled]="adjuntosReloading">
-                                    <ng-icon name="lucideCloudUpload" />
-                                </button>
-                                <div card-body>
-                                    @if (adjuntos && adjuntos.length > 0) {
-                                    @for (adjunto of adjuntos; track $index) {
-                                    <app-item-adjunto [adjunto]="adjunto"
-                                        [puedeEliminar]="can(PermisoAccion.DOC_ELIMINAR)"
-                                        (eliminar)="onEliminarAdjunto($event)"></app-item-adjunto>
-                                    }
-                                    } @else {
-                                    <p>No hay archivos adjuntos.</p>
-                                    }
-                                </div>
-                            </app-ui-card>
-
-                            <div>
-                                <div class="timeline timeline-icon-bordered">
-                                    <h3>Actividad</h3>
-                                    @if (!mostrarTodasLasActividades && vidaEvento && vidaEvento.length > 7) {
-                                    <div class="text-center mb-3">
-                                        <button type="button"
-                                            class="btn btn-link btn-sm text-muted text-decoration-none"
-                                            (click)="mostrarTodasLasActividades = true">
-                                            — ver anteriores —
-                                        </button>
-                                    </div>
-                                    }
-                                    @for (actividad of actividadesMostradas; track $index) {
-                                    <app-item-actividad [attr.id]="'actividad-adicion-' + actividad.adicion?.id"
-                                        [actividad]="actividad"></app-item-actividad>
-                                    }
-                                </div>
-
-                                <form (ngSubmit)="onEnviarComentario()" class="mt-3">
-                                    <div class="input-group">
-                                        <textarea [(ngModel)]="nuevoComentario" name="comentario" class="form-control"
-                                            rows="2" placeholder="Escribe un comentario..." required></textarea>
-                                        <button type="submit" class="btn btn-primary">Enviar</button>
-                                    </div>
-                                </form>
-
-                            </div>
-                        </div>
-                    </app-ui-card>
-                </div>
-
-                <div style="flex:1;min-width:0;">
-                    <div class="d-none d-lg-block">
-                        <app-evento-info-card [evento]="evento"></app-evento-info-card>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
-    </div>
+		<div class="col-12 col-xl-5" #activitySection style="padding-top: 40px;">
+			<div class="card border h-100 p-3 bg-body">
+				<app-evento-v2-activity
+					[actividades]="actividades"
+					[loading]="loadingActividad"
+					[error]="errorActividad"
+					(publicarComentario)="onPublicarComentario($event)"
+					(refreshActividad)="onRefreshActividad()"
+				/>
+			</div>
+		</div>
+	</div>
 </div>

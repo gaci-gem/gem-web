@@ -1,20 +1,38 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
-import { ItemActividadComponent } from '../../../evento/components/item-actividad/item-actividad';
+import { ItemActividadComponent } from '../item-actividad/item-actividad';
 import { VidaEvento } from '@core/interfaces/evento';
 import { ACCIONES } from '@/app/constants/actividad_acciones';
-import { getTimeAgo } from '@/app/utils/datetime-utils';
-import { ComentarioTextoComponent } from '../../../evento/components/comentario-texto/comentario-texto';
+import { ComentarioTextoComponent } from '../comentario-texto/comentario-texto';
 import { DrawerService } from '@core/services/drawer.service';
+import { TimeAgoComponent } from '@app/components/time-ago/time-ago';
 import { UsuarioService } from '@core/services/usuario';
-import { MentionOption, MentionTextareaComponent } from '@app/components/mention-textarea/mention-textarea';
+import {
+  MentionOption,
+  MentionTextareaComponent,
+} from '@app/components/mention-textarea/mention-textarea';
 import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-evento-v2-activity',
   standalone: true,
-  imports: [ButtonModule, FormsModule, ItemActividadComponent, ComentarioTextoComponent, MentionTextareaComponent],
+  imports: [
+    ButtonModule,
+    FormsModule,
+    ItemActividadComponent,
+    ComentarioTextoComponent,
+    MentionTextareaComponent,
+    TimeAgoComponent,
+  ],
   templateUrl: './evento-v2-activity.html',
   styleUrl: './evento-v2-activity.scss',
 })
@@ -56,30 +74,28 @@ export class EventoV2ActivityComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.usuarioService.getAll().pipe(
-      finalize(() => {
-        this.cdRef.detectChanges();
-      })
-    )
-    .subscribe({
-      next: (usuarios) => {
-        this.usuarioOptions = usuarios.map((u) => ({
-          id: u.id ?? u.usuario,
-          label: `${u.nombre} ${u.apellido}`,
-          value: u.usuario,
-          sublabel: u.usuario,
-          color: u.color,
-        }));
-      },
-    });
+    this.usuarioService
+      .getAll()
+      .pipe(
+        finalize(() => {
+          this.cdRef.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (usuarios) => {
+          this.usuarioOptions = usuarios.map((u) => ({
+            id: u.id ?? u.usuario,
+            label: `${u.nombre} ${u.apellido}`,
+            value: u.usuario,
+            sublabel: u.usuario,
+            color: u.color,
+          }));
+        },
+      });
   }
 
   getComentarioTexto(item: VidaEvento): string {
     return item.adicion?.comentario?.texto || '';
-  }
-
-  getComentarioTiempo(item: VidaEvento): string {
-    return getTimeAgo(new Date(item.fecha));
   }
 
   get tiposActividadDisponibles(): string[] {
@@ -129,21 +145,29 @@ export class EventoV2ActivityComponent implements OnInit {
   }
 
   trackActividad(index: number, item: VidaEvento): string {
-    const idPart = item.id !== undefined && item.id !== null ? String(item.id) : `idx-${index}`;
+    const idPart =
+      item.id !== undefined && item.id !== null
+        ? String(item.id)
+        : `idx-${index}`;
     return `${idPart}-${item.eventoId}-${item.accion}-${item.usuarioId}-${this.getFechaMs(item)}`;
   }
 
   private rebuildActividadView(): void {
-    const ordenadas = [...(this.actividades ?? [])].sort((a, b) => this.getFechaMs(b) - this.getFechaMs(a));
+    const ordenadas = [...(this.actividades ?? [])].sort(
+      (a, b) => this.getFechaMs(b) - this.getFechaMs(a),
+    );
     const filtradas = !this.tiposSeleccionados.size
       ? ordenadas
-      : ordenadas.filter((actividad) => this.tiposSeleccionados.has(actividad.accion));
+      : ordenadas.filter((actividad) =>
+          this.tiposSeleccionados.has(actividad.accion),
+        );
 
     this.actividadesFiltradasOrdenadas = filtradas;
     this.hayMasDeSieteActividades = filtradas.length > 7;
-    this.actividadesMostradas = (this.mostrarTodasLasActividades || !this.hayMasDeSieteActividades)
-      ? filtradas
-      : filtradas.slice(0, 7);
+    this.actividadesMostradas =
+      this.mostrarTodasLasActividades || !this.hayMasDeSieteActividades
+        ? filtradas
+        : filtradas.slice(0, 7);
   }
 
   private getFechaMs(item: VidaEvento): number {

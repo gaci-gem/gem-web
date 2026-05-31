@@ -118,3 +118,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+.categoria-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

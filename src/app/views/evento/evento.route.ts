@@ -1,9 +1,9 @@
-import { Routes } from '@angular/router'
-import { Eventos } from './eventos/eventos'
-import { EventosUsuario } from './eventos-usuario/eventos-usuario'
-import { Eventov2 } from './eventov2/eventov2'
+import { Routes } from '@angular/router';
+import { Eventos } from './eventos/eventos';
+import { EventosUsuario } from './eventos-usuario/eventos-usuario';
+import { Evento } from './evento/evento';
 
-export const  EVENTOS_ROUTES: Routes = [
+export const EVENTOS_ROUTES: Routes = [
   {
     path: 'evento/eventos',
     component: Eventos,
@@ -16,7 +16,7 @@ export const  EVENTOS_ROUTES: Routes = [
   },
   {
     path: 'evento/evento/:id',
-    component: Eventov2,
+    component: Evento,
     data: { title: 'Evento' },
   },
-]
+];

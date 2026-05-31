@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { DrawerService } from '@core/services/drawer.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -15,6 +15,9 @@ import { UsuarioDrawerComponent } from '@views/usuario/usuario-drawer/usuario-dr
   ]
 })
 export class DrawerContainerComponent implements OnInit, OnDestroy {
+
+  private crf = inject(ChangeDetectorRef);
+
   showEventoDrawer = false;
   eventoSeleccionadoId: string | null = null;
   eventoSeleccionadoTargetId: string | null = null;
@@ -33,6 +36,7 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
         this.showEventoDrawer = state.visible;
         this.eventoSeleccionadoId = state.id;
         this.eventoSeleccionadoTargetId = state.targetId || null;
+        this.crf.detectChanges();
       });
 
     this.drawerService.usuarioDrawer$
@@ -40,6 +44,7 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
       .subscribe(state => {
         this.showUsuarioDrawer = state.visible;
         this.usuarioSeleccionadoId = state.id;
+        this.crf.detectChanges();
       });
   }
 

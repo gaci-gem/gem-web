@@ -146,6 +146,12 @@ export const menuItems: MenuItemType[] = [
     permisoClave: PermisoClave.SISTEMA
   },
   {
+    label: 'Tipos de Trabajo',
+    icon: 'lucideBriefcase',
+    url: '/hora/categorias',
+    permisoClave: PermisoClave.TIPO_TRABAJO
+  },
+  {
     label: 'Reportes',
     icon: 'tablerReport',
     url: '/reporte/reportes',
