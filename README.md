@@ -1,4 +1,17 @@
-# Makima
+# GEM Web — Frontend de Gaci Event Management
+
+Frontend web de **GEM (Gaci Event Management)**, construido con Angular 20.
+
+Este repositorio pertenece a la organización [**gaci-gem**](https://github.com/gaci-gem).
+
+## 🏢 Organización
+
+| Repo | Descripción |
+| ---- | ----------- |
+| [gem-api](https://github.com/gaci-gem/gem-api) | API REST (NestJS) |
+| [gem-web](https://github.com/gaci-gem/gem-web) | Frontend web |
+
+---
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.2.
 
