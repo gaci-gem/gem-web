@@ -127,5 +127,16 @@ export const VIEWS_ROUTES: Routes = [
     data: { title: 'Novedades' },
   },
 
+  // Novedades
+  {
+    path: '',
+    loadChildren: () =>
+      import('./novedad/novedad.route').then((mod) => mod.NOVEDAD_ROUTES),
+    data: { permisoClave: PermisoClave.NOV },
+    canActivate: [PermisoVerGuard]
+  },
+
+
+
 ]
 

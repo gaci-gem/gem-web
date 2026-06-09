@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core'
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core'
 import { UiCard } from '@app/components/ui-card'
 import { DashboardService } from '@core/services/dashboard';
 import { NgIcon } from '@ng-icons/core'
@@ -6,8 +6,7 @@ import { finalize } from 'rxjs';
 import { ActividadReciente as AR } from '@core/interfaces/dashboard'
 import { ACCIONES } from '@/app/constants/actividad_acciones';
 import { CommonModule } from '@angular/common';
-import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
-import { getTimeAgo } from '@/app/utils/datetime-utils';
+import { TimeAgoComponent } from '@app/components/time-ago/time-ago';
 import { DrawerService } from '@core/services/drawer.service';
 
 
@@ -19,6 +18,7 @@ import { DrawerService } from '@core/services/drawer.service';
     NgIcon,
     UiCard,
     CommonModule,
+    TimeAgoComponent,
   ],
   template: `
     <app-ui-card
@@ -34,7 +34,7 @@ import { DrawerService } from '@core/services/drawer.service';
               <ng-icon [name]="getIconoAccion(ar.accion).nombre" class="me-2" [ngClass]="getIconoAccion(ar.accion).colorClase" style="width: 24px;height: 24px;"/>
               <div>
                 <div class="fw-semibold" (click)="navegarAEvento(ar.evento.id)" style="cursor: pointer;">{{ getTituloAccion(ar.accion, ar.evento) }}</div>
-                <small class="text-muted">{{ar.evento.cliente.nombre}} · {{ getTimeAgo(ar.fecha) }}</small>
+                <small class="text-muted">{{ar.evento.cliente.nombre}} · <app-time-ago [fecha]="ar.fecha" /></small>
               </div>
             </li>
           }
@@ -49,7 +49,8 @@ export class ActividadReciente implements OnInit{
   // @Output() reload = new EventEmitter<void>()
 
   private dashboardService = inject(DashboardService);
-    private drawerService = inject(DrawerService);
+  private drawerService = inject(DrawerService);
+  private cdr = inject(ChangeDetectorRef);
 
   actividad: AR[] = [];
   loading = false;
@@ -63,6 +64,7 @@ export class ActividadReciente implements OnInit{
     this.dashboardService.getActividadReciente()
     .pipe(finalize(() => {
       this.loading = false;
+      this.cdr.markForCheck();
     }))
     .subscribe({
       next: (data) => {
@@ -111,11 +113,6 @@ export class ActividadReciente implements OnInit{
       default:
         return { nombre: 'lucideAlertCircle', colorClase: 'text-secondary' };
     }
-  }
-
-  getTimeAgo(fecha: string | Date | undefined) {
-    if (!fecha) return 'Hace un momento';
-    return getTimeAgo(new Date(fecha));
   }
 
 }

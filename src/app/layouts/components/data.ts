@@ -138,6 +138,12 @@ export const menuItems: MenuItemType[] = [
     url: '/kb/kbs',
     permisoClave: PermisoClave.KB
   },
+  {
+    label: 'Novedades',
+    icon: 'lucideMegaphone',
+    url: '/novedad/historial',
+    permisoClave: PermisoClave.NOV
+  },
   { label: '', isTitle: true },
   {
     label: 'Parametros Sistema',

@@ -33,6 +33,10 @@ import { Router } from '@angular/router';
 import { DrawerService } from '@core/services/drawer.service';
 import { SseService } from '@core/services/sse.service';
 import { TimeAgoComponent } from '@app/components/time-ago/time-ago';
+import { DialogService } from 'primeng/dynamicdialog';
+import { NovedadService } from '@core/services/novedad';
+import { NovedadViewModal } from '@views/novedad/components/novedad-view-modal';
+import { modalConfig } from '@/app/types/modals';
 
 @Component({
   selector: 'app-notification-dropdown',
@@ -47,6 +51,7 @@ import { TimeAgoComponent } from '@app/components/time-ago/time-ago';
     NgbPopover,
     TimeAgoComponent,
   ],
+  providers: [DialogService],
   templateUrl: './notification-dropdown.html',
   styleUrls: ['./notificacion-dropdown.scss'],
 })
@@ -58,6 +63,8 @@ export class NotificationDropdown implements OnInit {
   private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
   private router = inject(Router);
   private drawerService = inject(DrawerService);
+  private dialogService = inject(DialogService);
+  private novedadService = inject(NovedadService);
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
   notifications: Notificacion[] = [];
@@ -189,6 +196,22 @@ export class NotificationDropdown implements OnInit {
         break;
       case 'NOTA':
         this.drawerService.abrirNotaDrawer(notificacion.targetId);
+        break;
+      case 'NOVEDAD':
+        if (notificacion.targetId) {
+          const id = Number(notificacion.targetId);
+          if (!isNaN(id)) {
+            this.novedadService.getById(id).subscribe({
+              next: (novedad) => {
+                this.dialogService.open(NovedadViewModal, {
+                  ...modalConfig,
+                  width: '50%',
+                  data: { novedad },
+                });
+              },
+            });
+          }
+        }
         break;
     }
   }

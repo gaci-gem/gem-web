@@ -81,7 +81,8 @@ export enum PermisoClave {
   REPORTE = 'REP',
   SISTEMA = 'SYS',
   KB = 'KB',
-  TIPO_TRABAJO = 'TTR'
+  TIPO_TRABAJO = 'TTR',
+  NOV = 'NOV'
 }
 
 // Array vacío de permisos para inicialización
@@ -227,6 +228,15 @@ export const permisosData: PermisoConfig[] = [
       { accion: 'CREAR', label: 'Crear tipos de trabajo', habilitado: true },
       { accion: 'MODIFICAR', label: 'Modificar tipos de trabajo', habilitado: true },
       { accion: 'ELIMINAR', label: 'Eliminar tipos de trabajo', habilitado: true }
+    ]
+  },
+  {
+    clave: PermisoClave.NOV,
+    descripcion: 'Novedades',
+    acciones: [
+      { accion: 'LEER', label: 'Ver novedades', habilitado: true },
+      { accion: 'CREAR', label: 'Crear novedades', habilitado: true },
+      { accion: 'ELIMINAR', label: 'Eliminar novedades', habilitado: true }
     ]
   }
 ];
