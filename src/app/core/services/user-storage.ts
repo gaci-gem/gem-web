@@ -6,6 +6,9 @@ export interface UsuarioLogeado {
   apellido: string
   email: string,
   pagina_inicio?: string
+  esCumpleanios?: boolean
+  ultimoLogin?: string | null
+  diasAusente?: number
 }
 const STORAGE_KEY = 'usuario'
 

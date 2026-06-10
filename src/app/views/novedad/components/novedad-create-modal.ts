@@ -20,7 +20,6 @@ import { finalize } from 'rxjs';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NgIcon,
     SelectModule,
     MultiSelectModule,
     DatePickerModule,

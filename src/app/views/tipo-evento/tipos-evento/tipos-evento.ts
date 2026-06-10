@@ -36,8 +36,7 @@ import { BadgeClickComponent } from "@app/components/badge-click";
     ToastModule,
     BooleanLabelPipe,
     CommonModule,
-    ControlTrabajarCon,
-    BadgeClickComponent
+    ControlTrabajarCon
 ],
   providers: [
     DialogService,
