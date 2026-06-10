@@ -1,0 +1,79 @@
+<p-toast></p-toast>
+<div class="container">
+  <form class="row g-3 needs-validation" [formGroup]="form" (ngSubmit)="accion($event)" novalidate>
+
+    <div class="col-md-6">
+      <label for="codigo" class="form-label">Código <span class="text-danger">*</span></label>
+      <input
+        id="codigo"
+        type="text"
+        formControlName="codigo"
+        class="form-control text-uppercase"
+        [class.is-invalid]="get('codigo')?.invalid && get('codigo')?.touched"
+        placeholder="Ej: DOC"
+        maxlength="10"
+        required
+      />
+      @if (get('codigo')?.invalid && get('codigo')?.touched) {
+        <div class="invalid-feedback">El código es obligatorio (máx. 10 caracteres).</div>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
+      <input
+        id="descripcion"
+        type="text"
+        formControlName="descripcion"
+        class="form-control"
+        [class.is-invalid]="get('descripcion')?.invalid && get('descripcion')?.touched"
+        placeholder="Nombre del tipo de trabajo"
+        required
+      />
+      @if (get('descripcion')?.invalid && get('descripcion')?.touched) {
+        <div class="invalid-feedback">La descripción es obligatoria.</div>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
+      <div class="d-flex align-items-center gap-2">
+        <input
+          id="color"
+          type="color"
+          formControlName="color"
+          class="form-control form-control-color"
+          [class.is-invalid]="get('color')?.invalid && get('color')?.touched"
+          required
+        />
+        <span class="text-muted small">{{ get('color')?.value }}</span>
+      </div>
+      @if (get('color')?.invalid && get('color')?.touched) {
+        <div class="invalid-feedback">El color es obligatorio.</div>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <div class="form-check form-switch mt-4">
+        <input
+          id="activo"
+          type="checkbox"
+          formControlName="activo"
+          class="form-check-input"
+          role="switch"
+        />
+        <label for="activo" class="form-check-label">Activo</label>
+      </div>
+    </div>
+
+    <div class="col-12 mb-5">
+      <button class="btn btn-primary" type="submit">
+        @if (modo === 'A') {
+          Crear Tipo de Trabajo
+        } @else if (modo === 'M') {
+          Modificar
+        }
+      </button>
+    </div>
+  </form>
+</div>

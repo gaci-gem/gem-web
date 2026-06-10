@@ -28,6 +28,34 @@ export interface Hora {
 
   evento?: Evento;
   registro?: RegistroHora;
+
+  categoriaCodigo?: string | null;
+  categoria?: { codigo: string; descripcion: string; color: string } | null;
+}
+
+export interface HorasPorCategoriaItem {
+  codigo: string;
+  descripcion: string;
+  totalHoras: number;
+  totalFormateado: string;
+  cantidadRegistros: number;
+}
+
+export interface HorasPorCategoriaResponse {
+  eventoId: string;
+  categorias: HorasPorCategoriaItem[];
+  totalGeneral: number;
+  totalGeneralFormateado: string;
+}
+
+export interface Categoria {
+  codigo: string;
+  descripcion: string;
+  activo: boolean;
+  color: string;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
 }
 
 export interface UsuarioHorasGenerales {

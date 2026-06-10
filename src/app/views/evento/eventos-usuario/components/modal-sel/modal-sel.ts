@@ -13,7 +13,8 @@ import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { forkJoin, of, tap } from 'rxjs';
 import { EventoService } from '@core/services/evento';
-import { catchError } from 'rxjs/operators';
+import { catchError, finalize } from 'rxjs/operators';
+import { MentionOption, MentionTextareaComponent } from '@app/components/index';
 
 @Component({
   selector: 'app-modal-sel',
@@ -24,6 +25,7 @@ import { catchError } from 'rxjs/operators';
     NgbTypeaheadModule,
     SelectModule,
     TableModule,
+    MentionTextareaComponent,
   ],
   providers: [
     MessageService,
@@ -46,6 +48,7 @@ export class ModalSel implements OnInit{
 
   reqComentario: boolean = false;
   comentario: string = '';
+  usuarioOptions: MentionOption[] = [];
 
   mensaje: string = '';
   modo: string = '';
@@ -74,6 +77,24 @@ export class ModalSel implements OnInit{
     // Inicializar valores de requisitos
     this.requisitos.forEach(req => {
       this.requisitosValores[req.id] = '';
+    });
+
+    
+    this.usuarioService.getAll().pipe(
+      finalize(() => {
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: (usuarios) => {
+        this.usuarioOptions = usuarios.map((u) => ({
+          id: u.id ?? u.usuario,
+          label: `${u.nombre} ${u.apellido}`,
+          value: u.usuario,
+          sublabel: u.usuario,
+          color: u.color,
+        }));
+      },
     });
 
     this.rol = data.rol;

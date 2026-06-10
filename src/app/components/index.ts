@@ -9,3 +9,5 @@ export * from './trabajar-con/trabajar-con';
 export * from './loading-spinner/loading-spinner';
 export * from './avatar-editable';
 export * from './catalogo-select/catalogo-select';
+export * from './mention-textarea/mention-textarea';
+export * from './time-ago/time-ago';

@@ -6,6 +6,8 @@ export interface Etapa {
   deAutoriza?: boolean;
   deArchivo?: boolean;
 
+  categoriaSugeridaCodigo?: string | null;
+
   requisitos?: Etapa_requisito[];
   // eventoEtapas?: EventoEtapa[];
   // rollbackDe?: EventoEtapa[];

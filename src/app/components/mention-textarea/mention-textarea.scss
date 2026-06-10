@@ -1,0 +1,56 @@
+.mention-textarea-wrapper {
+  position: relative;
+}
+
+.mention-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--ins-body-bg, #fff);
+  border: 1px solid var(--ins-border-color, #dee2e6);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 1050;
+}
+
+.mention-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.1s;
+
+  &:hover,
+  &--active {
+    background: var(--ins-secondary-bg, #f8f9fa);
+  }
+}
+
+.mention-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.mention-label {
+  font-weight: 500;
+  color: var(--ins-body-color);
+}
+
+.mention-sublabel {
+  font-size: 0.8rem;
+  color: var(--ins-secondary-color);
+  margin-left: auto;
+}

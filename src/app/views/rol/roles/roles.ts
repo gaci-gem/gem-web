@@ -28,7 +28,6 @@ import { getColor } from '@/app/utils/color-utils';
   selector: 'app-roles',
   imports: [
     UiCard,
-    BadgeClickComponent,
     TableModule,
     NgIcon,
     ToolbarModule,

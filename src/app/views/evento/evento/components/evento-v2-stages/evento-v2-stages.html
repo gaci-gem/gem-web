@@ -1,0 +1,76 @@
+<section class="card-v2 stages-wrapper">
+  <div class="stages-track" #stagesTrack>
+    @for (etapa of etapasNormales; track etapa.id; let i = $index) {
+      <div
+        class="stage-item"
+        [attr.data-secuencia]="etapa.secuencia"
+        [class.stage-item--current]="isCurrentStage(etapa.secuencia)"
+      >
+        <div
+          class="stage-dot"
+          [class.stage-dot--done]="getEstadoEtapa(etapa.secuencia) === 'completada'"
+          [class.stage-dot--active]="getEstadoEtapa(etapa.secuencia) === 'activa'"
+          [class.stage-dot--current]="isCurrentStage(etapa.secuencia)"
+        >
+          @if (getEstadoEtapa(etapa.secuencia) === 'completada') {
+            ✓
+          } @else {
+            {{ etapa.secuencia }}
+          }
+        </div>
+        <p class="stage-label" [pTooltip]="etapa.nombre" tooltipPosition="bottom">{{ etapa.nombre }}</p>
+
+        @if (etapa.rollback) {
+          <p class="stage-rollback">← {{ etapa.rollback.nombre }}</p>
+        }
+      </div>
+
+      @if (shouldConnectToNext(i)) {
+        <div
+          class="stage-link"
+          [class.stage-link--done]="
+            getEstadoEtapa(etapa.secuencia) === 'completada'
+          "
+        ></div>
+      }
+    }
+
+    @if (etapasFinal.length > 0) {
+      @for (etapa of etapasFinal; track etapa.id) {
+        <div
+          class="stage-item stage-item--final"
+          [attr.data-secuencia]="etapa.secuencia"
+          [class.stage-item--current]="isCurrentStage(etapa.secuencia)"
+        >
+          <div
+            class="stage-dot"
+            [class.stage-dot--done]="getEstadoEtapa(etapa.secuencia) === 'completada'"
+            [class.stage-dot--active]="getEstadoEtapa(etapa.secuencia) === 'activa'"
+            [class.stage-dot--current]="isCurrentStage(etapa.secuencia)"
+          >
+            @if (getEstadoEtapa(etapa.secuencia) === 'completada') {
+              ✓
+            } @else {
+              ✓
+            }
+          </div>
+          <p class="stage-label" [pTooltip]="etapa.nombre" tooltipPosition="bottom">{{ etapa.nombre }}</p>
+        </div>
+      }
+    }
+  </div>
+
+  @if (rollbacksEspeciales.length > 0) {
+    <div class="stages-rollbacks">
+      <p class="rollback-label">Rollbacks disponibles:</p>
+      <div class="rollback-items">
+        @for (etapa of rollbacksEspeciales; track etapa.id) {
+          <div class="rollback-item">
+            <span class="rollback-icon">↺</span>
+            <span class="rollback-name">{{ etapa.nombre }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

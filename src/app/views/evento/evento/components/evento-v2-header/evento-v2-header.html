@@ -1,0 +1,204 @@
+
+<p-popover #op appendTo="body">
+  <ng-template #content>
+    @for(req of estimacionDetalle?.requisitos; track req) {
+      <div class="d-flex justify-content-between gap-3">
+        <span>{{ req.descripcion.length > 30 ? (req.descripcion | slice:0:30) + '...' : req.descripcion }}</span>
+        <span class="text-nowrap">{{req.valorNumero}} Hs.</span>
+      </div>
+    }
+  </ng-template>
+</p-popover>
+
+<p-popover #opHoras appendTo="body">
+  <ng-template #content>
+    @for(hor of horasTrabajadas?.categorias; track hor) {
+      <div class="d-flex justify-content-between gap-3">
+        <span><span class="categoria-dot" [style.background]="hor.color"></span> {{ hor.descripcion.length > 30 ? (hor.descripcion | slice:0:30) + '...' : hor.descripcion }}</span>
+        <span class="text-nowrap">{{hor.totalHoras}} Hs.</span>
+      </div>
+    }
+  </ng-template>
+</p-popover>
+
+<section class="evento-header card-v2">
+  <!-- Top: código + estado + título + acciones -->
+  <div class="evento-header__top">
+    <div class="evento-header__title-block">
+      <div class="evento-header__meta">
+        <span class="evento-code">{{ codigoEvento }}</span>
+        <span class="badge" [class]="estadoBadgeClass">{{ estadoDesc }}</span>
+      </div>
+      <h1 class="evento-title">{{ evento.titulo }}</h1>
+    </div>
+
+    <div class="evento-header__actions">
+      <button
+        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center rounded-pill"
+        (click)="compartirEvento()"
+        [disabled]="togglingObservador"
+        title="Compartir evento"
+      >
+        <ng-icon name="lucideShare2"></ng-icon>
+      </button>
+
+      <button
+        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center rounded-pill"
+        [class.btn-outline-success]="esObservador"
+        (click)="onToggleObservador()"
+        [disabled]="togglingObservador"
+        title="Seguir/Dejar de seguir evento"
+      >
+        <ng-icon name="lucideEye"></ng-icon>
+        @if (togglingObservador) {
+          <span class="ms-2">Procesando...</span>
+        } @else {
+          <span class="ms-2">{{ esObservador ? 'Siguiendo' : 'Seguir' }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Info grid: producto, cliente, prioridad, fechas inicio/fin, fechas editables, usuarios -->
+  <div class="evento-header__info-grid">
+
+    <!-- Producto -->
+    @if (evento.producto) {
+      <div class="info-cell">
+        <span class="info-label">PRODUCTO</span>
+        <p class="info-value">{{ evento.producto.sigla }} – {{ evento.producto.nombre }} | {{ evento.producto.entornoCodigo }}</p>
+      </div>
+    }
+
+    <!-- Cliente -->
+    @if (evento.cliente) {
+      <div class="info-cell">
+        <span class="info-label">CLIENTE</span>
+        <p class="info-value">{{ evento.cliente.sigla }} – {{ evento.cliente.nombre }}</p>
+      </div>
+    }
+
+    <!-- Estimacion -->
+    @if (estimacionDetalle?.totalEstimacion) {
+      <div class="info-cell">
+        <span class="info-label">ESTIMACION TOTAL</span>
+        <div class="d-flex align-items-center">
+          <p class="info-value">{{ estimacionDetalle?.totalEstimacion }} Hs.</p>
+          <span #infoTrigger class="ms-2 d-inline-flex" style="color: var(--ins-secondary-color); cursor: pointer;" (click)="op.show($event, infoTrigger)">
+            <ng-icon name="lucideCircleAlert" style="pointer-events: none"></ng-icon>
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Horas Trabajadas -->
+    @if (horasTrabajadas) {
+      <div class="info-cell">
+        <span class="info-label">HORAS TRABAJADAS</span>
+        <div class="d-flex align-items-center">
+          <p class="info-value">{{ horasTrabajadas.totalGeneral }} Hs.</p>
+          <span #infoTriggerHoras class="ms-2 d-inline-flex" style="color: var(--ins-secondary-color); cursor: pointer;" (click)="opHoras.show($event, infoTriggerHoras)">
+            <ng-icon name="lucideCircleAlert" style="pointer-events: none"></ng-icon>
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Prioridad -->
+    <div class="info-cell">
+      <span class="info-label">PRIORIDAD</span>
+      <div class="prioridad-row">
+        @if (evento.prioridadUsu) {
+          <div class="prioridad-item">
+            <span class="prioridad-sublabel">Usuario</span>
+            <app-prioridad-icon [nivel]="evento.prioridadUsu" />
+          </div>
+        }
+        @if (evento.prioridadCal) {
+          <div class="prioridad-item">
+            <span class="prioridad-sublabel">Calculada</span>
+            <app-prioridad-icon [nivel]="evento.prioridadCal" />
+          </div>
+        }
+        @if (evento.prioridadFin) {
+          <div class="prioridad-item">
+            <span class="prioridad-sublabel">Final</span>
+            <app-prioridad-icon [nivel]="evento.prioridadFin" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Fecha Inicio + Fecha Fin (solo lectura) -->
+    <div class="info-cell">
+      <span class="info-label">INICIO / FIN</span>
+      <p class="info-value">
+        {{ evento.fechaInicio ? (evento.fechaInicio | date: 'dd/MM/yy') : '—' }}
+        &nbsp;→&nbsp;
+        {{ evento.fechaFinReal ? (evento.fechaFinReal | date: 'dd/MM/yy') : '—' }}
+      </p>
+    </div>
+
+    <!-- Fecha Estimada (editable) -->
+    <div class="info-cell">
+      <span class="info-label">FECHA ESTIMADA</span>
+      @if (evento.cerrado) {
+        <p class="info-value">{{ evento.fechaFinEst | date: 'dd/MM/yy' }}</p>
+      } @else {
+        <input
+          type="date"
+          class="form-control form-control-sm info-date-input"
+          [ngModel]="formatDateForInput(evento.fechaFinEst)"
+          (ngModelChange)="onFechaChange($event, 'fechaFinEst')"
+        />
+      }
+    </div>
+
+    <!-- Fecha Entrega (editable) -->
+    <div class="info-cell">
+      <span class="info-label">FECHA ENTREGA</span>
+      @if (evento.cerrado) {
+        <p class="info-value">{{ evento.fechaEntrega | date: 'dd/MM/yy' }}</p>
+      } @else {
+        <input
+          type="date"
+          class="form-control form-control-sm info-date-input"
+          [ngModel]="formatDateForInput(evento.fechaEntrega)"
+          (ngModelChange)="onFechaChange($event, 'fechaEntrega')"
+        />
+      }
+    </div>
+
+    <!-- Asignado a -->
+    @if (evento.usuarioActual) {
+      <div class="info-cell">
+        <span class="info-label">ASIGNADO A</span>
+        <app-badge-click
+          [backgroundColor]="evento.usuarioActual.color"
+          (click)="abrirUsuarioDrawer(evento.usuarioActual.id)"
+          style="cursor:pointer"
+        >
+          {{ evento.usuarioActual.usuario }}
+        </app-badge-click>
+      </div>
+    }
+
+    <!-- Creado por -->
+    @if (evento.usuarioAlta) {
+      <div class="info-cell">
+        <span class="info-label">CREADO POR</span>
+        <app-badge-click
+          [backgroundColor]="evento.usuarioAlta.color"
+          (click)="abrirUsuarioDrawer(evento.usuarioAlta.id)"
+          style="cursor:pointer"
+        >
+          {{ evento.usuarioAlta.usuario }}
+        </app-badge-click>
+        @if (evento.createdAt) {
+          <p class="info-value info-value--sub">{{ evento.createdAt | date: 'd/M/yy, h:mm a' }}</p>
+        }
+      </div>
+    }
+
+  </div>
+</section>

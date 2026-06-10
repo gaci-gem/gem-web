@@ -66,11 +66,12 @@
                                 <td>{{ rol.codigo }}</td>
                                 <td>{{ rol.descripcion }}</td>
                                 <td>
-                                    <app-badge-click
+                                    <!-- <app-badge-click
                                         [backgroundColor]="rol.color ?? primaryColor"
                                         width="2.5rem"
                                         height="inherit"
-                                    > </app-badge-click>
+                                    > </app-badge-click> -->
+                                    <span class="categoria-dot" [style.background]="rol.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span>
                                 </td>
                                 <td class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {

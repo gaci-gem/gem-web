@@ -10,6 +10,7 @@ import { ShortcutTable } from "@layouts/components/shortcut-table/shortcut-table
 import { EventoCronometroComponent } from '@app/components/evento-cronometro';
 import { Footer } from '@layouts/components/footer/footer'
 import { DrawerContainerComponent } from '@app/components/drawer-container/drawer-container'
+import { GreetingBannerComponent } from '@app/components/greeting-banner/greeting-banner'
 import { DialogService } from 'primeng/dynamicdialog'
 import { CHANGELOG } from '@core/services/changelog'
 import { ChangelogModalComponent } from '@views/changelog/changelog-modal'
@@ -24,6 +25,7 @@ import { ChangelogModalComponent } from '@views/changelog/changelog-modal'
     EventoCronometroComponent,
     Footer,
     DrawerContainerComponent,
+    GreetingBannerComponent,
   ],
   templateUrl: './vertical-layout.html',
   styles: `

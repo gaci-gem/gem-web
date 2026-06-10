@@ -1,0 +1,145 @@
+<section class="activity-panel">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-semibold">Actividad del Evento</h5>
+    <div class="d-flex gap-2">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-filter"
+        class="p-button-text p-button-sm"
+        label="Filtrar"
+        (click)="toggleFiltros()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        class="p-button-text p-button-sm"
+        label="Refrescar"
+        (click)="refreshActividad.emit()"
+      ></button>
+    </div>
+  </div>
+
+  @if (mostrarFiltros) {
+    <div class="card border rounded p-3 mb-3 activity-filter-panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="small fw-semibold">Tipos de actividad</span>
+        <button
+          pButton
+          type="button"
+          class="p-button-text p-button-sm"
+          label="Limpiar"
+          (click)="limpiarFiltros()"
+        ></button>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        @for (tipo of tiposActividadDisponibles; track tipo) {
+          <label
+            class="filter-chip"
+            [class.filter-chip--active]="tiposSeleccionados.has(tipo)"
+          >
+            <input
+              type="checkbox"
+              [checked]="tiposSeleccionados.has(tipo)"
+              (change)="toggleTipoActividad(tipo)"
+            />
+            <span>{{ tipo }}</span>
+          </label>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="card border rounded p-3 mb-3">
+    <div class="d-grid gap-2">
+      <app-mention-textarea
+        [(value)]="comentario"
+        [options]="usuarioOptions"
+        [rows]="2"
+        placeholder="Escribe una actualización o añade un comentario... usa @ para mencionar"
+        (ctrlEnter)="onPublicar()"
+      ></app-mention-textarea>
+
+      <div class="d-flex justify-content-end">
+        <button
+          pButton
+          type="button"
+          label="Publicar"
+          class="p-button-sm"
+          [disabled]="loading || !comentario.trim()"
+          (click)="onPublicar()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border rounded p-3">
+    @if (loading) {
+      <div class="small text-body-secondary">Cargando actividad...</div>
+    } @else if (error) {
+      <div class="small text-danger">{{ error }}</div>
+    } @else if (actividadesFiltradasOrdenadas.length === 0) {
+      <div class="small text-body-secondary">
+        No hay actividades para mostrar con ese filtro.
+      </div>
+    } @else {
+      <div class="timeline timeline-icon-bordered">
+        @for (
+          item of actividadesMostradas;
+          track trackActividad($index, item);
+          let last = $last
+        ) {
+          @if (item.accion === ACCIONES.COMENTARIO) {
+            <article
+              class="d-flex gap-2 align-items-start comment-item"
+              [class.pb-3]="!last"
+            >
+              <span class="avatar-circle">{{
+                getInitials(item.usuario?.usuario)
+              }}</span>
+
+              <div class="flex-grow-1 border rounded p-2 bg-body-tertiary">
+                <p class="mb-1 small text-body-secondary">
+                  <span class="fw-semibold text-body">{{
+                    item.usuario?.usuario
+                  }}</span>
+                  comentó
+                </p>
+                <div class="mb-1 text-body">
+                  <app-comentario-texto
+                    [texto]="getComentarioTexto(item)"
+                    [menciones]="item.adicion?.menciones || []"
+                    (usuarioClick)="abrirUsuarioDrawer($event)"
+                  ></app-comentario-texto>
+                </div>
+                <p class="mb-0 small text-body-secondary">
+                  <app-time-ago [fecha]="item.fecha" />
+                </p>
+              </div>
+            </article>
+          } @else {
+            <app-item-actividad
+              [actividad]="item"
+              [last]="last"
+            ></app-item-actividad>
+          }
+        }
+      </div>
+
+      @if (hayMasDeSieteActividades) {
+        <div class="d-flex justify-content-center mt-3">
+          <button
+            pButton
+            type="button"
+            class="p-button-text p-button-sm"
+            (click)="toggleVerMas()"
+          >
+            {{ mostrarTodasLasActividades ? "Ver menos" : "Ver más" }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</section>

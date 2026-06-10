@@ -55,6 +55,7 @@
                                 <th pSortableColumn="id" hidden>Id <p-sortIcon field="id" ></p-sortIcon></th>
                                 <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" ></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="rolPreferido">Rol Preferido <p-sortIcon field="rolPreferido"></p-sortIcon></th>
+                                <th pSortableColumn="categoriaSugeridaCodigo">Trabajo Sugerido <p-sortIcon field="categoriaSugeridaCodigo"></p-sortIcon></th>
                                 <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
                                 <th>Circuito</th>
                                 <th>Origen</th>
@@ -70,6 +71,13 @@
                                 <td hidden>{{ etapa.id }}</td>
                                 <td>{{ etapa.nombre }}</td>
                                 <td>{{ etapa.rolPreferido }}</td>
+                                <td>
+                                  @if (etapa.categoriaSugeridaCodigo) {
+                                    <span class="badge text-bg-info">{{ etapa.categoriaSugeridaCodigo }}</span>
+                                  } @else {
+                                    <span class="text-muted">—</span>
+                                  }
+                                </td>
                                 <td><span class="badge " style="min-width: 40%;" [ngClass]="etapa.activo ? 'text-bg-success' : 'text-bg-danger'">{{ etapa.activo | booleanLabel }}</span></td>
                                 <td>
                                     <span class="badge" style="min-width: 40%;" [ngClass]="etapa.deAutoriza ? 'text-bg-success' : 'text-bg-danger'">{{ etapa.deAutoriza ? 'Circuito Autoriza' : 'Circuito Default' }}</span>

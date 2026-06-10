@@ -72,11 +72,19 @@ export class AuthService {
   }
 
   login(credentials: any, recordar:boolean=false): Observable<any> {
-    return this.http.post(`${this.URL_COMPLETA}/auth/login`, credentials).pipe(
+    // Enviar la fecha local del cliente para que el backend compute bien cumpleaños y ausencia
+    const body = { ...credentials, fechaActual: new Date().toISOString() };
+    return this.http.post(`${this.URL_COMPLETA}/auth/login`, body).pipe(
       tap((res: any) => {
         this.eventoTrabajoService.limpiarEvento();
         this.setTokens(res.accessToken, res.refreshToken, recordar);
-        this.userStorage.setUsuario(res.usuario, recordar);
+        const usuarioData = {
+          ...res.usuario,
+          esCumpleanios: res.esCumpleanios,
+          ultimoLogin: res.ultimoLogin,
+          diasAusente: res.diasAusente
+        };
+        this.userStorage.setUsuario(usuarioData, recordar);
         if (res.permisos) {
           this.permisosService.setPermisos(res.permisos, recordar);
         }

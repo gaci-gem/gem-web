@@ -165,8 +165,14 @@
 
     <div class="mb-3">
         <label for="comentario" class="form-label">Comentario</label>
-        <textarea id="comentario" class="form-control" rows="5"
-            placeholder="Agrega detalles relevantes..." [(ngModel)]="comentario"></textarea>
+        <!-- <textarea id="comentario" class="form-control" rows="5"
+            placeholder="Agrega detalles relevantes..." [(ngModel)]="comentario"></textarea> -->
+        <app-mention-textarea
+            [(value)]="comentario"
+            [options]="usuarioOptions"
+            [rows]="5"
+            placeholder="Escribe una actualización o añade un comentario... usa @ para mencionar"
+        ></app-mention-textarea>
     </div>
 
     <div class="mt-4">

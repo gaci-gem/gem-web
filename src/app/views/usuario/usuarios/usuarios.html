@@ -72,6 +72,7 @@
                                 <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="apellido">Apellido <p-sortIcon field="apellido"></p-sortIcon><p-columnFilter type="text" field="apellido" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="mail">Email <p-sortIcon field="mail"></p-sortIcon></th>
+                                <th>  </th>
                                 <th pSortableColumn="usuario">Usuario <p-sortIcon field="usuario"></p-sortIcon><p-columnFilter type="text" field="usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="fecha_creacion">Fecha Creacion <p-sortIcon field="fecha_creacion"></p-sortIcon></th>
                                 <th pSortableColumn="ultimo_login">Ultimo Login <p-sortIcon field="ultimo_login"></p-sortIcon></th>
@@ -88,6 +89,7 @@
                                 <td>{{ usuario.nombre }}</td>
                                 <td>{{ usuario.apellido }}</td>
                                 <td>{{ usuario.email }}</td>
+                                <td><span [style.background]="usuario.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span></td>
                                 <td>{{ usuario.usuario }}</td>
                                 <td>{{ usuario.createdAt | date:'short' }}</td>
                                 <td>{{ usuario.ultimo_login | date:'short' }}</td>

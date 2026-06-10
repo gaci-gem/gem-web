@@ -1,497 +1,542 @@
-import { EventoInfoCardComponent } from './components/evento-info-card/evento-info-card.component';
-import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, Input, OnInit } from '@angular/core';
-import { UiCard } from '@app/components/ui-card';
-import { ShortcutDirective } from '@core/directive/shortcut';
-import { Evento_requisito, Evento_requisito_completo, EventoCompleto, EventoDocumentacion, formatEventoNumero, VidaEvento } from '@core/interfaces/evento';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { UserStorageService } from '@core/services/user-storage';
+import { EventoV2HeaderComponent } from './components/evento-v2-header/evento-v2-header';
+import { EventoV2StagesComponent } from './components/evento-v2-stages/evento-v2-stages';
+import {
+  EstimacionDetalle,
+  EventoV2DetailsFilesComponent,
+  EventoV2Requisito,
+} from './components/evento-v2-details-files/evento-v2-details-files';
+import { EventoV2ActivityComponent } from './components/evento-v2-activity/evento-v2-activity';
+import {
+  EventoCompleto,
+  EventoDocumentacion,
+  EventoVistaResponse,
+  Evento_requisito_completo,
+  VidaEvento,
+  actividadesMock,
+  adjuntosMock,
+  documentacionMock,
+  eventoMock,
+  requisitosMock,
+} from '@core/interfaces/evento';
+import {
+  TipoEventoTimeline,
+  TipoEventoTimelineEtapa,
+} from '@core/interfaces/tipo-evento';
+import { ACCIONES } from '@/app/constants/actividad_acciones';
+import { EstadosEvento } from '@/app/constants/evento_estados';
 import { EventoService } from '@core/services/evento';
-import { NgIcon } from '@ng-icons/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
-import { ToastModule } from 'primeng/toast';
-import { ToolbarModule } from 'primeng/toolbar';
-import { NgbAccordionModule, NgbCollapse } from "@ng-bootstrap/ng-bootstrap";
 import { ActivatedRoute } from '@angular/router';
-import { ItemAdjuntoComponent } from './components/item-adjunto/item-adjunto';
-import { ItemActividadComponent } from './components/item-actividad/item-actividad';
-import { FileUploader } from '@app/components/file-uploader/file-uploader';
+import { finalize } from 'rxjs';
+import { TipoEventoService } from '@core/services/tipo-evento';
+import { RegistroHoraService } from '@core/services/registro-hora';
+import { HorasPorCategoriaResponse } from '@core/interfaces/registro-hora';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { HoraCrud } from '../../registroHora/hora-crud/hora-crud';
 import { modalConfig } from '@/app/types/modals';
-import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
-import { FormsModule } from '@angular/forms';
-import { finalize, firstValueFrom } from 'rxjs';
-import { LoadingService } from '@core/services/loading.service';
-import { LoadingSpinnerComponent } from '@app/components/index';
-import { Tipo_requisito } from '@core/interfaces/etapa';
-import { showError, showSuccessToast } from '@/app/utils/message-utils';
-import { PermisosService } from '@core/services/permisos';
-import { PermisoAccion } from '@/app/types/permisos';
-import { PermisoClave } from '@core/interfaces/rol';
-import { buildPermiso } from '@/app/utils/permiso-utils';
-import { getEstadoDescCorto } from '@/app/constants/evento_estados';
-import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
-import { ItemDocumentacion } from "./components/item-documentacion/item-documentacion";
-import { PaginasLibresModal } from './components/paginas-libres-modal/paginas-libres-modal';
-import { ParametroService } from '@core/services/parametros';
-
 
 @Component({
   selector: 'app-evento',
+  standalone: true,
   imports: [
-    UiCard,
-    TableModule,
-    NgbAccordionModule,
-    ToolbarModule,
-    ConfirmDialogModule,
-    ToastModule,
-    EventoInfoCardComponent,
-    ItemAdjuntoComponent,
-    ItemActividadComponent,
-    NgIcon,
-    FormsModule,
-    LoadingSpinnerComponent,
-    ItemDocumentacion
-],
-  providers: [
-    DialogService,
-    MessageService,
-    ConfirmationService
+    EventoV2HeaderComponent,
+    EventoV2StagesComponent,
+    EventoV2DetailsFilesComponent,
+    EventoV2ActivityComponent,
   ],
   templateUrl: './evento.html',
-  styleUrl: './evento.scss'
+  styleUrl: './evento.scss',
 })
-export class Evento implements OnInit {
-  @Input() eventoIdParam!: string;
-  @Input() targetId?: string;
-  private loadingService = inject(LoadingService);
-  private dialogService = inject(DialogService);
-  private messageService = inject(MessageService);
-  protected confirmationService = inject(ConfirmationService);
-  protected permisosService = inject(PermisosService);
-  ref!: DynamicDialogRef | null;
-  private rutActiva = inject(ActivatedRoute);
-  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
-  private userStorageService = inject(UserStorageService);
-  private parametroService = inject(ParametroService);
+export class Evento {
+  private readonly eventoService = inject(EventoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly userStorageService = inject(UserStorageService);
+  private readonly zone = inject(NgZone);
+  private readonly cdRef = inject(ChangeDetectorRef);
+  private readonly registroHoraService = inject(RegistroHoraService);
+  private readonly dialogService = inject(DialogService);
+  private tipoEventoService = inject(TipoEventoService);
+  private observer?: IntersectionObserver;
 
-  readonly PermisoAccion = PermisoAccion;
-  getEstadoDescCorto = getEstadoDescCorto;
+  @Input() eventoIdParam?: string;
 
-  usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
-  permisoClave = PermisoClave.EVENTO;
+  @ViewChild('detailsSection') detailsSection?: ElementRef<HTMLDivElement>;
+  @ViewChild('activitySection') activitySection?: ElementRef<HTMLDivElement>;
 
-  private eventoService = inject(EventoService);
-  evento!: EventoCompleto;
-  cargandoEvento: boolean = false;
+  eventoId = '';
+  evento: EventoCompleto | null = null;
+  documentacion: EventoDocumentacion[] = [];
+  adjuntos: any[] = [];
+  requisitos: EventoV2Requisito[] = [];
+  actividades: VidaEvento[] = [];
+  estimacionDetalle: EstimacionDetalle | null = null;
 
-  // estado para observar/seguir el evento
-  esObservador: boolean = false;
-  togglingObservador: boolean = false;
+  loadingEvento = false;
+  loadingAdjuntos = false;
+  loadingRequisitos = false;
+  loadingActividad = false;
 
-  eventoId!: string;
+  errorEvento: string | null = null;
+  errorAdjuntos: string | null = null;
+  errorRequisitos: string | null = null;
+  errorActividad: string | null = null;
 
-  adjuntosReloading = false;
-  adjuntos!: any[];
+  private adjuntosLoaded = false;
+  private requisitosLoaded = false;
+  private actividadLoaded = false;
 
-  documentacionReloading = false;
-  documentacion!: EventoDocumentacion[];
-  documentacionActiva: boolean = false;
+  porCategoriaData: HorasPorCategoriaResponse | null = null;
+  loadingPorCategoria = false;
+  errorPorCategoria: string | null = null;
+  private porCategoriaLoaded = false;
 
-  requisitosReloading = false;
-  requisitos!: Evento_requisito_completo[];
+  private readonly usarFallbackLegacy = true;
 
-  vidaEvento!: VidaEvento[];
-  mostrarTodasLasActividades: boolean = false;
-  nuevoComentario: string = '';
+  loadingMap: Record<
+    'evento' | 'actividad' | 'adjuntos' | 'requisitos',
+    boolean
+  > = {
+    evento: false,
+    actividad: false,
+    adjuntos: false,
+    requisitos: false,
+  };
 
-  get actividadesMostradas(): VidaEvento[] {
-    if (!this.vidaEvento) return [];
-    if (this.mostrarTodasLasActividades || this.vidaEvento.length <= 7) {
-      return this.vidaEvento;
+  etapas: TipoEventoTimelineEtapa[] = [];
+
+  etapaActualSecuencia = 1;
+
+  ngOnInit(): void {
+    this.eventoId = this.eventoIdParam || this.route.snapshot.params['id'];
+
+    if (!this.eventoId) {
+      this.applyLegacyMock();
+      return;
     }
-    // Mostramos las últimas 7 (las más recientes al final)
-    return this.vidaEvento.slice(-7);
+
+    this.loadEventoBase();
   }
 
-  onActualizarRequisito(req: any, event: any) {
-    // Aquí puedes ajustar el payload según lo que espera tu backend
-    let payload: any = {
-      requisitoId: req.requisito.id,
-      eventoId: this.eventoId,
-      usuarioId: this.usuarioActivo?.id,
-      valorTexto: null,
-      valorNumero: null,
-      valorBooleano: null,
-      valorFecha: null,
-      url: null
-    };
-
-    switch (req.requisito.tipo) {
-      case Tipo_requisito.text:
-        payload.valorTexto = event.target.value;
-        break;
-      case Tipo_requisito.date:
-        payload.valorFecha = new Date(event.target.value);
-        break;
-      case Tipo_requisito.boolean:
-        payload.valorBooleano = event.target.checked;
-        break;
-      case Tipo_requisito.numeric:
-        payload.valorNumero = Number(event.target.value);
-        break;
-      case Tipo_requisito.file:
-        payload.url = event.target.files[0];
-        break;
-    }
-    if (req.cumplido) {
-      this.eventoService.updateEventoRequisito(this.eventoId, req.requisito.id, payload).subscribe({
-        next: (res) => {
-          this.onReloadRequisitos();
-          showSuccessToast(this.messageService, 'Requisito registrado', 'El requisito ha sido registrado exitosamente.');
-        },
-        error: (err) => {
-          showError(this.messageService, 'Error al actualizar requisito:', err.error.message);
-        }
-      });
-    } else {
-      this.eventoService.registrarEventoRequisito(this.eventoId, payload).subscribe({
-        next: (res) => {
-          this.onReloadRequisitos();
-          showSuccessToast(this.messageService, 'Requisito registrado', 'El requisito ha sido registrado exitosamente.');
-        },
-        error: (err) => {
-          showError(this.messageService, 'Error al registrar requisito:', err.error.message);
-        }
-      });
-    }
-  }
-  getType(req: any): string {
-    switch (req.requisito.tipo) {
-      case Tipo_requisito.text:
-        return 'text';
-      case Tipo_requisito.date:
-        return 'date';
-      case Tipo_requisito.boolean:
-        return 'checkbox';
-      case Tipo_requisito.numeric:
-        return 'number';
-      case Tipo_requisito.file:
-        return 'text';
-      default:
-        return 'text';
-    }
-
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
   }
 
-  async ngOnInit() {
-    if (this.eventoIdParam) {
-      this.eventoId = this.eventoIdParam;
-    } else {
-      this.eventoId = this.rutActiva.snapshot.params['id'];
+  ngAfterViewInit(): void {
+    if (!('IntersectionObserver' in window)) {
+      this.loadRequisitos();
+      this.loadAdjuntos();
+      this.loadPorCategoria();
+      this.loadActividad();
+      return;
     }
-    // console.log(this.eventoId)
 
-    this.documentacionActiva = await this.getDocumentacionActiva();
-    this.getEvento();
-    this.onReloadAdjuntos();
-    this.onReloadDocumentacion();
-    this.onReloadRequisitos();
-    this.getActividadEvento();
-  }
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
 
-  getEvento() {
-    // this.loadingService.show();
-    this.cargandoEvento = true;
-    this.eventoService.getByIdCompleto(this.eventoId).pipe(
-      finalize(() => this.cargandoEvento = false)
-    ).subscribe(
-      {
-        next: (res: any) => {
-          console.log(res);
-          this.evento = {
-            ...res,
-            evento: formatEventoNumero(res.tipo.codigo, res.numero)
-          };
-          const usuarioId = this.usuarioActivo?.id;
-          const observadores = this.evento.observadores;
-          if (usuarioId && Array.isArray(observadores)) {
-            this.esObservador = observadores.some((o: any) => o.usuarioId === usuarioId);
-          } else {
-            this.esObservador = false;
+          if (entry.target === this.detailsSection?.nativeElement) {
+            this.loadRequisitos();
+            this.loadAdjuntos();
+            this.loadPorCategoria();
+            this.observer?.unobserve(entry.target);
           }
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('Error fetching evento:', err);
-        }
-      }
-    );
-  }
 
-  onToggleObservador() {
-    if (!this.usuarioActivo) return;
-    this.togglingObservador = true;
-    this.eventoService.toggleObservador(this.eventoId, this.usuarioActivo.id)
-    .pipe(finalize(() => {this.togglingObservador = false; this.cdr.detectChanges();}))
-    .subscribe({
-      next: (res: any) => {
-        // alternar estado local
-        this.esObservador = !this.esObservador;
-        // recargar actividad/opciones si es necesario
-        this.getActividadEvento();
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: this.esObservador ? 'Ahora eres observador del evento' : 'Ya no eres observador del evento' });
+          if (entry.target === this.activitySection?.nativeElement) {
+            this.loadActividad();
+            this.observer?.unobserve(entry.target);
+          }
+        }
       },
-      error: (err: any) => {
-        console.error('Error toggle observador:', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.error?.message || 'No se pudo alternar observador' });
-      }
-    });
-  }
-
-  onReloadAdjuntos() {
-    this.adjuntosReloading = true;
-
-    this.eventoService.getAdjuntos(this.eventoId).subscribe(
-      {
-        next: (res: any) => {
-          // console.log(res)
-          this.adjuntos = res;
-          this.adjuntosReloading = false;
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('Error fetching adjuntos:', err);
-        }
-      }
+      { threshold: 0.2 },
     );
-  }
 
-  onReloadDocumentacion() {
-    this.documentacionReloading = true;
-
-    this.eventoService.getDocumentacion(this.eventoId)
-    .pipe(finalize(() => { this.documentacionReloading = false; this.cdr.detectChanges(); }))
-    .subscribe(
-      {
-        next: (res: any) => {
-          // console.log(res)
-          this.documentacion = res.sort((a: EventoDocumentacion, b: EventoDocumentacion) => {
-            // Ordenar primero por esPrincipal, luego por fecha descendente
-            if (a.esPrincipal && !b.esPrincipal) return -1;
-            if (!a.esPrincipal && b.esPrincipal) return 1;
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          });
-        },
-        error: (err: any) => {
-          console.error('Error fetching docs:', err);
-        }
-      }
-    );
-  }
-
-  onReloadRequisitos() {
-    this.requisitosReloading = true;
-
-    this.eventoService.getRequisitos(this.eventoId).subscribe(
-      {
-        next: (res: any) => {
-          // console.log(res)
-          // Inicializar cumplimiento si es null
-          this.requisitos = res.map((req: any) => {
-            if (!req.cumplimiento) {
-              req.cumplimiento = { valor: '' };
-            }
-            return req;
-          });
-          this.requisitosReloading = false;
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('Error fetching requisitos:', err);
-        }
-      }
-    );
-  }
-
-  getActividadEvento() {
-    this.eventoService.getActividad(this.eventoId).subscribe(
-      {
-        next: (res: any) => {
-          // console.log(res)
-          this.vidaEvento = res;
-          this.cdr.detectChanges();
-
-          if (this.targetId) {
-            this.mostrarTodasLasActividades = true;
-            setTimeout(() => {
-              this.scrollToTarget();
-            }, 500);
-          }
-        },
-        error: (err: any) => {
-          console.error('Error fetching actividad evento:', err);
-        }
-      }
-    );
-  }
-
-  scrollToTarget() {
-    if (!this.targetId) return;
-    const element = document.getElementById(`actividad-adicion-${this.targetId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      element.classList.add('blink-target');
-      setTimeout(() => {
-        element.classList.remove('blink-target');
-      }, 3000);
+    if (this.detailsSection?.nativeElement) {
+      this.observer.observe(this.detailsSection.nativeElement);
+    }
+    if (this.activitySection?.nativeElement) {
+      this.observer.observe(this.activitySection.nativeElement);
     }
   }
 
-  onEliminarAdjunto(event: any) {
-    console.log('Eliminar adjunto:', event);
-    this.confirmationService.confirm({
-      message: `¿Seguro que querés eliminar ${event.nameFile}?`,
-      header: 'Confirmar eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.eventoService.eliminarAdicional(this.eventoId, event.id).subscribe({
-          next: (res) => {
-            console.log('Adjunto eliminado:', res);
-            this.onReloadAdjuntos();
-          },
-          error: (err) => {
-            console.error('Error al eliminar adjunto:', err);
+  loadEventoBase(force = false): void {
+    if (!this.eventoId || (this.loadingEvento && !force)) return;
+
+    this.loadingEvento = true;
+    this.loadingMap.evento = true;
+    this.errorEvento = null;
+
+    this.eventoService
+      .getEventoVista(this.eventoId)
+      .pipe(finalize(() => this.finalizeBlockLoading('evento')))
+      .subscribe({
+        next: (res) => {
+          this.applyVistaResponse(res);
+        },
+        error: () => {
+          if (this.usarFallbackLegacy) {
+            this.loadEventoBaseLegacy();
+            return;
           }
-        });
-      }
-    });
+          this.errorEvento = 'No se pudo cargar el evento.';
+        },
+      });
   }
 
-  onEliminarDocumento(documento: any) {
-    console.log('Eliminar documento:', documento);
-    this.confirmationService.confirm({
-      message: `¿Seguro que querés desasociar ${documento.title}?`,
-      header: 'Confirmar desasociación',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.eventoService.desasociarPaginaNotion(documento.id).subscribe({
-          next: (res) => {
-            console.log('Documento desasociado:', res);
-            this.onReloadDocumentacion();
-          },
-          error: (err) => {
-            console.error('Error al desasociar documento:', err);
+  loadActividad(force = false): void {
+    if (!this.eventoId || this.loadingActividad) return;
+    if (!force && this.actividadLoaded) return;
+
+    this.loadingActividad = true;
+    this.loadingMap.actividad = true;
+    this.errorActividad = null;
+
+    this.eventoService
+      .getEventoVista(this.eventoId, { incluirActividad: true })
+      .pipe(finalize(() => this.finalizeBlockLoading('actividad')))
+      .subscribe({
+        next: (res) => {
+          this.actividades = res.actividad ?? [];
+          this.actividadLoaded = true;
+        },
+        error: () => {
+          if (this.usarFallbackLegacy) {
+            this.loadActividadLegacy(force);
+            return;
           }
-        });
-      }
-    });
+          this.errorActividad = 'No se pudo cargar la actividad.';
+        },
+      });
   }
-  onTogglePrincipalDocumento(documento: any) {
-    this.eventoService.togglePaginaPrincipal(documento.id)
-    .pipe(finalize(() => { this.cdr.detectChanges(); }))
-    .subscribe({
-      next: (res) => {
-        console.log('Documento desasociado:', res);
-        this.onReloadDocumentacion();
+
+  loadAdjuntos(force = false): void {
+    if (!this.eventoId || this.loadingAdjuntos) return;
+    if (!force && this.adjuntosLoaded) return;
+
+    this.loadingAdjuntos = true;
+    this.loadingMap.adjuntos = true;
+    this.errorAdjuntos = null;
+
+    this.eventoService
+      .getEventoVista(this.eventoId, {
+        incluirAdjuntos: true,
+        adjuntosActivo: 'all',
+      })
+      .pipe(finalize(() => this.finalizeBlockLoading('adjuntos')))
+      .subscribe({
+        next: (res) => {
+          this.adjuntos = res.adjuntos ?? [];
+          this.adjuntosLoaded = true;
+        },
+        error: () => {
+          if (this.usarFallbackLegacy) {
+            this.loadAdjuntosLegacy(force);
+            return;
+          }
+          this.errorAdjuntos = 'No se pudieron cargar los adjuntos.';
+        },
+      });
+  }
+
+  loadRequisitos(force = false): void {
+    if (!this.eventoId || this.loadingRequisitos) return;
+    if (!force && this.requisitosLoaded) return;
+
+    this.loadingRequisitos = true;
+    this.loadingMap.requisitos = true;
+    this.errorRequisitos = null;
+
+    this.eventoService
+      .getEventoVista(this.eventoId, { incluirRequisitos: true })
+      .pipe(finalize(() => this.finalizeBlockLoading('requisitos')))
+      .subscribe({
+        next: (res) => {
+          this.requisitos = this.mapRequisitos(res.requisitos ?? []);
+          this.requisitosLoaded = true;
+        },
+        error: () => {
+          if (this.usarFallbackLegacy) {
+            this.loadRequisitosLegacy(force);
+            return;
+          }
+          this.errorRequisitos = 'No se pudieron cargar los requisitos.';
+        },
+      });
+  }
+
+  loadPorCategoria(force = false): void {
+    if (!this.eventoId || this.loadingPorCategoria) return;
+    if (!force && this.porCategoriaLoaded) return;
+
+    this.loadingPorCategoria = true;
+    this.errorPorCategoria = null;
+
+    this.registroHoraService
+      .getPorCategoria(this.eventoId)
+      .pipe(
+        finalize(() => {
+          this.loadingPorCategoria = false;
+          this.cdRef.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.porCategoriaData = res;
+          this.porCategoriaLoaded = true;
+        },
+        error: () => {
+          this.errorPorCategoria =
+            'No se pudo cargar el desglose por categoría.';
+        },
+      });
+  }
+
+  onCargarHoras(): void {
+    const ref = this.dialogService.open(HoraCrud, {
+      ...modalConfig,
+      header: 'Cargar Horas',
+      data: {
+        item: null,
+        modo: 'A',
+        categoriaSugerida: this.evento?.categoriaSugerida || null,
+        eventoIdPreseleccionado: this.eventoId,
       },
-      error: (err) => {
-        console.error('Error al desasociar documento:', err);
+    });
+
+    if (!ref) return;
+    ref.onClose.subscribe((result: any) => {
+      if (result) {
+        this.loadPorCategoria(true);
       }
     });
   }
 
-  onUploadAdjunto() {
-    this.ref = this.dialogService.open(FileUploader, {
-      ...modalConfig,
-      header: "Subir Adjunto",
-      data: {
-        eventoId: this.eventoId,
-        usuarioId: this.usuarioActivo?.id
-      }
-    });
+  private finalizeBlockLoading(
+    block: 'evento' | 'actividad' | 'adjuntos' | 'requisitos',
+  ): void {
+    this.zone.run(() => {
+      this.loadingMap[block] = false;
 
-    if (!this.ref) return;
+      if (block === 'evento') this.loadingEvento = false;
+      if (block === 'actividad') this.loadingActividad = false;
+      if (block === 'adjuntos') this.loadingAdjuntos = false;
+      if (block === 'requisitos') this.loadingRequisitos = false;
 
-    this.ref.onClose.subscribe((result: any) => {
-      if (!result) return;
+      this.cdRef.detectChanges();
     });
   }
 
-  onLinkDocumentacion() {
-    // console.error('No desarrollado aún: subir documentación');
-    this.ref = this.dialogService.open(PaginasLibresModal, {
-      ...modalConfig,
-      header: "Adjuntar Documentación",
-      data: {
-        eventoId: this.eventoId,
-      }
-    });
-
-    if (!this.ref) return;
-
-    this.ref.onClose.subscribe((result: any) => {
-      this.onReloadDocumentacion();
-      if (!result) return;
-    });
+  onRefreshActividad(): void {
+    this.loadActividad(true);
   }
 
-  onEnviarComentario() {
-    if (!this.nuevoComentario.trim()) return;
+  onRefreshAdjuntos(): void {
+    this.loadAdjuntos(true);
+  }
+
+  onRefreshRequisitos(): void {
+    this.loadRequisitos(true);
+  }
+
+  onPublicarComentario(texto: string): void {
+    if (!this.eventoId || !texto.trim()) return;
+
+    const usuarioId = this.userStorageService.getUsuario()?.id ?? '';
 
     const formData = new FormData();
     formData.append('eventoId', this.eventoId);
-    formData.append('usuarioId', this.usuarioActivo?.id || '');
-    formData.append('tipo', "COMENTARIO");
-    formData.append('comentario', JSON.stringify({ "texto": this.nuevoComentario }));
+    formData.append('usuarioId', usuarioId);
+    formData.append('tipo', 'COMENTARIO');
+    formData.append('comentario', JSON.stringify({ texto }));
+
     this.eventoService.agregarAdicional(this.eventoId, formData).subscribe({
-      next: (res) => {
-        this.getActividadEvento();
+      next: () => this.loadActividad(true),
+      error: () => {
+        this.errorActividad = 'No se pudo publicar el comentario.';
       },
-      error: (err) => {
-        console.error('Error al guardar el comentario:', err);
-      }
     });
-    this.nuevoComentario = '';
   }
 
-  can(accion: PermisoAccion): boolean {
-    return this.permisosService.can(buildPermiso(this.permisoClave, accion));
+  private applyVistaResponse(res: EventoVistaResponse): void {
+    this.evento = res.evento;
+    this.documentacion = res.evento.documentacion ?? [];
+
+    if (res.actividad !== undefined) {
+      this.actividades = res.actividad;
+      this.actividadLoaded = true;
+    }
+    if (res.adjuntos !== undefined) {
+      this.adjuntos = res.adjuntos;
+      this.adjuntosLoaded = true;
+    }
+    if (res.requisitos !== undefined) {
+      this.requisitos = this.mapRequisitos(res.requisitos);
+      this.requisitosLoaded = true;
+    }
+    if (res.estimacionDetalle) {
+      this.estimacionDetalle = res.estimacionDetalle;
+    }
+
+    this.getEtapas(res.evento.tipoCodigo);
   }
 
-  canModificarRequisitos(): boolean {
-    return this.can(PermisoAccion.REQ_MODIFICAR);
-  }
-
-  getRequerimientoDisabled(req: any): boolean {
-    // console.log(this.evento.etapaActualData.id, req.etapa.id, this.evento.usuarioActual.id, this.usuarioActivo?.id);
-    return (
-      this.evento.etapaActualData.id < req.etapa.id ||
-      this.evento.usuarioActual.id !== this.usuarioActivo?.id
-    );
-  }
-
-  async getDocumentacionActiva(): Promise<boolean> {
-    return await firstValueFrom(this.parametroService.getParametroActivo('NOTION_ENABLED'));
-  }
-
-  compartirEvento() {
-    const baseUrl = window.location.origin;
-    const eventoUrl = `${baseUrl}/evento/evento/${this.eventoId}`;
-    
-    navigator.clipboard.writeText(eventoUrl).then(() => {
-      this.messageService.add({ 
-        severity: 'success', 
-        summary: 'URL copiada', 
-        detail: 'El enlace del evento se copió al portapapeles' 
+  getEtapas(tipoEventoCodigo: string) {
+    // this.cargandoTimeline = true;
+    this.etapaActualSecuencia = this.evento?.etapaActual ?? 1;
+    this.tipoEventoService
+      .getTimeline(tipoEventoCodigo)
+      .pipe(
+        finalize(() => {
+          // this.cargandoTimeline = false;
+          this.cdRef.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (timeline: TipoEventoTimeline) => {
+          this.etapas = timeline.etapas;
+        },
+        error: (err: any) => {
+          console.error('Error fetching timeline:', err);
+        },
       });
-    }).catch((err) => {
-      console.error('Error al copiar al portapapeles:', err);
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo copiar el enlace al portapapeles' 
-      });
+  }
+
+  private mapRequisitos(
+    requisitos: Evento_requisito_completo[],
+  ): EventoV2Requisito[] {
+    return requisitos.map((req) => ({
+      cumplido: req.cumplido,
+      requisito:
+        req.requisito?.descripcion ??
+        req.requisito?.codigo ??
+        'Sin descripción',
+      etapa: req.etapa?.nombre ?? '-',
+      valor: this.resolveRequisitoValor(req),
+    }));
+  }
+
+  private resolveRequisitoValor(req: Evento_requisito_completo): string {
+    const cumplimiento = req.cumplimiento;
+    if (!cumplimiento) return '';
+
+    if (cumplimiento.valor !== undefined && cumplimiento.valor !== null)
+      return String(cumplimiento.valor);
+    if (
+      cumplimiento.valorTexto !== undefined &&
+      cumplimiento.valorTexto !== null
+    )
+      return String(cumplimiento.valorTexto);
+    if (
+      cumplimiento.valorNumero !== undefined &&
+      cumplimiento.valorNumero !== null
+    )
+      return String(cumplimiento.valorNumero);
+    if (cumplimiento.valorFecha) return String(cumplimiento.valorFecha);
+    if (
+      cumplimiento.valorBooleano !== undefined &&
+      cumplimiento.valorBooleano !== null
+    ) {
+      return cumplimiento.valorBooleano ? 'Sí' : 'No';
+    }
+
+    return '';
+  }
+
+  private loadEventoBaseLegacy(): void {
+    this.eventoService.getByIdCompleto(this.eventoId).subscribe({
+      next: (evento) => {
+        this.evento = evento;
+        this.documentacion = evento.documentacion ?? [];
+        this.loadingEvento = false;
+      },
+      error: () => {
+        this.loadingEvento = false;
+        this.errorEvento = 'No se pudo cargar el evento (fallback legacy).';
+        this.applyLegacyMock();
+      },
     });
+  }
+
+  private loadActividadLegacy(force = false): void {
+    if (!force && this.actividadLoaded) {
+      this.loadingActividad = false;
+      return;
+    }
+
+    this.eventoService.getActividad(this.eventoId).subscribe({
+      next: (actividad) => {
+        this.actividades = actividad;
+        this.actividadLoaded = true;
+        this.loadingActividad = false;
+      },
+      error: () => {
+        this.loadingActividad = false;
+        this.errorActividad =
+          'No se pudo cargar la actividad (fallback legacy).';
+      },
+    });
+  }
+
+  private loadAdjuntosLegacy(force = false): void {
+    if (!force && this.adjuntosLoaded) {
+      this.loadingAdjuntos = false;
+      return;
+    }
+
+    this.eventoService.getAdjuntos(this.eventoId).subscribe({
+      next: (adjuntos) => {
+        this.adjuntos = adjuntos;
+        this.adjuntosLoaded = true;
+        this.loadingAdjuntos = false;
+      },
+      error: () => {
+        this.loadingAdjuntos = false;
+        this.errorAdjuntos =
+          'No se pudieron cargar los adjuntos (fallback legacy).';
+      },
+    });
+  }
+
+  private loadRequisitosLegacy(force = false): void {
+    if (!force && this.requisitosLoaded) {
+      this.loadingRequisitos = false;
+      return;
+    }
+
+    this.eventoService.getRequisitos(this.eventoId).subscribe({
+      next: (requisitos) => {
+        this.requisitos = this.mapRequisitos(requisitos);
+        this.requisitosLoaded = true;
+        this.loadingRequisitos = false;
+      },
+      error: () => {
+        this.loadingRequisitos = false;
+        this.errorRequisitos =
+          'No se pudieron cargar los requisitos (fallback legacy).';
+      },
+    });
+  }
+
+  private applyLegacyMock(): void {
+    this.evento = eventoMock;
+    this.documentacion = documentacionMock;
+    this.adjuntos = adjuntosMock;
+    this.requisitos = requisitosMock;
+    this.actividades = actividadesMock;
+
+    this.actividadLoaded = true;
+    this.adjuntosLoaded = true;
+    this.requisitosLoaded = true;
   }
 }

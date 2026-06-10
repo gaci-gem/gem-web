@@ -1,7 +1,7 @@
 import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
+import { Categoria, HorasPorCategoriaResponse, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { PaginatedResponse } from '@core/interfaces/paginated-response';
 import { extractData } from '@core/operators/extract-data.operator';
 import { Observable } from 'rxjs';
@@ -13,13 +13,26 @@ export class RegistroHoraService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
 
-  getAll(mes?: number, anio?: number): Observable<RegistroHora[]> {
+  getAll(mes?: number, anio?: number, categoriaCodigo?: string): Observable<RegistroHora[]> {
     let url = `${this.URL_COMPLETA}/registro-hora`;
+    const params: string[] = [];
     if (mes !== undefined && anio !== undefined) {
-      url += `?mes=${mes}&anio=${anio}`;
+      params.push(`mes=${mes}`, `anio=${anio}`);
+    }
+    if (categoriaCodigo) {
+      params.push(`categoriaCodigo=${categoriaCodigo}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
     }
     return this.http.get<PaginatedResponse<RegistroHora>>(url).pipe(
       extractData<RegistroHora>()
+    );
+  }
+
+  getPorCategoria(eventoId: string): Observable<HorasPorCategoriaResponse> {
+    return this.http.get<HorasPorCategoriaResponse>(
+      `${this.URL_COMPLETA}/registro-hora/evento/${eventoId}/por-categoria`
     );
   }
 
@@ -41,6 +54,22 @@ export class RegistroHoraService {
     return this.http.get<UsuarioHorasGenerales[]>(
       `${this.URL_COMPLETA}/usuario/usuario/horasGenerales?desde=${desde.toISOString()}&hasta=${hasta.toISOString()}`
     );
+  }
+
+  getCategorias(): Observable<Categoria[]> {
+    return this.http.get<Categoria[]>(`${this.URL_COMPLETA}/registro-hora/categorias`);
+  }
+
+  createCategoria(categoria: Categoria): Observable<Categoria> {
+    return this.http.post<Categoria>(`${this.URL_COMPLETA}/registro-hora/categorias`, categoria);
+  }
+
+  updateCategoria(codigo: string, categoria: Partial<Categoria>): Observable<Categoria> {
+    return this.http.patch<Categoria>(`${this.URL_COMPLETA}/registro-hora/categorias/${codigo}`, categoria);
+  }
+
+  deleteCategoria(codigo: string): Observable<void> {
+    return this.http.delete<void>(`${this.URL_COMPLETA}/registro-hora/categorias/${codigo}`);
   }
 
   create(registro:RegistroHora): Observable<RegistroHora> {

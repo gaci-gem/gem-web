@@ -3,12 +3,13 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TrabajarCon, UiCard } from '@app/components/index';
 import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
+import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
 import { modalConfig } from '@/app/types/modals';
 import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
-import { RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
+import { Categoria, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
@@ -17,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { SelectModule } from 'primeng/select';
 import { TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -34,6 +36,7 @@ import { HoraCrud } from '../hora-crud/hora-crud';
     ButtonModule,
     CommonModule,
     FormsModule,
+    SelectModule,
     ControlTrabajarCon,
   ],
   providers: [
@@ -51,10 +54,15 @@ export class Horas extends TrabajarCon<RegistroHora> {
   ref!: DynamicDialogRef | null;
   getFechaLocal = getFechaLocal;
 
+  categoriasMap: Map<string, Categoria> = new Map();
+
   registrosHorasGenerales!: UsuarioHorasGenerales[];
   registrosHorasGeneralesFiltradas!: UsuarioHorasGenerales[];
 
   dateRangeFilter: Date[] | undefined;
+
+  categoriaFiltro: string | null = null;
+  readonly tiposTrabajo = TIPOS_TRABAJO;
 
   constructor() {
     super(
@@ -92,7 +100,20 @@ export class Horas extends TrabajarCon<RegistroHora> {
   }
 
   protected loadItems(): void {
+    this.cargarCategorias();
     this.onFechaChange();
+  }
+
+  private cargarCategorias(): void {
+    if (this.categoriasMap.size > 0) return;
+    this.registroHoraService.getCategorias().subscribe(cats => {
+      cats.forEach(c => this.categoriasMap.set(c.codigo, c));
+    });
+  }
+
+  getCategoriaInfo(codigo: string | null | undefined): Categoria | null {
+    if (!codigo) return null;
+    return this.categoriasMap.get(codigo) ?? null;
   }
 
   private inicializarFiltroFecha(): void {
@@ -155,6 +176,26 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.onFechaChange();
   }
 
+  filtrarPorCategoria(codigo: string | null): void {
+    this.categoriaFiltro = codigo;
+    if (!codigo) {
+      this.registrosHorasGeneralesFiltradas = this.registrosHorasGenerales;
+      return;
+    }
+    this.registrosHorasGeneralesFiltradas = this.registrosHorasGenerales
+      .map(usuario => ({
+        ...usuario,
+        registrosHora: usuario.registrosHora
+          .map(reg => ({
+            ...reg,
+            horas: reg.horas?.filter(h => h.categoriaCodigo === codigo) || []
+          }))
+          .filter(reg => reg.horas && reg.horas.length > 0)
+      }))
+      .filter(usuario => usuario.registrosHora.length > 0);
+    this.cdr.detectChanges();
+  }
+
   consultarRegistros(desde: Date, hasta: Date) {
     this.loadingService.show();
     this.registroHoraService.getHorasGenerales(desde, hasta).pipe(
@@ -170,7 +211,8 @@ export class Horas extends TrabajarCon<RegistroHora> {
                   ? reg.horas.map((h: any) => ({
                       ...h,
                       inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
-                      fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined
+                      fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
+                      categoriaCodigo: h?.categoriaCodigo || null
                     }))
                   : reg.horas;
                 return { ...reg, fecha, horas };

@@ -61,7 +61,17 @@ import { UsuarioAdicionalClave } from "@/app/constants/adicionales_usuario";
                     }
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+                    <input
+                        id="fechaNacimiento"
+                        type="date"
+                        formControlName="fechaNacimiento"
+                        class="form-control"
+                    />
+                </div>
+
+                <div class="col-md-4">
                     <label for="color" class="form-label">Color</label>
                     <input
                         id="color"
@@ -121,7 +131,8 @@ export class TabModificar implements OnInit {
         nombre: ['', Validators.required],
         apellido: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
-        color: ['']
+        color: [''],
+        fechaNacimiento: ['']
     });
 
     formAdicionales = this.fb.group({
@@ -141,6 +152,7 @@ export class TabModificar implements OnInit {
             apellido: this.usuario.apellido,
             email: this.usuario.email,
             color: this.usuario.color,
+            fechaNacimiento: this.usuario.fechaNacimiento ? new Date(this.usuario.fechaNacimiento).toISOString().split('T')[0] : '',
         })
     }
 
@@ -157,7 +169,8 @@ export class TabModificar implements OnInit {
     }
 
     modificarUsuario(event: any) {
-        let usuario = {
+        const fechaNacimiento = this.formUsuario.get('fechaNacimiento')?.value;
+        let usuario: any = {
             id: this.usuario.id,
             nombre: this.formUsuario.get('nombre')?.value ?? this.usuario.nombre,
             apellido: this.formUsuario.get('apellido')?.value ?? this.usuario.apellido,
@@ -165,6 +178,9 @@ export class TabModificar implements OnInit {
             color: this.formUsuario.get('color')?.value ?? this.usuario.color,
             usuario: this.usuario.usuario,
         };
+        if (fechaNacimiento) {
+            usuario.fechaNacimiento = fechaNacimiento;
+        }
         this.confirmationService.confirm({
             message: '¿Está seguro que desea modificar los datos del usuario?',
             header: 'Confirmar modificación',

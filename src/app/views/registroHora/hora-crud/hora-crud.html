@@ -20,7 +20,7 @@
       <h5>Horas</h5>
       <div formArrayName="horas">
         <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label>Evento</label>
           </div>
           <div class="col-md-2">
@@ -29,7 +29,10 @@
           <div class="col-md-2">
             <label>Final</label>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
+            <label>Categoría</label>
+          </div>
+          <div class="col-md-2">
             <label>Detalle</label>
           </div>
           <div class="col-md-1">
@@ -38,7 +41,7 @@
         @for (hora of horasFormArray.controls; track $index) {
         <div [formGroupName]="$index" class="row g-3 mb-2 ">
 
-          <div class="col-12 col-md-4 mb-2 mb-md-0">
+          <div class="col-12 col-md-3 mb-2 mb-md-0">
             <!-- <label>Evento</label> -->
             <div class="row">
               <div class="col-10">
@@ -60,15 +63,24 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="inicio"
-              [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
+            <p-datepicker
+              [inputId]="getTimeInputId($index, 'inicio')"
+              formControlName="inicio"
+              [timeOnly]="true"
+              hourFormat="24"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [showButtonBar]="true"
+              [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+              (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"
+            ></p-datepicker>
             @if (hora.errors?.['overlap']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Horario superpuesto
             </div>
             }
             @if (hora.errors?.['invalidTimeRange']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Hora inválida
             </div>
             }
@@ -76,21 +88,55 @@
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
-            <input type="time" class="form-control" formControlName="fin"
-              [class.is-invalid]="hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange']" />
+            <p-datepicker
+              [inputId]="getTimeInputId($index, 'fin')"
+              formControlName="fin"
+              [timeOnly]="true"
+              hourFormat="24"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [showButtonBar]="true"
+              [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+              (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"
+            ></p-datepicker>
             @if (hora.errors?.['overlap']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Horario superpuesto
             </div>
             }
             @if (hora.errors?.['invalidTimeRange']) {
-            <div class="invalid-feedback">
+            <div class="invalid-feedback d-block">
               Fin debe ser mayor que inicio
             </div>
             }
           </div>
 
-          <div class="col-10 col-md-3 mb-2 mb-md-0">
+          <div class="col-12 col-md-2 mb-2 mb-md-0">
+            <p-select
+              [options]="categorias"
+              [formControlName]="'categoriaCodigo'"
+              optionLabel="descripcion"
+              optionValue="codigo"
+              placeholder="Categoría..."
+              [style]="{ 'min-width': '160px' }"
+              appendTo="body"
+            >
+              <ng-template let-item pTemplate="selectedItem">
+                @if (item) {
+                <span class="categoria-dot" [style.background]="item.color"></span>
+                {{ item.descripcion }}
+                } @else {
+                <span>Categoría...</span>
+                }
+              </ng-template>
+              <ng-template let-item pTemplate="item">
+                <span class="categoria-dot" [style.background]="item.color"></span>
+                <span>{{ item.descripcion }}</span>
+              </ng-template>
+            </p-select>
+          </div>
+
+          <div class="col-10 col-md-2 mb-2 mb-md-0">
             <!-- <label>Secuencia</label> -->
             <input type="text" class="form-control" formControlName="detalle" placeholder="Detalle" />
           </div>

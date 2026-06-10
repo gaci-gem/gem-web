@@ -57,6 +57,7 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
       apellido: new FormControl('', [Validators.required]),
       email: new FormControl('', [Validators.required, Validators.email]),
       usuario: new FormControl('', [Validators.required]),
+      fechaNacimiento: new FormControl(''),
       color: new FormControl(getRandomColor(), [Validators.required]),
       password: new FormControl('', [Validators.required]),
       confirmPass: new FormControl('', [Validators.required]),
@@ -71,6 +72,7 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
       apellido: data.apellido,
       email: data.email,
       usuario: data.usuario,
+      fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento).toISOString().split('T')[0] : '',
       color: data.color,
       password: '',
       confirmPass: '',
@@ -86,7 +88,8 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
   }
 
   protected toModel(): Usuario {
-    let usuario = {
+    const fechaNacimiento = this.get('fechaNacimiento')?.value;
+    let usuario: any = {
       id: this.get('id')?.value ?? undefined,
       nombre: this.get('nombre')?.value,
       apellido: this.get('apellido')?.value,
@@ -96,6 +99,9 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
       password: this.get('password')?.value || undefined,
       roles: this.get('roles')?.value || []
     };
+    if (fechaNacimiento) {
+      usuario.fechaNacimiento = fechaNacimiento;
+    }
     console.log(usuario)
     return usuario;
   }

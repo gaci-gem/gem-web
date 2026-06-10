@@ -1,37 +1,48 @@
-<div class="container-fluid">
-
-  <!-- KPIs -->
-  <div class="row mb-0">
-    <app-dashboard-kpis />
+@if (urgentes.length > 0 && !urgentBannerDismissed) {
+  <div class="urgent-banner">
+    <div class="urgent-banner-content">
+      <div class="d-flex align-items-center gap-3">
+        <ng-icon name="lucideTriangleAlert" class="urgent-banner-icon" />
+        <div>
+          <strong class="urgent-banner-title">
+            {{ urgentes.length }} {{ urgentes.length === 1 ? 'novedad urgente' : 'novedades urgentes' }}
+          </strong>
+          <p class="urgent-banner-text mb-0">
+            @for (u of urgentes; track u.id; let last = $last) {
+              {{ u.titulo }}{{ !last ? ', ' : '' }}
+            }
+          </p>
+        </div>
+      </div>
+      <button class="urgent-banner-close" (click)="dismissUrgentBanner()">
+        <ng-icon name="lucideX" />
+      </button>
+    </div>
   </div>
+}
 
-  <div class="row mt-1">
+<div class="container-fluid pt-2">
 
-    <!-- Columna izquierda -->
+  <div class="row">
+
+    <!-- Columna izquierda: KPIs + Charts -->
     <div class="col-xl-9">
-
+      <app-dashboard-kpis />
       <div class="row">
         <div class="col-xl-6">
           <app-eventos-por-tipo />
         </div>
-
         <div class="col-xl-6">
           <app-eventos-por-etapa />
         </div>
       </div>
-
-      <div class="row mb-3">
-        <div class="col-12">
-          <app-tendencia-eventos />
-        </div>
-      </div>
-
+      <app-tendencia-eventos class="d-block mb-3" />
     </div>
 
-    <!-- Columna derecha -->
+    <!-- Columna derecha: Novedades + Actividad -->
     <div class="col-xl-3">
-      <app-actividad-reciente
-      />
+      <app-novedad-widget />
+      <app-actividad-reciente />
     </div>
 
   </div>

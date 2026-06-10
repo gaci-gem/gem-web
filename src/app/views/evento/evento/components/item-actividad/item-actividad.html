@@ -1,36 +1,38 @@
-
 @if (!ACCIONES_NO_MOSTRAR.includes(actividad.accion)) {
-<div class="timeline-item d-flex align-items-stretch">
+  <div class="timeline-item d-flex align-items-stretch">
     <!-- <div class="timeline-time pe-3 text-muted">{{ getTimeAgo() }}</div> -->
     <div class="timeline-dot">
-        <ng-icon [name]="getIconNameAccion()" class="fs-xl text-muted" />
+      <ng-icon [name]="getIconNameAccion()" class="fs-xl text-muted" />
     </div>
 
     <div class="timeline-content ps-3 {{ !last ? 'pb-4' : '' }}">
-        <span class="d-flex align-items-center">
-            <h5 class="mb-1">{{ getTitleAccion() }} </h5>
-            <p class="mb-1 text-muted" style="margin-left: 8px; font-size: 10px;">{{ getTimeAgo() }}</p>
-        </span>
-        @if (actividad.accion === ACCIONES.COMENTARIO) {
-            <div class="comentario-container">
-                <app-comentario-texto 
-                    [texto]="actividad.adicion?.comentario?.texto || ''"
-                    [menciones]="actividad.adicion?.menciones || []"
-                    (usuarioClick)="abrirUsuarioDrawer($event)"
-                ></app-comentario-texto>
-            </div>
-        } @else {
-            @if (getDescripcionAccion()) {
-                @if (actividad.accion === ACCIONES.ELIMINO_ADJUNTO) {
-                    <p class="mb-1 text-muted text-danger text-decoration-line-through">{{ getDescripcionAccion() }}</p>
-                } @else {
-                    <p class="mb-1 text-muted">{{ getDescripcionAccion() }}</p>
-                }
-            }
+      <span class="d-flex align-items-center">
+        <h5 class="mb-1">{{ getTitleAccion() }}</h5>
+      </span>
+      @if (actividad.accion === ACCIONES.COMENTARIO) {
+        <div class="comentario-container">
+          <app-comentario-texto
+            [texto]="actividad.adicion?.comentario?.texto || ''"
+            [menciones]="actividad.adicion?.menciones || []"
+            (usuarioClick)="abrirUsuarioDrawer($event)"
+          ></app-comentario-texto>
+        </div>
+      } @else {
+        @if (getDescripcionAccion()) {
+          @if (actividad.accion === ACCIONES.ELIMINO_ADJUNTO) {
+            <p class="mb-1 text-muted text-danger text-decoration-line-through">
+              {{ getDescripcionAccion() }}
+            </p>
+          } @else {
+            <p class="mb-1 text-muted">{{ getDescripcionAccion() }}</p>
+          }
         }
-        <!-- <span class="text-primary fw-medium">By {{ item.name }}</span> -->
+      }
+      <p class="mb-0 text-muted" style="font-size: 10px">
+        <app-time-ago [fecha]="actividad.fecha" />
+      </p>
     </div>
-</div>
+  </div>
 }
 
 <!-- <div class="timeline-item d-flex align-items-stretch">

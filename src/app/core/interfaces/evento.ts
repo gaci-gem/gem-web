@@ -1,7 +1,17 @@
-import { EstadosEvento } from "@/app/constants/evento_estados";
-import { Etapa_requisito, Etapa } from "./etapa";
+import { EstadosEvento } from '@/app/constants/evento_estados';
+import { Etapa_requisito, Etapa } from './etapa';
+import { TipoEventoTimelineEtapa } from './tipo-evento';
+import { ACCIONES } from '@/app/constants/actividad_acciones';
+import {
+  EstimacionDetalle,
+  EventoV2Requisito,
+} from '@/app/views/evento/evento/components/evento-v2-details-files/evento-v2-details-files';
 
-export function formatEventoNumero(tipoCodigo: string, numero: number, pad: number = 3): string {
+export function formatEventoNumero(
+  tipoCodigo: string,
+  numero: number,
+  pad: number = 3,
+): string {
   return `${tipoCodigo}-${numero.toString().padStart(pad, '0')}`;
 }
 
@@ -36,7 +46,6 @@ export function formatEventoNumero(tipoCodigo: string, numero: number, pad: numb
 //   observadores?: UsuarioEvento[];
 // }
 
-
 export interface UsuarioEvento {
   id: string;
   nombre: string;
@@ -66,6 +75,13 @@ export interface EventoCompleto extends Evento {
   etapaAnterior: EventoEtapa | null;
 
   registroTiempo?: RegistroHora;
+
+  categoriaSugerida?: {
+    codigo: string;
+    descripcion: string;
+    color: string;
+    activo?: boolean;
+  } | null;
 }
 
 export interface EventoDocumentacion {
@@ -89,7 +105,7 @@ export interface EventoCliente {
   sigla: string;
   nombre: string;
   activo: boolean;
-  critico: boolean
+  critico: boolean;
 }
 
 export interface EventoProyecto {
@@ -117,7 +133,7 @@ export interface EventoProducto {
   nombre: string;
   entornoCodigo: string;
   activo: boolean;
-  critico: boolean
+  critico: boolean;
 }
 
 /** Tipo enriquecido para EventoCompleto */
@@ -126,6 +142,7 @@ export interface EventoTipo {
   descripcion: string;
   activo: boolean;
   color: string;
+  propio?: boolean;
 }
 
 /** Usuario enriquecido para EventoCompleto */
@@ -149,7 +166,7 @@ export enum TipoRequisito {
   Numeric = 'numeric',
   File = 'file',
   Boolean = 'boolean',
-  Date = 'date'
+  Date = 'date',
 }
 
 /** Etapa enriquecida para EventoCompleto */
@@ -181,7 +198,7 @@ export interface Evento {
   numero: number;
   titulo: string;
   cerrado: boolean;
-  estado?:EstadosEvento;
+  estado?: EstadosEvento;
   etapaActual: number;
   usuarioAltaId: string;
   usuarioActualId?: string;
@@ -206,7 +223,7 @@ export interface Evento {
   updatedAt?: string;
   deletedAt?: string;
 
-  comentario?:string
+  comentario?: string;
   evento?: string;
   eventoSearch?: string;
 }
@@ -319,19 +336,19 @@ export interface EventoAdicion {
     pathFile?: string;
     mimeType?: string;
     nameFile?: string;
-  }
+  };
   activo?: boolean;
 
   auditorias?: VidaEvento[];
-  menciones?: ComentarioMencion[]
+  menciones?: ComentarioMencion[];
 }
 
 export interface ComentarioMencion {
-  id: number,
-  eventoAdicionId: number,
-  usuarioId: string,
-  fecha: string,
-  usuario: EventoUsuario
+  id: number;
+  eventoAdicionId: number;
+  usuarioId: string;
+  fecha: string;
+  usuario: EventoUsuario;
 }
 
 /** Comentario circular entre usuarios y eventos */
@@ -342,21 +359,21 @@ export interface CircularEvento {
 }
 
 export interface Evento_requisito {
-  eventoId:string;
-  requisitoId:number;
+  eventoId: string;
+  requisitoId: number;
 
-  valorTexto?:string;
-  valorNumero?:number;
-  valorFecha?:Date;
-  valorBooleano?:boolean;
-  valor?:any;
-  url?:string;
-  createdAt?:Date;
-  updatedAt?:Date;
-  deletedAt?:Date;
+  valorTexto?: string;
+  valorNumero?: number;
+  valorFecha?: Date;
+  valorBooleano?: boolean;
+  valor?: any;
+  url?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
 
   // evento          evento      @relation(fields: [eventoId], references: [id])
-  requisito?:Etapa_requisito;
+  requisito?: Etapa_requisito;
 }
 
 export interface Evento_requisito_completo {
@@ -365,8 +382,7 @@ export interface Evento_requisito_completo {
   obligatorio: boolean;
   cumplido: boolean;
   cumplimiento: Evento_requisito;
-} 
-
+}
 
 export const eventoFromEventoCompleto = (evento: EventoCompleto): Evento => {
   return {
@@ -396,9 +412,9 @@ export const eventoFromEventoCompleto = (evento: EventoCompleto): Evento => {
     // createdAt: evento.createdAt,
     // updatedAt: evento.updatedAt,
     // deletedAt: evento.deletedAt,
-    comentario: evento.comentario
-  }
-}
+    comentario: evento.comentario,
+  };
+};
 
 export interface NotionPageResult {
   pageId: string;
@@ -406,3 +422,328 @@ export interface NotionPageResult {
   properties?: Record<string, any>;
   title?: string;
 }
+
+export type EventoVistaAdjuntosActivo = boolean | 'all';
+
+export interface EventoVistaOpciones {
+  incluirActividad?: boolean;
+  incluirAdjuntos?: boolean;
+  incluirRequisitos?: boolean;
+  adjuntosActivo?: EventoVistaAdjuntosActivo;
+}
+
+export interface EventoVistaResponse {
+  evento: EventoCompleto;
+  actividad?: VidaEvento[];
+  adjuntos?: any[];
+  requisitos?: Evento_requisito_completo[];
+  estimacionDetalle?: EstimacionDetalle;
+}
+
+/// datos mock
+
+export const etapas: TipoEventoTimelineEtapa[] = [
+  {
+    id: 11,
+    nombre: 'INGRESO',
+    secuencia: 1,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'CONS',
+  },
+  {
+    id: 2,
+    nombre: 'AUTORIZAR',
+    secuencia: 2,
+    deAutoriza: true,
+    deArchivo: false,
+    rolPreferido: 'MESA',
+    rollback: {
+      secuencia: -13,
+      nombre: 'Rechazados',
+    },
+  },
+  {
+    id: 4,
+    nombre: 'CONSTRUIR',
+    secuencia: 3,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'DESA',
+  },
+  {
+    id: 14,
+    nombre: 'TESTEO',
+    secuencia: 4,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'CONS',
+    rollback: {
+      secuencia: 3,
+      nombre: 'CONSTRUIR',
+    },
+  },
+  {
+    id: 3,
+    nombre: 'CONSOLIDAR',
+    secuencia: 5,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'DESA',
+  },
+  {
+    id: 12,
+    nombre: 'PRESUPUESTAR',
+    secuencia: 6,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'ADMIN',
+    rollback: {
+      secuencia: 3,
+      nombre: 'CONSTRUIR',
+    },
+  },
+  {
+    id: 5,
+    nombre: 'ENVIAR',
+    secuencia: 7,
+    deAutoriza: false,
+    deArchivo: false,
+    rolPreferido: 'MESA',
+  },
+  {
+    id: 10,
+    nombre: 'Finalizados',
+    secuencia: 99,
+    deAutoriza: false,
+    deArchivo: true,
+    rolPreferido: 'ADMIN',
+  },
+];
+
+export const etapaActualSecuencia = 2;
+
+export const eventoMock: EventoCompleto = {
+  id: 'mock-evento-v2',
+  tipoCodigo: 'CAS',
+  numero: 1,
+  titulo: 'PRUEBA CAS con adjunto',
+  cerrado: false,
+  estado: EstadosEvento.En_Curso,
+  etapaActual: 2,
+  usuarioAltaId: 'u-1',
+  facEventoCerr: false,
+  clienteId: 1,
+  proyectoId: 1,
+  productoId: 1,
+  moduloCodigo: 'MOD',
+  prioridadUsu: 3,
+  prioridadCal: 2,
+  prioridadFin: 3,
+  fechaInicio: '2026-02-11T00:00:00.000Z',
+  fechaFinEst: '2026-02-20T00:00:00.000Z',
+  fechaFinReal: undefined,
+  fechaEntrega: '2026-02-22T00:00:00.000Z',
+  createdAt: '2026-01-02T21:05:00.000Z',
+  tipo: {
+    codigo: 'CAS',
+    descripcion: 'DESARROLLO',
+    activo: true,
+    color: '#e91e8c',
+  },
+  cliente: {
+    id: 1,
+    sigla: 'GACI',
+    nombre: 'GACI GROUP',
+    activo: true,
+    critico: false,
+  },
+  producto: {
+    id: 1,
+    sigla: 'G60',
+    nombre: 'GACI 6.0 PRODUCTO ESTÁNDAR',
+    entornoCodigo: 'WIN',
+    activo: true,
+    critico: false,
+  },
+  usuarioAlta: {
+    id: 'u-1',
+    nombre: 'Julian',
+    apellido: 'Torossian',
+    usuario: 'Jtorossian',
+    color: '#c15dd6',
+  },
+  usuarioActual: {
+    id: 'u-2',
+    nombre: 'Florencia',
+    apellido: 'Rossi',
+    usuario: 'SAIETA',
+    color: '#e91e8c',
+  },
+  modulo: {
+    codigo: 'MOD',
+    nombre: 'Módulo base',
+    padreCodigo: null,
+    activo: true,
+  },
+  proyecto: {
+    id: 1,
+    sigla: 'PROJ',
+    nombre: 'Proyecto Base',
+    activo: true,
+    critico: false,
+  },
+  etapaActualData: {
+    id: 2,
+    nombre: 'AUTORIZAR',
+    rolPreferido: 'MESA',
+    activo: true,
+  },
+  etapaSiguiente: {
+    id: 4,
+    nombre: 'CONSTRUIR',
+    rolPreferido: 'DESA',
+    activo: true,
+  },
+  etapaAnterior: {
+    id: 11,
+    nombre: 'INGRESO',
+    rolPreferido: 'CONS',
+    activo: true,
+  },
+  registrosHora: [],
+  auditorias: [],
+  eventosAdicion: [],
+  requisitos: [],
+  observadores: [],
+  documentacion: [],
+};
+
+export const requisitosMock: EventoV2Requisito[] = [
+  {
+    cumplido: true,
+    requisito: 'Documento funcional validado',
+    etapa: 'Autorizar',
+    valor: 'Aprobado por lider tecnico',
+  },
+  {
+    cumplido: false,
+    requisito: 'Checklist de impacto en cliente',
+    etapa: 'Autorizar',
+    valor: '',
+  },
+];
+
+export const documentacionMock: EventoDocumentacion[] = [
+  {
+    id: 'doc-1',
+    eventoId: 'mock-evento-v2',
+    proveedor: 'Notion',
+    externalId: 'N-123',
+    externalUrl: 'https://www.notion.so/',
+    titulo: '[CAS-001] - PRUEBA CAS',
+    esPrincipal: true,
+    createdAt: new Date('2026-02-11T10:00:00'),
+    updatedAt: new Date('2026-02-11T10:00:00'),
+  },
+];
+
+export const adjuntosMock: any[] = [
+  {
+    id: 101,
+    mimeType:
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    archivo: {
+      name: 'CUS 8465.docx',
+      mimeType:
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      path: '/mock/cus-8465.docx',
+    },
+    auditorias: [
+      {
+        fecha: '2026-02-11T10:00:00',
+      },
+    ],
+  },
+];
+
+export const actividadesMock: VidaEvento[] = [
+  {
+    id: 1,
+    eventoId: 'mock-evento-v2',
+    etapaNumero: 2,
+    usuarioId: 'u-1',
+    fecha: new Date('2026-02-15T12:00:00'),
+    accion: ACCIONES.AVANZO,
+    usuario: {
+      id: 'u-1',
+      nombre: 'Julian',
+      apellido: 'Torossian',
+      usuario: 'Jtorossian',
+      color: '#000000',
+    },
+  },
+  {
+    id: 2,
+    eventoId: 'mock-evento-v2',
+    etapaNumero: 2,
+    usuarioId: 'u-2',
+    fecha: new Date('2026-02-17T14:30:00'),
+    accion: ACCIONES.COMENTARIO,
+    usuario: {
+      id: 'u-2',
+      nombre: 'Florencia',
+      apellido: 'Rossi',
+      usuario: 'Frossi',
+      color: '#000000',
+    },
+    adicion: {
+      id: 11,
+      eventoId: 'mock-evento-v2',
+      tipo: ACCIONES.COMENTARIO,
+      comentario: {
+        texto:
+          'Por favor revisar los documentos adjuntos antes de proceder a la siguiente etapa.',
+      },
+      menciones: [],
+    },
+  },
+  {
+    id: 3,
+    eventoId: 'mock-evento-v2',
+    etapaNumero: 2,
+    usuarioId: 'u-1',
+    fecha: new Date('2026-02-18T09:15:00'),
+    accion: ACCIONES.ADJUNTO,
+    usuario: {
+      id: 'u-1',
+      nombre: 'Julian',
+      apellido: 'Torossian',
+      usuario: 'Jtorossian',
+      color: '#000000',
+    },
+    adicion: {
+      id: 12,
+      eventoId: 'mock-evento-v2',
+      tipo: ACCIONES.ADJUNTO,
+      archivo: {
+        nameFile: 'CUS 8465.docx',
+      },
+    },
+  },
+  {
+    id: 4,
+    eventoId: 'mock-evento-v2',
+    etapaNumero: 2,
+    usuarioId: 'u-1',
+    fecha: new Date('2026-02-20T10:00:00'),
+    accion: ACCIONES.LIBERO_EVENTO,
+    usuario: {
+      id: 'u-1',
+      nombre: 'Julian',
+      apellido: 'Torossian',
+      usuario: 'Jtorossian',
+      color: '#000000',
+    },
+  },
+];

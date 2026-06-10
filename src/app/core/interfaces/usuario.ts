@@ -11,6 +11,7 @@ export interface Usuario {
   activo?: boolean;
   ultimo_login?: Date;
   color: string;
+  fechaNacimiento?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;

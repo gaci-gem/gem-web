@@ -1,0 +1,156 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 mt-3">
+
+      <app-ui-card title="Historial de Novedades">
+        <div card-body>
+
+          <p-toolbar>
+            <ng-template pTemplate="left">
+              <app-filtro-radio-group
+                [options]="estadoFiltroOptions"
+                [checkedValue]="filterEstado"
+                (filtroCambio)="filterEstado = $event; applyFilters()"
+                [notLabel]="true"
+              />
+              <p-select
+                [options]="tipoOptions"
+                [(ngModel)]="filterTipo"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Tipo"
+                styleClass="me-2"
+                style="width: 160px;"
+              />
+              <p-datepicker
+                [(ngModel)]="filterFecha"
+                selectionMode="range"
+                [iconDisplay]="'input'"
+                [showIcon]="true"
+                [showButtonBar]="true"
+                inputId="filter-date"
+                placeholder="Desde - Hasta"
+                style="margin-left: 10px;"
+                (onClearClick)="onClearFecha()"
+              />
+            </ng-template>
+            <ng-template pTemplate="right">
+              <button class="btn btn-primary" (click)="nuevaNovedad()">
+                <ng-icon name="lucidePlus" class="me-1" />
+                Nueva novedad
+              </button>
+            </ng-template>
+          </p-toolbar>
+
+          <p-table
+            #dt
+            [value]="novedades"
+            [lazy]="true"
+            (onLazyLoad)="onTablePage($event)"
+            [totalRecords]="total"
+            [rows]="limit"
+            [paginator]="true"
+            [rowsPerPageOptions]="[10,20,50]"
+            [loading]="loading"
+            [tableStyle]="{ 'min-width': '60rem' }"
+            [rowHover]="true"
+            dataKey="id"
+            currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
+            [showCurrentPageReport]="true"
+            size="small"
+          >
+            <ng-template pTemplate="caption">
+                <div class="flex align-items-center justify-content-between" style="display: flex" >
+                    <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input pInputText style=" padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; margin-left: 10px; " class="p-component p-element p-inputtext" type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
+                    </span>
+                    <button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff"/></button>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="min-width: 100px;">Tipo</th>
+                <th>Título</th>
+                <th style="min-width: 120px;">Creado por</th>
+                <th style="min-width: 100px;">Creado</th>
+                <th style="min-width: 100px;">Estado</th>
+                <th style="width: 8rem;">Acciones</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-novedad>
+              <tr>
+                <td>
+                  <span class="badge {{ getTipoBadge(novedad.tipo) }}">
+                    {{ novedad.tipo }}
+                  </span>
+                </td>
+                <td class="fw-semibold">{{ novedad.titulo }}</td>
+                <td>
+                  @if (novedad.createdBy) {
+                    <app-badge-click
+                      [backgroundColor]="novedad.createdBy.color"
+                      style="cursor: pointer"
+                      (click)="abrirUsuarioDrawer(novedad.createdBy.id)"
+                    >
+                      {{ novedad.createdBy.usuario || novedad.createdBy.nombre }}
+                    </app-badge-click>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>{{ novedad.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <span class="badge {{ getEstadoBadge(novedad.estado) }}">
+                    {{ novedad.estado }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="verNovedad(novedad)"
+                      title="Ver detalle"
+                    >
+                      <ng-icon name="lucideEye" />
+                    </button>
+                    @if (novedad.estado === 'Activo') {
+                      <button
+                        class="btn btn-sm btn-outline-warning"
+                        (click)="archiveNovedad(novedad)"
+                        title="Archivar"
+                      >
+                        <ng-icon name="lucideArchive" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center py-4">
+                  <ng-icon name="lucideInbox" class="d-block mb-2" style="font-size: 2rem;" />
+                  <p class="text-muted mb-0">No se encontraron novedades</p>
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="summary">
+              <div class="d-flex align-items-center justify-content-between">
+                En total hay {{ total }} Novedades.
+              </div>
+            </ng-template>
+          </p-table>
+
+        </div>
+      </app-ui-card>
+
+    </div>
+  </div>
+</div>

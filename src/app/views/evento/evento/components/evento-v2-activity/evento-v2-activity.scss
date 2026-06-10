@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.activity-panel .card {
+  background: var(--ins-body-bg);
+  border-color: var(--ins-border-color) !important;
+}
+
+.avatar-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--ins-border-color);
+  background: var(--ins-secondary-bg);
+  color: var(--ins-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.comment-item {
+  margin-bottom: 0.25rem;
+}
+
+.activity-filter-panel {
+  background: var(--ins-body-bg);
+  border-color: var(--ins-border-color) !important;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--ins-border-color);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  background: var(--ins-secondary-bg);
+  color: var(--ins-secondary-color);
+  cursor: pointer;
+}
+
+.filter-chip input {
+  margin: 0;
+}
+
+.filter-chip--active {
+  border-color: var(--ins-primary);
+  background: color-mix(in srgb, var(--ins-primary) 14%, transparent);
+  color: var(--ins-primary);
+}

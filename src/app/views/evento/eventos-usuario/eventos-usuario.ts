@@ -1,5 +1,13 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, ComponentRef, inject, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ComponentRef,
+  effect,
+  inject,
+  ViewChild,
+  ViewContainerRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BadgeClickComponent } from '@app/components/badge-click';
 import { EventoCronometroComponent } from '@app/components/evento-cronometro';
@@ -11,18 +19,27 @@ import { modalConfig } from '@/app/types/modals';
 import { parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
-import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
+import {
+  CircularEvento,
+  Evento,
+  EventoCompleto,
+  formatEventoNumero,
+} from '@core/interfaces/evento';
 import { PermisoClave } from '@core/interfaces/rol';
 import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
 import { DrawerService } from '@core/services/drawer.service';
 import { EventoAccionesService } from '@core/services/evento-acciones';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
 import { EventoService } from '@core/services/evento';
-import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
+import { SseService } from '@core/services/sse.service';
+import {
+  UserStorageService,
+  UsuarioLogeado,
+} from '@core/services/user-storage';
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -33,6 +50,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { EventoCrud } from '../evento-crud/evento-crud';
 import { ModalSel } from './components/modal-sel/modal-sel';
 import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propio';
+import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 
 @Component({
   selector: 'app-eventos-usuario',
@@ -53,14 +71,11 @@ import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propi
     DatePickerModule,
     FormsModule,
     ControlTrabajarCon,
+    ContextMenuModule,
   ],
-  providers: [
-    DialogService,
-    MessageService,
-    ConfirmationService
-  ],
+  providers: [DialogService, MessageService, ConfirmationService],
   templateUrl: './eventos-usuario.html',
-  styleUrl: './eventos-usuario.scss'
+  styleUrl: './eventos-usuario.scss',
 })
 export class EventosUsuario extends TrabajarCon<Evento> {
   private eventoService = inject(EventoService);
@@ -70,15 +85,22 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   private userStorageService = inject(UserStorageService);
   private eventoTrabajoService = inject(EventoTrabajoService);
   private drawerService = inject(DrawerService);
+  private sseService = inject(SseService);
+  private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
   @ViewChild('dt') table!: Table;
+  @ViewChild('cm') cm!: ContextMenu;
   private selecionarEventoPropio!: DynamicDialogRef | null;
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
 
   eventos: EventoCompleto[] = [];
-  
+  selectedEventos: EventoCompleto[] = [];
+
   filtroFecha: Date[] | undefined;
-  
+
+  selectedEvento: EventoCompleto | null = null;
+  menuItems: MenuItem[] = [];
+
   // Simplificar las propiedades del evento en trabajo
   eventoEnTrabajo: EventoCompleto | null = null;
   tiempoInicioTrabajo: Date | null = null;
@@ -87,9 +109,19 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     super(
       inject(ChangeDetectorRef),
       inject(MessageService),
-      inject(ConfirmationService)
+      inject(ConfirmationService),
     );
     this.permisoClave = PermisoClave.EVENTO;
+
+    effect(() => {
+      const notificaciones = this.sseService.notifications();
+      if (notificaciones.length === 0) return;
+
+      const ultima = notificaciones[0];
+      if (ultima?.targetType === 'EVENTO') {
+        this.programarRefresco();
+      }
+    });
   }
 
   override ngOnInit(): void {
@@ -100,18 +132,97 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     });
 
     // Suscribirse a cambios en el evento en trabajo
-    this.eventoTrabajoService.eventoEnTrabajo$.subscribe(evento => {
+    this.eventoTrabajoService.eventoEnTrabajo$.subscribe((evento) => {
       this.eventoEnTrabajo = evento;
       this.cdr.detectChanges();
     });
 
-    this.eventoTrabajoService.tiempoInicio$.subscribe(tiempo => {
+    this.eventoTrabajoService.tiempoInicio$.subscribe((tiempo) => {
       this.tiempoInicioTrabajo = tiempo;
       this.cdr.detectChanges();
     });
   }
 
+  onContextMenu(event: MouseEvent, evento: EventoCompleto): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.selectedEvento = evento;
+    this.buildContextMenu(evento);
+    setTimeout(() => this.cm.show(event));
+  }
+
+  buildContextMenu(e: EventoCompleto): void {
+    const items: MenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'pi pi-eye',
+        command: () => this.abrirEventoDrawer(e),
+      },
+    ];
+
+    if (!e.cerrado && !e.tipo?.propio) {
+      const accionItems: MenuItem[] = [];
+
+      if (e.etapaSiguiente) {
+        if (e.etapaActualData?.deAutoriza) {
+          accionItems.push({
+            label: 'Autorizar',
+            icon: 'pi pi-check-circle',
+            command: () => this.mostrarModalCrud(e, 'AUT'),
+          });
+        } else {
+          accionItems.push({
+            label: 'Avanzar',
+            icon: 'pi pi-forward',
+            command: () => this.mostrarModalCrud(e, 'AVZ'),
+          });
+        }
+      }
+
+      if (e.etapaAnterior) {
+        if (e.etapaActualData?.deAutoriza) {
+          accionItems.push({
+            label: 'Rechazar',
+            icon: 'pi pi-ban',
+            command: () => this.mostrarModalCrud(e, 'REC'),
+          });
+        } else {
+          accionItems.push({
+            label: 'Retroceder',
+            icon: 'pi pi-backward',
+            command: () => this.mostrarModalCrud(e, 'RTO'),
+          });
+        }
+      }
+
+      accionItems.push({
+        label: 'Reasignar',
+        icon: 'pi pi-arrow-right-arrow-left',
+        command: () => this.mostrarModalCrud(e, 'RAS'),
+      });
+
+      items.push({ separator: true }, ...accionItems);
+    }
+
+    if (!this.eventoEnTrabajo) {
+      items.push(
+        { separator: true },
+        {
+          label: 'Tomar Evento',
+          icon: 'pi pi-play',
+          command: () => this.tomarEvento(e),
+        },
+      );
+    }
+
+    this.menuItems.splice(0, this.menuItems.length, ...items);
+  }
+
   ngOnDestroy(): void {
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
   }
 
   private inicializarFiltroFecha(): void {
@@ -129,7 +240,12 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   onFechaChange(): void {
-    if (this.filtroFecha && this.filtroFecha.length === 2 && this.filtroFecha[0] && this.filtroFecha[1]) {
+    if (
+      this.filtroFecha &&
+      this.filtroFecha.length === 2 &&
+      this.filtroFecha[0] &&
+      this.filtroFecha[1]
+    ) {
       this.loadItems();
     }
   }
@@ -141,39 +257,64 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   protected loadItems(): void {
     this.loadingService.show();
-    
+
     let params: any = {};
-    if (this.filtroFecha && this.filtroFecha.length === 2 && this.filtroFecha[0] && this.filtroFecha[1]) {
+    if (
+      this.filtroFecha &&
+      this.filtroFecha.length === 2 &&
+      this.filtroFecha[0] &&
+      this.filtroFecha[1]
+    ) {
       params.desde = this.formatearFecha(this.filtroFecha[0]);
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
 
-    this.eventoService.getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params)
-    .pipe(finalize(() => {
-      this.loadingService.hide();
-      this.cdr.detectChanges();
-    }))
-    .subscribe({
-      next: (res) => {
-        console.log(res);
-        setTimeout(() => {
-          this.eventos = res.map(e => ({
-            ...e,
-            evento: formatEventoNumero(e.tipo.codigo, e.numero),
-            fechaInicio: (e as any).fechaInicio ? parseIsoAsLocal((e as any).fechaInicio) : null,
-            fechaFinReal: (e as any).fechaFinReal ? parseIsoAsLocal((e as any).fechaFinReal) : null,
-            fechaFinEst: (e as any).fechaFinEst ? parseIsoAsLocal((e as any).fechaFinEst) : null,
-            fechaEntrega: (e as any).fechaEntrega ? parseIsoAsLocal((e as any).fechaEntrega) : null
-          })) as unknown as EventoCompleto[];
-          if (this.table) {
-            this.table.reset();
-          }
-        });
-      },
-      error: () => {
-        this.showError('Error al cargar los eventos.');
-      }
-    });
+    this.eventoService
+      .getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params)
+      .pipe(
+        finalize(() => {
+          this.loadingService.hide();
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          console.log(res);
+          setTimeout(() => {
+            this.eventos = res.map((e) => ({
+              ...e,
+              evento: formatEventoNumero(e.tipo.codigo, e.numero),
+              fechaInicio: (e as any).fechaInicio
+                ? parseIsoAsLocal((e as any).fechaInicio)
+                : null,
+              fechaFinReal: (e as any).fechaFinReal
+                ? parseIsoAsLocal((e as any).fechaFinReal)
+                : null,
+              fechaFinEst: (e as any).fechaFinEst
+                ? parseIsoAsLocal((e as any).fechaFinEst)
+                : null,
+              fechaEntrega: (e as any).fechaEntrega
+                ? parseIsoAsLocal((e as any).fechaEntrega)
+                : null,
+            })) as unknown as EventoCompleto[];
+            if (this.table) {
+              this.table.reset();
+            }
+          });
+        },
+        error: () => {
+          this.showError('Error al cargar los eventos.');
+        },
+      });
+  }
+
+  /** Programa un refresco de la grilla con throttle de 2s para evitar múltiples llamadas */
+  private programarRefresco(): void {
+    if (this.refreshTimeout) return;
+    this.refreshTimeout = setTimeout(() => {
+      this.refreshTimeout = null;
+      this.loadItems();
+    }, 2000);
   }
 
   protected override exportarExcelImpl(): void {
@@ -186,7 +327,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-      }
+      },
     });
   }
 
@@ -195,14 +336,18 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     form.append('file', file);
 
     this.loadingService.show();
-    this.eventoService.importarExcel(form).pipe(
-      finalize(() => {
-        this.loadingService.hide();
-      })
-    ).subscribe({
-      next: () => this.afterChange('Eventos importados correctamente.'),
-      error: (err) => this.showError(err?.error?.message || 'Error al importar eventos.')
-    });
+    this.eventoService
+      .importarExcel(form)
+      .pipe(
+        finalize(() => {
+          this.loadingService.hide();
+        }),
+      )
+      .subscribe({
+        next: () => this.afterChange('Eventos importados correctamente.'),
+        error: (err) =>
+          this.showError(err?.error?.message || 'Error al importar eventos.'),
+      });
   }
 
   protected override descargarPlantilla(): void {
@@ -215,15 +360,16 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-      }
+      },
     });
   }
 
   alta(evento: Evento): void {
-    delete evento.id
+    delete evento.id;
     this.eventoService.create(evento).subscribe({
       next: () => this.afterChange('Evento creado correctamente.'),
-      error: (err) => this.showError(err.error.message || 'Error al crear el evento.')
+      error: (err) =>
+        this.showError(err.error.message || 'Error al crear el evento.'),
     });
   }
 
@@ -231,7 +377,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     let eventoCodigo = evento.id ?? '';
     this.eventoService.update(eventoCodigo, evento).subscribe({
       next: () => this.afterChange('Evento actualizado correctamente.'),
-      error: (err) => this.showError(err.error.message || 'Error al modificar el evento.')
+      error: (err) =>
+        this.showError(err.error.message || 'Error al modificar el evento.'),
     });
   }
 
@@ -239,11 +386,15 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     let eventoCodigo = evento.id ?? '';
     this.eventoService.delete(eventoCodigo).subscribe({
       next: () => this.afterChange('Evento eliminado correctamente.'),
-      error: (err) => this.showError(err.error.message || 'Error al eliminar el Evento.')
+      error: (err) =>
+        this.showError(err.error.message || 'Error al eliminar el Evento.'),
     });
   }
 
-  mostrarModalCrud(evento: EventoCompleto | null, modo: 'A' | 'M' | 'AVZ' | 'RTO' | 'RAS' | 'AUT' | 'REC') {
+  mostrarModalCrud(
+    evento: EventoCompleto | null,
+    modo: 'A' | 'M' | 'AVZ' | 'RTO' | 'RAS' | 'AUT' | 'REC',
+  ) {
     // Si es modo de Alta o Modificación, abrir el modal de EventoCrud
     if (modo === 'A' || modo === 'M') {
       const data = { item: evento, modo };
@@ -252,7 +403,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       this.ref = this.dialogService.open(EventoCrud, {
         ...modalConfig,
         header,
-        data
+        data,
       });
 
       if (!this.ref) return;
@@ -266,7 +417,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
             const id = evento?.id ?? '';
             this.editarFormData(id, result);
           } else {
-            console.log(result)
+            console.log(result);
             this.altaFormData(result);
           }
         } else {
@@ -289,12 +440,12 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       rol: '',
       requisitos: [] as any[],
       eventoId: evento?.id ?? '',
-      usuarioId: this.usuarioActivo?.id ?? ''
+      usuarioId: this.usuarioActivo?.id ?? '',
     };
 
     switch (modo) {
       case 'AVZ':
-        header = "Avanzar Evento";
+        header = 'Avanzar Evento';
         // data.reqComentario = evento?.etapaSiguiente?.requiereComentario || false;
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
         data.requisitos = evento?.etapaActualData?.requisitos ?? [];
@@ -302,25 +453,25 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         data.rol = evento?.etapaSiguiente?.rolPreferido ?? '';
         break;
       case 'RTO':
-        header = "Retroceder Evento";
+        header = 'Retroceder Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
         data.proximaEtapa = evento?.etapaSiguiente?.nombre ?? '';
         data.rol = evento?.etapaAnterior?.rolPreferido ?? '';
         break;
       case 'RAS':
-        header = "Reasignar Evento";
+        header = 'Reasignar Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
         data.rol = evento?.etapaActualData?.rolPreferido ?? '';
         break;
       case 'AUT':
-        header = "Autorizar Evento";
+        header = 'Autorizar Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
         data.requisitos = evento?.etapaActualData?.requisitos ?? [];
         data.proximaEtapa = evento?.etapaSiguiente?.nombre ?? '';
         data.rol = evento?.etapaSiguiente?.rolPreferido ?? '';
         break;
       case 'REC':
-        header = "Rechazar Evento";
+        header = 'Rechazar Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
         data.proximaEtapa = evento?.etapaAnterior?.nombre ?? '';
         // data.rol = evento?.etapaActualData?.rolPreferido ?? '';
@@ -331,7 +482,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       ...modalConfig,
       width: '50%',
       header,
-      data
+      data,
     });
 
     if (!this.ref) return;
@@ -344,46 +495,60 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         const body: CircularEvento = {
           eventoId: evento.id || '',
           usuarioId: result.usuarioSeleccionado,
-          comentario: result.comentario
-        }
-        
+          comentario: result.comentario,
+        };
+
         // Verificar si el evento a procesar es el mismo que está en trabajo
         const eventoEnTrabajoId = this.eventoEnTrabajo?.id;
         const eventoActualId = evento.id;
-        const debeLiberar = eventoEnTrabajoId === eventoActualId && (modo === 'AVZ' || modo === 'RTO' || modo === 'RAS');
-        
+        const debeLiberar =
+          eventoEnTrabajoId === eventoActualId &&
+          (modo === 'AVZ' || modo === 'RTO' || modo === 'RAS');
+
         this.loadingService.show();
 
         // Si debe liberar, primero liberar el evento
         if (debeLiberar) {
-          this.eventoAccionesService.liberar(eventoEnTrabajoId || '', 'Liberado automáticamente por acción de usuario').subscribe({
-            next: () => {
-              // Limpiar el evento en trabajo
-              this.eventoTrabajoService.limpiarEvento();
-              this.showSuccess('Evento liberado automáticamente.');
-              
-              // Continuar con la acción original
-              this.ejecutarAccionEvento(modo, body);
-            },
-            error: (err: any) => {
-              this.showError(err.error.message || 'Error al liberar el evento automáticamente.');
-              this.loadingService.hide();
-            }
-          });
+          this.eventoAccionesService
+            .liberar(
+              eventoEnTrabajoId || '',
+              'Liberado automáticamente por acción de usuario',
+            )
+            .subscribe({
+              next: () => {
+                // Limpiar el evento en trabajo
+                this.eventoTrabajoService.limpiarEvento();
+                this.showSuccess('Evento liberado automáticamente.');
+
+                // Continuar con la acción original
+                this.ejecutarAccionEvento(modo, body);
+              },
+              error: (err: any) => {
+                this.showError(
+                  err.error.message ||
+                    'Error al liberar el evento automáticamente.',
+                );
+                this.loadingService.hide();
+              },
+            });
         } else {
           // Ejecutar la acción directamente
           this.ejecutarAccionEvento(modo, body);
         }
       }
     });
-
   }
 
-  private ejecutarAccionEvento(modo: 'AVZ' | 'RTO' | 'RAS' | 'AUT' | 'REC', body: CircularEvento): void {
+  private ejecutarAccionEvento(
+    modo: 'AVZ' | 'RTO' | 'RAS' | 'AUT' | 'REC',
+    body: CircularEvento,
+  ): void {
     if (modo === 'AVZ') {
       this.eventoAccionesService.avanzar(body).subscribe({
         next: () => this.showSuccess('Evento avanzado correctamente.'),
-        error: (err: any) => { this.showError(err.error.message || 'Error al avanzar el evento.') },
+        error: (err: any) => {
+          this.showError(err.error.message || 'Error al avanzar el evento.');
+        },
         complete: () => {
           this.loadItems();
         },
@@ -391,7 +556,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     } else if (modo === 'RTO') {
       this.eventoAccionesService.retroceder(body).subscribe({
         next: () => this.showSuccess('Evento retrocedido correctamente.'),
-        error: (err: any) => this.showError(err.error.message || 'Error al retroceder el evento.'),
+        error: (err: any) =>
+          this.showError(err.error.message || 'Error al retroceder el evento.'),
         complete: () => {
           this.loadItems();
         },
@@ -399,7 +565,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     } else if (modo === 'RAS') {
       this.eventoAccionesService.reasignar(body).subscribe({
         next: () => this.showSuccess('Evento reasignado correctamente.'),
-        error: (err: any) => this.showError(err.error.message || 'Error al reasignar el evento.'),
+        error: (err: any) =>
+          this.showError(err.error.message || 'Error al reasignar el evento.'),
         complete: () => {
           this.loadItems();
         },
@@ -407,7 +574,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     } else if (modo === 'AUT') {
       this.eventoAccionesService.autorizar(body).subscribe({
         next: () => this.showSuccess('Evento autorizado correctamente.'),
-        error: (err: any) => this.showError(err.error.message || 'Error al autorizar el evento.'),
+        error: (err: any) =>
+          this.showError(err.error.message || 'Error al autorizar el evento.'),
         complete: () => {
           this.loadItems();
         },
@@ -416,7 +584,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       delete body.usuarioId; // no se usa en rechazar
       this.eventoAccionesService.rechazar(body).subscribe({
         next: () => this.showSuccess('Evento rechazado correctamente.'),
-        error: (err: any) => this.showError(err.error.message || 'Error al rechazar el evento.'),
+        error: (err: any) =>
+          this.showError(err.error.message || 'Error al rechazar el evento.'),
         complete: () => {
           this.loadItems();
         },
@@ -428,14 +597,14 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   private altaFormData(formData: FormData): void {
     this.eventoService.createAdicional(formData).subscribe({
       next: () => this.afterChange('Evento creado correctamente.'),
-      error: () => this.showError('Error al crear el evento.')
+      error: () => this.showError('Error al crear el evento.'),
     });
   }
 
   private editarFormData(id: string, formData: FormData): void {
     this.eventoService.updateAdicional(id, formData).subscribe({
       next: () => this.afterChange('Evento actualizado correctamente.'),
-      error: () => this.showError('Error al modificar el evento.')
+      error: () => this.showError('Error al modificar el evento.'),
     });
   }
 
@@ -459,7 +628,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   // Nuevos métodos para manejar eventos en trabajo
   tomarEvento(evento: EventoCompleto): void {
     if (this.eventoEnTrabajo) {
-      this.showError('Ya tienes un evento en trabajo. Libera el evento actual antes de tomar otro.');
+      this.showError(
+        'Ya tienes un evento en trabajo. Libera el evento actual antes de tomar otro.',
+      );
       return;
     }
 
@@ -467,11 +638,13 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.eventoAccionesService.tomar(evento.id || '').subscribe({
       next: () => {
         const tiempoInicio = new Date();
-        
+
         // Actualizar a través del servicio
         this.eventoTrabajoService.setEventoEnTrabajo(evento, tiempoInicio);
-        
-        this.showSuccess(`Evento ${evento.tipo.codigo}-${evento.numero?.toString().padStart(3, '0')} tomado.`);
+
+        this.showSuccess(
+          `Evento ${evento.tipo.codigo}-${evento.numero?.toString().padStart(3, '0')} tomado.`,
+        );
         this.loadItems();
         this.cdr.detectChanges();
       },
@@ -480,7 +653,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       },
       complete: () => {
         this.loadingService.hide();
-      }
+      },
     });
   }
 
@@ -491,22 +664,26 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   private verificarEventoEnTrabajo(): void {
     // Solo verificar para el estado local, el servicio maneja la verificación global
-    this.eventoAccionesService.obtenerEventoEnTrabajo(this.usuarioActivo?.id ?? '').subscribe({
-      next: (evento: any) => {
-        if (evento && evento.registroTiempo) {
-          const tiempoInicio = this.resolverTiempoInicio(evento.registroTiempo.inicio);
-          
-          // Actualizar a través del servicio
-          this.eventoTrabajoService.setEventoEnTrabajo(evento, tiempoInicio);
-          return;
-        }
+    this.eventoAccionesService
+      .obtenerEventoEnTrabajo(this.usuarioActivo?.id ?? '')
+      .subscribe({
+        next: (evento: any) => {
+          if (evento && evento.registroTiempo) {
+            const tiempoInicio = this.resolverTiempoInicio(
+              evento.registroTiempo.inicio,
+            );
 
-        this.eventoTrabajoService.limpiarEvento();
-      },
-      error: () => {
-        this.eventoTrabajoService.limpiarEvento();
-      }
-    });
+            // Actualizar a través del servicio
+            this.eventoTrabajoService.setEventoEnTrabajo(evento, tiempoInicio);
+            return;
+          }
+
+          this.eventoTrabajoService.limpiarEvento();
+        },
+        error: () => {
+          this.eventoTrabajoService.limpiarEvento();
+        },
+      });
   }
 
   private resolverTiempoInicio(inicio: string | Date): Date {
@@ -520,7 +697,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
           ahora.getDate(),
           parseInt(match[1], 10),
           parseInt(match[2], 10),
-          parseInt(match[3], 10)
+          parseInt(match[3], 10),
         );
 
         if (tiempoInicio.getTime() > ahora.getTime()) {
@@ -543,11 +720,11 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   abrirSelectorEventoPropio(event: Event) {
     event.preventDefault();
     event.stopPropagation();
-    
+
     this.selecionarEventoPropio = this.dialogService.open(SelEventoPropio, {
       ...modalConfig,
-      header: "Seleccionar Evento Propio a tomar",
-      focusOnShow: false
+      header: 'Seleccionar Evento Propio a tomar',
+      focusOnShow: false,
     });
 
     if (!this.selecionarEventoPropio) return;
@@ -558,5 +735,4 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       }
     });
   }
-
 }

@@ -1,9 +1,11 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
-import { BadgeClickComponent, LoadingSpinnerComponent } from '@app/components/index';
+import {
+  BadgeClickComponent,
+  LoadingSpinnerComponent,
+} from '@app/components/index';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
-import { Evento } from '../../../evento/evento';
 import { SelectBase } from '@app/components/select-base/select-base';
 import { EventoService } from '@core/services/evento';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
@@ -26,9 +28,9 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
     NgIcon,
     TooltipModule,
     NgbTooltipModule,
-  ]
+  ],
 })
-export class SelEventoPropio extends SelectBase<Evento> {
+export class SelEventoPropio extends SelectBase<EventoCompleto> {
   private eventoService = inject(EventoService);
   protected config = inject(DynamicDialogConfig);
   private drawerService = inject(DrawerService);
@@ -36,14 +38,14 @@ export class SelEventoPropio extends SelectBase<Evento> {
   filtroEvento: FiltroActivo = FiltroActivo.FALSE;
 
   eventos: EventoCompleto[] = [];
-  eventoSeleccionado!: Evento;
+  eventoSeleccionado!: EventoCompleto;
   modalVisible: boolean = false;
 
   constructor() {
     super(
       inject(ChangeDetectorRef),
       inject(MessageService),
-      inject(ConfirmationService)
+      inject(ConfirmationService),
     );
   }
 
@@ -63,33 +65,40 @@ export class SelEventoPropio extends SelectBase<Evento> {
 
   loadItems() {
     this.loadingSelect = true;
-    this.eventoService.getAllComplete(this.filtroEvento, {propio:true}).pipe(
-      finalize(() => {
-        this.loadingSelect = false
-        this.cdr.detectChanges();
-      })
-    ).subscribe({
-      next: (res: EventoCompleto[]) => {
-        // console.log(res);
-        // this.eventos = res;
-        this.eventos = res.map(evento => ({
-          ...evento,
-          evento: formatEventoNumero(evento.tipo.codigo, evento.numero)
-        }));
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los eventos' });
-      }
-    });
+    this.eventoService
+      .getAllComplete(this.filtroEvento, { propio: true })
+      .pipe(
+        finalize(() => {
+          this.loadingSelect = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (res: EventoCompleto[]) => {
+          // console.log(res);
+          // this.eventos = res;
+          this.eventos = res.map((evento) => ({
+            ...evento,
+            evento: formatEventoNumero(evento.tipo.codigo, evento.numero),
+          }));
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar los eventos',
+          });
+        },
+      });
   }
 
-  select(evento: Evento) {
+  select(evento: EventoCompleto) {
     this.eventoSeleccionado = evento;
-    this.submit()
+    this.submit();
   }
 
-  toModel(): Evento {
-    let evento: Evento = this.eventoSeleccionado;
+  toModel(): EventoCompleto {
+    let evento: EventoCompleto = this.eventoSeleccionado;
     return evento;
   }
 }

@@ -1,8 +1,8 @@
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { environment } from '@/environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Evento, Evento_requisito, Evento_requisito_completo, EventoCompleto, EventoDocumentacion, NotionPageResult, VidaEvento } from '@core/interfaces/evento';
+import { Evento, Evento_requisito, Evento_requisito_completo, EventoCompleto, EventoDocumentacion, EventoVistaOpciones, EventoVistaResponse, NotionPageResult, VidaEvento } from '@core/interfaces/evento';
 import { Observable, tap } from 'rxjs';
 
 @Injectable({
@@ -61,6 +61,25 @@ export class EventoService {
 
   getByIdCompleto(eventoId: string): Observable<EventoCompleto> {
     return this.http.get<EventoCompleto>(`${this.URL_COMPLETA}/evento/${eventoId}/completo`);
+  }
+
+  getEventoVista(eventoId: string, opciones?: EventoVistaOpciones): Observable<EventoVistaResponse> {
+    let params = new HttpParams();
+
+    if (opciones?.incluirActividad !== undefined) {
+      params = params.set('incluirActividad', String(opciones.incluirActividad));
+    }
+    if (opciones?.incluirAdjuntos !== undefined) {
+      params = params.set('incluirAdjuntos', String(opciones.incluirAdjuntos));
+    }
+    if (opciones?.incluirRequisitos !== undefined) {
+      params = params.set('incluirRequisitos', String(opciones.incluirRequisitos));
+    }
+    if (opciones?.adjuntosActivo !== undefined) {
+      params = params.set('adjuntosActivo', String(opciones.adjuntosActivo));
+    }
+
+    return this.http.get<EventoVistaResponse>(`${this.URL_COMPLETA}/evento/${eventoId}/vista`, { params });
   }
 
   getAdjuntos(eventoId: string): Observable<any[]> {

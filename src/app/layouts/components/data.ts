@@ -138,12 +138,24 @@ export const menuItems: MenuItemType[] = [
     url: '/kb/kbs',
     permisoClave: PermisoClave.KB
   },
+  {
+    label: 'Novedades',
+    icon: 'lucideMegaphone',
+    url: '/novedad/historial',
+    permisoClave: PermisoClave.NOV
+  },
   { label: '', isTitle: true },
   {
     label: 'Parametros Sistema',
     icon: 'lucideSlidersHorizontal',
     url: '/parametro/parametros',
     permisoClave: PermisoClave.SISTEMA
+  },
+  {
+    label: 'Tipos de Trabajo',
+    icon: 'lucideBriefcase',
+    url: '/hora/categorias',
+    permisoClave: PermisoClave.TIPO_TRABAJO
   },
   {
     label: 'Reportes',
