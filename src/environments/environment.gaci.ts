@@ -1,5 +1,5 @@
 export const environment = {
 
-    BASE_URL:"https://gem-api.julitorossian.dev"
+    BASE_URL:"__BASE_URL__"
 
 };
