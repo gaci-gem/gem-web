@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core'
+import { Component, inject, OnInit } from '@angular/core'
 import { AppLogo } from '@app/components/app-logo'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'
@@ -126,7 +126,7 @@ import { UserStorageService } from '@core/services/user-storage'
   `,
   styles: ``,
 })
-export class SignIn {
+export class SignIn implements OnInit {
   constructor(public layout: LayoutStoreService) { }
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -136,6 +136,22 @@ export class SignIn {
 
   showPassword: boolean = false
   cargando: boolean = false;
+
+  ngOnInit(): void {
+    // Si hay returnUrl apuntando a gem-docs Y ya tenemos sesión válida,
+    // redirigir directo sin mostrar el login form
+    const returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
+    if (returnUrl && returnUrl.includes('localhost:4201')) {
+      this.authService.verifyToken().subscribe(isValid => {
+        if (isValid) {
+          const token = this.authService.getAccessToken();
+          const separator = returnUrl.includes('?') ? '&' : '?';
+          window.location.href = `${returnUrl}${separator}token=${token}`;
+        }
+        // Si no está logueado, mostrar el form normalmente
+      });
+    }
+  }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword
@@ -169,8 +185,18 @@ export class SignIn {
   loginOk() {
     let returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
     let inicio_default = this.userStorage.getUsuario()?.pagina_inicio;
-    // console.log('returnUrl:', returnUrl);
 
+    // Si returnUrl apunta a gem-docs (puerto 4201), pasar token en la URL
+    // ya que localStorage no es compartido entre origins diferentes
+    // IMPORTANTE: usar window.location.href para cross-origin, router.navigateByUrl no sirve
+    if (returnUrl && returnUrl.includes('localhost:4201')) {
+      const token = this.authService.getAccessToken();
+      const separator = returnUrl.includes('?') ? '&' : '?';
+      window.location.href = `${returnUrl}${separator}token=${token}`;
+      return;
+    }
+
+    // Comportamiento normal: gem-web redirect
     this.router.navigateByUrl(returnUrl || inicio_default || '/');
   }
 
