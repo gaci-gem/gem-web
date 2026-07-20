@@ -1,16 +1,18 @@
 // logout-flow.spec.ts
-// Slice 2 logout flow seed. Asserts the logout wiring for REQ-logout-all-envs:
+// Slice 2 logout flow seed + Slice 3 wires. Asserts the logout wiring for
+// REQ-logout-all-envs:
 // - fire POST /auth/logout with `withCredentials: true`;
-// - clear `localStorage` JWT (Q4 LOCKED, hydrates cookie-first future path);
+// - clear `localStorage` JWT (Q4 LOCKED);
 // - post a `{ type: 'logout', at: <ISO> }` message on `BroadcastChannel('gem-auth')`
 //   after logout resolves so `gem-docs` can clear its session in lockstep.
 //
-// Status: RED on origin/desa — `AuthService.logout()` does NOT yet wire any of
-// the three behaviours above. The LS-clear assertion today IS GREEN because
+// Slice 2 status: `AuthService.logout()` did NOT yet wire any of the three
+// behaviours above. The LS-clear assertion today IS GREEN because
 // `clearTokens()` already wipes `localStorage` + `sessionStorage` keys; the
-// other two assertions are documented as pending until Slice 3 (per design §
-// 9 and tasks.md § Slice 3 owner) lands the AuthService.logout() +
-// BroadcastChannel('gem-auth') wiring and the `withCredentials` interceptor.
+// other two were documented as pending until Slice 3.
+// Slice 3 status: `AuthService.logout()` fires `POST /auth/logout` and posts
+// `BroadcastChannel('gem-auth')` after resolve. The two pending markers now
+// flip to real assertions — see task 3.3 in tasks.md.
 
 import { TestBed } from '@angular/core/testing'
 import { provideHttpClient } from '@angular/common/http'
@@ -28,6 +30,18 @@ import { HeartbeatService } from '@core/services/heartbeat.service'
 describe('AuthService.logout() — REQ-logout-all-envs (Slice 2 seed, with Slice 3 wires)', () => {
   const ACCESS_KEY = 'access_token'
   const REFRESH_KEY = 'refresh_token'
+  const LOGOUT_PATH = '/auth/logout'
+
+  // Drain helper: Slice 3 wires AuthService.logout() to fire POST /auth/logout
+  // as a fire-and-forget cookie clear. Tests that don't care about that HTTP
+  // call (the GREEN-pre LS-clear / heartbeat-stop group) still need to flush
+  // the request so `httpMock.verify()` in afterEach stays clean.
+  function drainLogoutRequest() {
+    const open = httpMock.match(
+      (r) => r.method === 'POST' && r.url.endsWith(LOGOUT_PATH),
+    )
+    open.forEach((r) => r.flush({ ok: true }))
+  }
 
   let service: AuthService
   let httpMock: HttpTestingController
@@ -79,6 +93,7 @@ describe('AuthService.logout() — REQ-logout-all-envs (Slice 2 seed, with Slice
     localStorage.removeItem(REFRESH_KEY)
     sessionStorage.removeItem(ACCESS_KEY)
     sessionStorage.removeItem(REFRESH_KEY)
+    drainLogoutRequest()
     httpMock.verify()
   })
 
@@ -115,18 +130,12 @@ describe('AuthService.logout() — REQ-logout-all-envs (Slice 2 seed, with Slice
   })
 
   // -------------------------------------------------------------------------
-  // RED-seeds for Slice 3 wires. Document the assertions here so reviewers
-  // can see the desired contract; the `pending()` markers keep CI green and
-  // signal that Slice 3 owns the wiring.
+  // Slice 3 wires — formerly pending(), now real assertions. Spec checks
+  // REQ-cross-app-cors + REQ-logout-all-envs end-to-end through httpMock +
+  // the real BroadcastChannel in the Chromium runner.
   // -------------------------------------------------------------------------
 
   it('fires POST /auth/logout with withCredentials=true (Slice 3 wire)', () => {
-    pending(
-      'Slice 3 wires AuthService.logout() to fire POST /auth/logout with ' +
-        'withCredentials=true (REQ-cross-app-cors + REQ-logout-all-envs). ' +
-        'See design § 9 and tasks.md § Slice 3.3.',
-    )
-
     service.logout()
 
     const req = httpMock.expectOne(
@@ -138,26 +147,74 @@ describe('AuthService.logout() — REQ-logout-all-envs (Slice 2 seed, with Slice
     req.flush({ ok: true })
   })
 
-  it("posts { type: 'logout', at: <ISO> } on BroadcastChannel('gem-auth') after resolve (Slice 3 wire)", () => {
-    pending(
-      'Slice 3 wires a BroadcastChannel("gem-auth") post on logout so ' +
-        'gem-docs can clear its session in lockstep. See design § 9 and ' +
-        'tasks.md § Slice 3.3.',
-    )
-
+  it("posts { type: 'logout', at: <ISO> } on BroadcastChannel('gem-auth') after resolve (Slice 3 wire)", async () => {
     const received: string[] = []
     const bc = new BroadcastChannel('gem-auth')
     bc.onmessage = (ev) => received.push(JSON.stringify(ev.data ?? {}))
 
     service.logout()
 
-    // The post is async-after-resolve; for the green path we expect one
-    // message whose envelope contains type=logout and a valid ISO `at`.
+    const req = httpMock.expectOne(
+      (r) =>
+        r.method === 'POST' &&
+        r.url === `${envModule.apiBaseUrl || ''}/auth/logout`,
+    )
+    expect(req.request.withCredentials).toBeTrue()
+    req.flush({ ok: true })
+
+    // BroadcastChannel delivery is async (macrotask). Poll the queue until
+    // the message arrives or the timeout expires. In CI this resolves in
+    // single-digit milliseconds; the 1s ceiling is a defensive cap.
+    await new Promise<void>((resolve) => {
+      if (received.length >= 1) {
+        return resolve()
+      }
+      const deadline = Date.now() + 1000
+      const interval = setInterval(() => {
+        if (received.length >= 1 || Date.now() > deadline) {
+          clearInterval(interval)
+          resolve()
+        }
+      }, 5)
+    })
+
+    bc.close()
     expect(received.length).toBe(1)
     const parsed = JSON.parse(received[0])
     expect(parsed.type).toBe('logout')
     expect(typeof parsed.at).toBe('string')
     expect(new Date(parsed.at).toString()).not.toBe('Invalid Date')
+  })
+
+  it('broadcasts logout even when POST /auth/logout fails (defensive)', async () => {
+    // The BC post is a fire-and-forget side-channel. If gem-api is briefly
+    // unreachable (network blip, restart), the cookie may not clear server-side
+    // but gem-docs MUST still drop its session to avoid a zombie-authed UI.
+    const received: string[] = []
+    const bc = new BroadcastChannel('gem-auth')
+    bc.onmessage = (ev) => received.push(JSON.stringify(ev.data ?? {}))
+
+    service.logout()
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.method === 'POST' &&
+        r.url === `${envModule.apiBaseUrl || ''}/auth/logout`,
+    )
+    req.flush('service unavailable', { status: 503, statusText: 'Service Unavailable' })
+
+    await new Promise<void>((resolve) => {
+      if (received.length >= 1) return resolve()
+      const deadline = Date.now() + 1000
+      const interval = setInterval(() => {
+        if (received.length >= 1 || Date.now() > deadline) {
+          clearInterval(interval)
+          resolve()
+        }
+      }, 5)
+    })
+
     bc.close()
+    expect(received.length).toBe(1)
   })
 })
