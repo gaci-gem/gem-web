@@ -100,6 +100,35 @@ export class AuthService {
     this.userStorage.clearUsuario()
     this.permisosService.clearPermisos();
     // localStorage.removeItem('__SIMPLE_ANGULAR_CONFIG__'); // Limpia configuración de la app
+
+    // Slice 3 (shared-auth-cross-origin): fire POST /auth/logout so the server
+    // clears the auth cookie (Slice 1 — `gem-api/src/modules/auth/cookie-builder.ts`
+    // emits a past-Expires Set-Cookie on /auth/logout). Credentials ride on the
+    // request via the cookie; `withCredentials: true` ensures the browser
+    // includes the cookie on the cross-origin call so the server can identify
+    // the session and clear it. After the request resolves (success or failure)
+    // we broadcast the logout to gem-docs via BroadcastChannel('gem-auth') so
+    // gem-docs can clear its own session state in lockstep
+    // (REQ-logout-all-envs, design § 9).
+    this.http
+      .post(`${this.URL_COMPLETA}/auth/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => this.broadcastLogout(),
+        error: () => this.broadcastLogout(),
+      })
+  }
+
+  private broadcastLogout(): void {
+    // BroadcastChannel is supported on Chromium/Firefox and Safari 15+. Pre-15
+    // Safari throws — we swallow because the gem-docs public landing renders
+    // without auth even if the listener is absent (DR-5 in design.md).
+    try {
+      const channel = new BroadcastChannel('gem-auth')
+      channel.postMessage({ type: 'logout', at: new Date().toISOString() })
+      channel.close()
+    } catch {
+      // ignore — see DR-5.
+    }
   }
 
 }
