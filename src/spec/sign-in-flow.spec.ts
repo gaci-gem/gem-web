@@ -33,7 +33,8 @@ function resetEnv() {
     cookieOnlyAuth: false,
     useCookieAuth: false,
     trustedReturnOrigins: [],
-  })
+    REVERT_LITERAL: false,
+  } as any)
 }
 
 describe('SignIn.decideRedirect() — REQ-sign-in-redirect + REQ-open-redirect-guard', () => {
@@ -156,6 +157,21 @@ describe('SignIn.decideRedirect() — REQ-sign-in-redirect + REQ-open-redirect-g
 
     it('returns null for undefined', () => {
       expect(component.decideRedirect(undefined)).toBeNull()
+    })
+  })
+
+  describe('REVERT_LITERAL fail-safe rollback', () => {
+    it('bypasses allowlist and performs URL-token handover to localhost:4201 if REVERT_LITERAL is active', () => {
+      setEnv({ REVERT_LITERAL: true } as any)
+      const decision = component.decideRedirect('http://localhost:4201/welcome')
+      expect(decision?.kind).toBe('cross-origin-token')
+      expect(decision?.url).toContain('http://localhost:4201/welcome')
+      expect(decision?.url).toContain('token=jwt.test.token')
+    })
+
+    it('returns null for other untrusted origins even if REVERT_LITERAL is active', () => {
+      setEnv({ REVERT_LITERAL: true } as any)
+      expect(component.decideRedirect('https://evil.com/welcome')).toBeNull()
     })
   })
 })

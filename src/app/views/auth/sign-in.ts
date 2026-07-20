@@ -194,6 +194,18 @@ export class SignIn {
   decideRedirect(returnUrl: string | undefined): RedirectDecision | null {
     if (!returnUrl) return null
 
+    const REVERT_LITERAL = (environment as any).REVERT_LITERAL ?? false;
+
+    // Fail-safe rollback: old localhost:4201 literal redirection
+    if (REVERT_LITERAL && returnUrl.includes('localhost:4201')) {
+      const token = this.authService.getAccessToken()
+      const separator = returnUrl.includes('?') ? '&' : '?'
+      return {
+        kind: 'cross-origin-token',
+        url: `${returnUrl}${separator}token=${token ?? ''}`,
+      }
+    }
+
     if (isTrustedReturnUrl(returnUrl, environment.trustedReturnOrigins)) {
       if (environment.useCookieAuth) {
         return { kind: 'cross-origin-cookie', url: returnUrl }

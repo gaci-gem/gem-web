@@ -11,6 +11,7 @@ export const environment = {
   cookieName: 'token',
   cookieOnlyAuth: false,
   useCookieAuth: false,
+  REVERT_LITERAL: false,
 
   trustedReturnOrigins: [
     'http://localhost:4201',

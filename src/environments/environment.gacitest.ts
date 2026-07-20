@@ -12,6 +12,7 @@ export const environment = {
   cookieName: 'token',
   cookieOnlyAuth: true,
   useCookieAuth: true,
+  REVERT_LITERAL: false,
 
   trustedReturnOrigins: [
     'https://gem-docs.julitorossian.dev',

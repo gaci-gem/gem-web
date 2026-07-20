@@ -14,6 +14,7 @@ export const environment = {
   cookieName: 'token',
   cookieOnlyAuth: true,
   useCookieAuth: true,
+  REVERT_LITERAL: false,
 
   // TODO(prod-ops): replace placeholder LAN IPs with the real allowlist when
   // ops confirms the production LAN segment (D2).

@@ -16,6 +16,7 @@ export const environment = {
   cookieName: 'token',
   cookieOnlyAuth: false,
   useCookieAuth: false,
+  REVERT_LITERAL: false,
 
   // Origin allowlist for the open-redirect guard. Empty by default; the
   // per-environment file overrides it. NEVER widen this without explicit
