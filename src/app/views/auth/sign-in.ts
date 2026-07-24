@@ -11,6 +11,16 @@ import { finalize } from 'rxjs'
 import { LayoutStoreService } from '@core/services/layout-store.service'
 import { UsuarioService } from '@core/services/usuario'
 import { UserStorageService } from '@core/services/user-storage'
+import { environment } from '@/environments/environment'
+import { isTrustedReturnUrl } from '@core/utils/is-trusted-return-url'
+
+// Internal — surfaced for testability of the redirect decision without
+// triggering `window.location.href` from a Karma test (which would navigate
+// the runner away).
+export type RedirectDecision =
+  | { kind: 'cross-origin-cookie'; url: string }
+  | { kind: 'cross-origin-token'; url: string }
+  | { kind: 'fallback'; url: string }
 
 @Component({
   selector: 'app-sign-in',
@@ -137,18 +147,13 @@ export class SignIn implements OnInit {
   showPassword: boolean = false
   cargando: boolean = false;
 
-  ngOnInit(): void {
-    // Si hay returnUrl apuntando a gem-docs Y ya tenemos sesión válida,
-    // redirigir directo sin mostrar el login form
+  ngOnInit() {
     const returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
-    if (returnUrl && returnUrl.includes('localhost:4201')) {
+    if (returnUrl) {
       this.authService.verifyToken().subscribe(isValid => {
         if (isValid) {
-          const token = this.authService.getAccessToken();
-          const separator = returnUrl.includes('?') ? '&' : '?';
-          window.location.href = `${returnUrl}${separator}token=${token}`;
+          this.loginOk();
         }
-        // Si no está logueado, mostrar el form normalmente
       });
     }
   }
@@ -183,21 +188,62 @@ export class SignIn implements OnInit {
   }
 
   loginOk() {
-    let returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
-    let inicio_default = this.userStorage.getUsuario()?.pagina_inicio;
+    const returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
+    const inicio_default = this.userStorage.getUsuario()?.pagina_inicio;
 
-    // Si returnUrl apunta a gem-docs (puerto 4201), pasar token en la URL
-    // ya que localStorage no es compartido entre origins diferentes
-    // IMPORTANTE: usar window.location.href para cross-origin, router.navigateByUrl no sirve
-    if (returnUrl && returnUrl.includes('localhost:4201')) {
-      const token = this.authService.getAccessToken();
-      const separator = returnUrl.includes('?') ? '&' : '?';
-      window.location.href = `${returnUrl}${separator}token=${token}`;
-      return;
+    // Slice 2 (shared-auth-cross-origin): the helper gates the open-redirect
+    // attack surface and decouples the dev URL-token handover from a hardcoded
+    // hostname. The allowlist is intentionally env-driven — see
+    // environment*.ts (trustedReturnOrigins).
+    const decision = this.decideRedirect(returnUrl)
+    this.applyRedirect(decision, inicio_default)
+  }
+
+  // Exposed for spec assertions — keeps the decision logic independent of the
+  // browser side-effect so `window.location.href = X` is never invoked from a
+  // Karma test (which would navigate the runner away mid-`it`).
+  decideRedirect(returnUrl: string | undefined): RedirectDecision | null {
+    if (!returnUrl) return null
+
+    const REVERT_LITERAL = (environment as any).REVERT_LITERAL ?? false;
+
+    // Fail-safe rollback: old localhost:4201 literal redirection
+    if (REVERT_LITERAL && returnUrl.includes('localhost:4201')) {
+      const token = this.authService.getAccessToken()
+      const separator = returnUrl.includes('?') ? '&' : '?'
+      return {
+        kind: 'cross-origin-token',
+        url: `${returnUrl}${separator}token=${token ?? ''}`,
+      }
     }
 
-    // Comportamiento normal: gem-web redirect
-    this.router.navigateByUrl(returnUrl || inicio_default || '/');
+    if (isTrustedReturnUrl(returnUrl, environment.trustedReturnOrigins)) {
+      if (environment.useCookieAuth) {
+        return { kind: 'cross-origin-cookie', url: returnUrl }
+      }
+      const token = this.authService.getAccessToken()
+      const separator = returnUrl.includes('?') ? '&' : '?'
+      return {
+        kind: 'cross-origin-token',
+        url: `${returnUrl}${separator}token=${token ?? ''}`,
+      }
+    }
+    return null
+  }
+
+  private applyRedirect(decision: RedirectDecision | null, fallback: string | undefined) {
+    if (decision?.kind === 'cross-origin-cookie') {
+      // Test/Prod: cookie is the credential. Navigate with no token in URL.
+      window.location.href = decision.url
+      return
+    }
+    if (decision?.kind === 'cross-origin-token') {
+      // Dev: trusted-allowed localhost origin gets the JWT in the URL because
+      // cookies don't cross origins in dev (no Domain).
+      window.location.href = decision.url
+      return
+    }
+    this.router.navigateByUrl(fallback || '/')
   }
 
 }
