@@ -13,3 +13,200 @@
   align-items: center;
   gap: 8px;
 }
+
+.hours-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hours-section-heading h5 {
+  margin: 0;
+}
+
+.mobile-field-label {
+  display: none;
+}
+
+.touch-action {
+  min-height: 44px;
+}
+
+.hora-form__actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.hora-form__actions .invalid-feedback {
+  flex-basis: 100%;
+}
+
+@media (max-width: 767px) {
+  .hora-form {
+    padding-inline: .25rem;
+  }
+
+  .hours-section-heading {
+    display: block;
+  }
+
+  .hours-section-heading .text-muted {
+    display: block;
+    margin-top: .25rem;
+  }
+
+  .hora-form .col-12.border {
+    padding: 1rem !important;
+  }
+
+  .hora-form > .col-12.border [formgroupname] {
+    margin: 0;
+    padding: 1rem 0;
+    border-top: 1px solid var(--surface-200);
+  }
+
+  .hora-form > .col-12.border [formgroupname] > div {
+    width: 100%;
+    padding-inline: 0;
+  }
+
+  .mobile-field-label {
+    display: block;
+    margin-bottom: .35rem;
+    font-weight: 600;
+  }
+
+  .hora-form .p-datepicker,
+  .hora-form .p-datepicker-input,
+  .hora-form p-select,
+  .hora-form .p-select,
+  .hora-form input,
+  .hora-form select {
+    width: 100%;
+  }
+
+  .hora-form > .col-12.border [formgroupname] .col-6 {
+    width: 50%;
+  }
+
+  .hora-form > .col-12.border [formgroupname] .col-2.d-flex {
+    min-height: 44px;
+  }
+
+  .hora-form > .col-12.border [formgroupname] .col-2.d-flex button {
+    min-height: 44px;
+  }
+
+  .hora-form__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: .75rem 0;
+    background: var(--surface-0);
+  }
+
+  .hora-form__actions button {
+    flex: 1;
+  }
+}
+
+.mobile-hours-editor {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-200);
+  border-radius: 12px;
+  background: var(--surface-50);
+}
+
+.mobile-hours-editor__heading,
+.mobile-hour-card__header,
+.mobile-hour-card__times,
+.mobile-hour-card__actions {
+  display: flex;
+  gap: .75rem;
+}
+
+.mobile-hours-editor__heading,
+.mobile-hour-card__header,
+.mobile-hour-card__actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-hours-editor__heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.mobile-hours-editor__heading p {
+  margin: .25rem 0 0;
+  color: var(--text-color-secondary);
+  font-size: .875rem;
+}
+
+.mobile-hours-editor__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.mobile-hour-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-200);
+  border-radius: 10px;
+  background: var(--surface-0);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.mobile-hour-card__header {
+  align-items: flex-end;
+}
+
+.mobile-hour-card__event {
+  flex: 1;
+}
+
+.mobile-hour-card__header > button {
+  flex: 0 0 44px;
+}
+
+.mobile-hour-card label {
+  display: block;
+  margin-bottom: .35rem;
+  font-weight: 600;
+}
+
+.mobile-hour-card__times > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-hour-card .p-datepicker,
+.mobile-hour-card .p-datepicker-input,
+.mobile-hour-card .p-select,
+.mobile-hour-card p-select,
+.mobile-hour-card input,
+.mobile-hour-card select {
+  width: 100%;
+}
+
+.mobile-hour-card__field {
+  width: 100%;
+}
+
+.mobile-hour-card__actions {
+  justify-content: flex-end;
+  padding-top: .75rem;
+  border-top: 1px solid var(--surface-200);
+}
+
+.mobile-hours-editor__empty {
+  margin: 0;
+  color: var(--text-color-secondary);
+}

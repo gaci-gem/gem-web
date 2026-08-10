@@ -15,3 +15,159 @@
   font-size: 0.875rem;
   background: var(--surface-100);
 }
+
+.mobile-hours-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.mobile-period-filter {
+  display: grid;
+  gap: .35rem;
+  margin-bottom: 1rem;
+}
+
+.mobile-period-filter label {
+  font-weight: 600;
+}
+
+.mobile-period-filter .p-datepicker,
+.mobile-period-filter .p-datepicker-input {
+  width: 100%;
+}
+
+.day-card,
+.interval-card {
+  border: 1px solid var(--surface-200);
+  border-radius: 12px;
+  background: var(--surface-0);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.day-card {
+  padding: 1rem;
+}
+
+.day-card__header,
+.interval-card__heading,
+.day-card__meta,
+.day-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.day-card__eyebrow {
+  display: block;
+  color: var(--text-color-secondary);
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.day-card h2 {
+  margin: .15rem 0 0;
+  font-size: 1.05rem;
+  text-transform: capitalize;
+}
+
+.day-card__total {
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.day-card__meta {
+  justify-content: flex-start;
+  margin: .8rem 0;
+  color: var(--text-color-secondary);
+  font-size: .875rem;
+}
+
+.day-card__toggle {
+  margin-left: auto;
+  padding: 0;
+  min-height: 44px;
+}
+
+.interval-list {
+  display: grid;
+  gap: .75rem;
+}
+
+.interval-card {
+  padding: .85rem;
+  background: var(--surface-50);
+  box-shadow: none;
+}
+
+.interval-card__heading {
+  align-items: flex-start;
+}
+
+.interval-card__heading strong {
+  overflow-wrap: anywhere;
+}
+
+.interval-card__duration {
+  color: var(--primary-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.interval-card__details {
+  display: grid;
+  gap: .55rem;
+  margin: .75rem 0 0;
+  font-size: .875rem;
+}
+
+.interval-card__details > div {
+  display: grid;
+  grid-template-columns: 5.25rem 1fr;
+  gap: .5rem;
+}
+
+.interval-card__details dt {
+  color: var(--text-color-secondary);
+}
+
+.interval-card__details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.interval-card__detail {
+  align-items: start;
+}
+
+.day-card__actions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--surface-200);
+}
+
+.touch-action {
+  min-height: 44px;
+  padding-inline: .75rem;
+}
+
+.mobile-empty-state,
+.empty-intervals {
+  margin: 0;
+  color: var(--text-color-secondary);
+}
+
+@media (min-width: 768px) {
+  .mobile-hours-list,
+  .mobile-period-filter {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .day-card__actions .touch-action {
+    flex: 1;
+  }
+}

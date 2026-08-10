@@ -1,7 +1,10 @@
 .footer {
-  transition: background-color 0.3s ease;
   display: block;
   padding-right: 2% !important;
+  // Sin `transition`: estaba provocando una animación lenta al cambiar de theme
+  // (0.3s ease en background-color) que se notaba porque el resto de la UI
+  // cambiaba instantáneamente. Sacarla hace que el footer cambie al ritmo
+  // del resto de la página cuando el usuario cambia entre light/dark.
 }
 
 /* Color para builds de test/develop/staging */

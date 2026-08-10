@@ -2,8 +2,9 @@
 @if (loading) {
 <app-loading-spinner></app-loading-spinner>
 }
+@if (!loading) {
 <div class="container">
-  <form class="row g-3 needs-validation" [formGroup]="form" (ngSubmit)="accion($event)" novalidate>
+  <form class="row g-3 needs-validation hora-form" [formGroup]="form" (ngSubmit)="accion($event)" novalidate>
     <!-- Campos de TipoEvento -->
     <div class="col-md-3" hidden>
       <label for="id" class="form-label">Id</label>
@@ -12,12 +13,133 @@
 
     <div class="col-md-3">
       <label for="fecha" class="form-label">Fecha</label>
-      <input id="fecha" type="date" formControlName="fecha" class="form-control" placeholder="fecha" required />
+      <input id="fecha" type="date" formControlName="fecha" class="form-control" placeholder="fecha" required aria-describedby="fecha-error" />
+      @if (get('fecha')?.invalid && get('fecha')?.touched) {
+      <div id="fecha-error" class="invalid-feedback d-block">La fecha es obligatoria.</div>
+      }
     </div>
 
-    <!-- Sección de horas -->
+    @if (isMobile()) {
+    <section class="mobile-hours-editor" aria-labelledby="mobile-hours-title">
+      <div class="mobile-hours-editor__heading">
+        <div>
+          <h2 id="mobile-hours-title">Intervalos de trabajo</h2>
+          <p>Agregá cada bloque de tiempo del día.</p>
+        </div>
+        <button type="button" class="btn btn-success touch-action" (click)="addHora()">
+          <ng-icon name="lucidePlus" /> Agregar intervalo
+        </button>
+      </div>
+
+      <div formArrayName="horas" class="mobile-hours-editor__list">
+        @for (hora of horasFormArray.controls; track $index) {
+        <article [formGroupName]="$index" class="mobile-hour-card">
+          <header class="mobile-hour-card__header">
+            <div class="mobile-hour-card__event">
+              <label [for]="'mobile-evento-' + $index">Evento</label>
+              <select class="form-control" [id]="'mobile-evento-' + $index" formControlName="eventoId">
+                <option [ngValue]="null">-- Seleccionar evento --</option>
+                @for (e of eventos; track e.id) {
+                <option [ngValue]="e.id">{{ e.titulo }}</option>
+                }
+              </select>
+              @if (hora.get('eventoId')?.invalid && hora.get('eventoId')?.touched) {
+              <div class="invalid-feedback d-block">Seleccioná un evento.</div>
+              }
+            </div>
+            <button type="button" class="btn btn-icon btn-outline-info touch-action" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento para el intervalo {{ $index + 1 }}">
+              <ng-icon name="lucideSearch" />
+            </button>
+          </header>
+
+          <div class="mobile-hour-card__times">
+            <div>
+              <label [for]="getTimeInputId($index, 'inicio')">Inicio</label>
+              <p-datepicker
+                [inputId]="getTimeInputId($index, 'inicio')"
+                formControlName="inicio"
+                [timeOnly]="true"
+                hourFormat="24"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [showButtonBar]="true"
+                [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+                (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"
+              ></p-datepicker>
+              @if (hora.get('inicio')?.invalid && hora.get('inicio')?.touched) {
+              <div class="invalid-feedback d-block">Ingresá la hora de inicio.</div>
+              }
+            </div>
+            <div>
+              <label [for]="getTimeInputId($index, 'fin')">Final</label>
+              <p-datepicker
+                [inputId]="getTimeInputId($index, 'fin')"
+                formControlName="fin"
+                [timeOnly]="true"
+                hourFormat="24"
+                [showIcon]="true"
+                [iconDisplay]="'input'"
+                [showButtonBar]="true"
+                [invalid]="!!(hora.errors?.['overlap'] || hora.errors?.['invalidTimeRange'])"
+                (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"
+              ></p-datepicker>
+              @if (hora.get('fin')?.invalid && hora.get('fin')?.touched) {
+              <div class="invalid-feedback d-block">Ingresá la hora final.</div>
+              }
+            </div>
+          </div>
+          @if (hora.errors?.['overlap']) {
+          <div class="invalid-feedback d-block" role="alert">Este horario se superpone con otro intervalo.</div>
+          }
+          @if (hora.errors?.['invalidTimeRange']) {
+          <div class="invalid-feedback d-block" role="alert">El final debe ser mayor que el inicio.</div>
+          }
+
+          <div class="mobile-hour-card__field">
+            <label [for]="'mobile-categoria-' + $index">Categoría</label>
+            <p-select
+              [inputId]="'mobile-categoria-' + $index"
+              [options]="categorias"
+              formControlName="categoriaCodigo"
+              optionLabel="descripcion"
+              optionValue="codigo"
+              placeholder="Seleccionar categoría"
+              appendTo="body"
+            >
+              <ng-template let-item pTemplate="selectedItem">
+                @if (item) {
+                <span class="categoria-dot" [style.background]="item.color"></span>{{ item.descripcion }}
+                } @else { <span>Seleccionar categoría</span> }
+              </ng-template>
+              <ng-template let-item pTemplate="item">
+                <span class="categoria-dot" [style.background]="item.color"></span>{{ item.descripcion }}
+              </ng-template>
+            </p-select>
+          </div>
+
+          <div class="mobile-hour-card__field">
+            <label [for]="'mobile-detalle-' + $index">Detalle</label>
+            <input [id]="'mobile-detalle-' + $index" type="text" class="form-control" formControlName="detalle" placeholder="Agregar detalle (opcional)" />
+          </div>
+
+          <footer class="mobile-hour-card__actions">
+            <button type="button" class="btn btn-outline-danger touch-action" (click)="removeHora($index)" aria-label="Eliminar intervalo {{ $index + 1 }}">
+              <ng-icon name="lucideTrash" /> Eliminar intervalo
+            </button>
+          </footer>
+        </article>
+        } @empty {
+        <p class="mobile-hours-editor__empty">Todavía no agregaste intervalos.</p>
+        }
+      </div>
+    </section>
+    } @else {
+    <!-- Sección desktop de horas. Se mantiene separada para no alterar la tabla de edición existente. -->
     <div class="col-12 border p-2 rounded">
-      <h5>Horas</h5>
+       <div class="hours-section-heading">
+         <h5>Intervalos de trabajo</h5>
+         <span class="text-muted">Completá evento, horario y categoría.</span>
+       </div>
       <div formArrayName="horas">
         <div class="row">
           <div class="col-md-3">
@@ -45,7 +167,8 @@
             <!-- <label>Evento</label> -->
             <div class="row">
               <div class="col-10">
-                <select class="form-control" formControlName="eventoId">
+             <label class="mobile-field-label" [for]="'evento-' + $index">Evento</label>
+             <select class="form-control" [id]="'evento-' + $index" formControlName="eventoId" aria-label="Evento">
                   <option [ngValue]="null">-- Seleccionar --</option>
                   @for (e of eventos; track e.id) {
                   <!-- ngValue preserva el tipo (number si e.id es number) -->
@@ -54,15 +177,18 @@
                 </select>
               </div>
               <div class="col-2">
-                <button card-actions class="btn btn-icon btn-outline-info" (click)="modalSelEvento(hora, $event)">
+                 <button type="button" card-actions class="btn btn-icon btn-outline-info touch-action" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento">
                   <ng-icon name="lucideSearch" />
                 </button>
-              </div>
+             </div>
+             @if (hora.get('eventoId')?.invalid && hora.get('eventoId')?.touched) {
+             <div class="invalid-feedback d-block">Seleccioná un evento.</div>
+             }
             </div>
           </div>
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
-            <!-- <label>Secuencia</label> -->
+             <label class="mobile-field-label" [for]="getTimeInputId($index, 'inicio')">Inicio</label>
             <p-datepicker
               [inputId]="getTimeInputId($index, 'inicio')"
               formControlName="inicio"
@@ -87,7 +213,7 @@
           </div>
 
           <div class="col-6 col-md-2 mb-2 mb-md-0">
-            <!-- <label>Secuencia</label> -->
+             <label class="mobile-field-label" [for]="getTimeInputId($index, 'fin')">Final</label>
             <p-datepicker
               [inputId]="getTimeInputId($index, 'fin')"
               formControlName="fin"
@@ -112,13 +238,15 @@
           </div>
 
           <div class="col-12 col-md-2 mb-2 mb-md-0">
-            <p-select
+             <label class="mobile-field-label" [for]="'categoria-' + $index">Categoría</label>
+             <p-select
+               [inputId]="'categoria-' + $index"
               [options]="categorias"
               [formControlName]="'categoriaCodigo'"
               optionLabel="descripcion"
               optionValue="codigo"
               placeholder="Categoría..."
-              [style]="{ 'min-width': '160px' }"
+               [style]="{ 'min-width': '160px', width: '100%' }"
               appendTo="body"
             >
               <ng-template let-item pTemplate="selectedItem">
@@ -137,12 +265,12 @@
           </div>
 
           <div class="col-10 col-md-2 mb-2 mb-md-0">
-            <!-- <label>Secuencia</label> -->
-            <input type="text" class="form-control" formControlName="detalle" placeholder="Detalle" />
+             <label class="mobile-field-label" [for]="'detalle-' + $index">Detalle</label>
+             <input [id]="'detalle-' + $index" type="text" class="form-control" formControlName="detalle" placeholder="Detalle" />
           </div>
 
           <div class="col-2 col-md-1 d-flex align-items-end mb-2 mb-md-0">
-            <button type="button" class="btn btn-danger w-100 h-100" (click)="removeHora($index)">
+             <button type="button" class="btn btn-danger w-100 h-100 touch-action" (click)="removeHora($index)" aria-label="Eliminar intervalo {{ $index + 1 }}">
               <ng-icon name="lucideTrash" />
             </button>
           </div>
@@ -150,19 +278,25 @@
         </div>
         }
       </div>
-      <button type="button" class="btn btn-success mt-2" (click)="addHora()">Agregar hora</button>
-    </div>
+       <button type="button" class="btn btn-success mt-2 touch-action" (click)="addHora()">Agregar intervalo</button>
+     </div>
+    }
 
 
 
-    <div class="col-12 mb-5">
-      <button class="btn btn-primary" type="submit">
+    <div class="col-12 mb-5 hora-form__actions">
+       @if (form.invalid && form.touched) {
+       <div class="invalid-feedback d-block" role="alert">Revisá los campos marcados antes de guardar. Los horarios no pueden superponerse y el final debe ser mayor que el inicio.</div>
+       }
+       <button class="btn btn-primary touch-action" type="submit">
         @if (modo === 'A') {
         Crear
         } @else if (modo === 'M') {
         Modificar
-        }
-      </button>
+         }
+       </button>
+       <button class="btn btn-outline-secondary touch-action" type="button" (click)="cancel()">Cancelar</button>
     </div>
   </form>
 </div>
+}

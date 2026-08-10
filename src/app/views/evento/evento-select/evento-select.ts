@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { BadgeClickComponent, LoadingSpinnerComponent } from '@app/components/index';
 import { SelectBase } from '@app/components/select-base/select-base';
 import { Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
@@ -13,6 +13,8 @@ import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ViewportService } from '@core/services/viewport.service';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
     selector: 'app-evento-select',
@@ -26,18 +28,24 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
         NgIcon,
         TooltipModule,
         NgbTooltipModule,
+        InputTextModule,
     ]
 })
 export class EventoSelect extends SelectBase<Evento> {
     private eventoService = inject(EventoService);
     protected config = inject(DynamicDialogConfig);
     private drawerService = inject(DrawerService);
+    private viewportService = inject(ViewportService);
 
     filtroEvento: FiltroActivo = FiltroActivo.ALL;
 
     eventos: EventoCompleto[] = [];
     eventoSeleccionado!: Evento;
     modalVisible: boolean = false;
+    readonly isMobile = this.viewportService.isMobile;
+    readonly mobilePageSize = 10;
+    readonly mobileSearch = signal('');
+    readonly mobilePage = signal(0);
 
     constructor() {
         super(
@@ -86,6 +94,50 @@ export class EventoSelect extends SelectBase<Evento> {
     select(evento:Evento) {
         this.eventoSeleccionado = evento;
         this.submit()
+    }
+
+    get eventosFiltradosMobile(): EventoCompleto[] {
+        const search = this.mobileSearch().trim().toLocaleLowerCase();
+        if (!search) return this.eventos;
+
+        return this.eventos.filter((evento) => [
+            evento.evento,
+            evento.titulo,
+            evento.cliente?.sigla,
+            evento.cliente?.nombre,
+            evento.producto?.sigla,
+            evento.producto?.nombre,
+            evento.producto?.entornoCodigo,
+            evento.modulo?.codigo,
+            evento.modulo?.nombre,
+        ].some((value) => value?.toLocaleLowerCase().includes(search)));
+    }
+
+    get eventosMobilePagina(): EventoCompleto[] {
+        const start = this.mobilePage() * this.mobilePageSize;
+        return this.eventosFiltradosMobile.slice(start, start + this.mobilePageSize);
+    }
+
+    get mobileTotalPages(): number {
+        return Math.ceil(this.eventosFiltradosMobile.length / this.mobilePageSize);
+    }
+
+    onMobileSearch(value: string): void {
+        this.mobileSearch.set(value);
+        this.mobilePage.set(0);
+    }
+
+    goToMobilePage(page: number): void {
+        const lastPage = Math.max(this.mobileTotalPages - 1, 0);
+        this.mobilePage.set(Math.min(Math.max(page, 0), lastPage));
+    }
+
+    get mobileFirstItem(): number {
+        return this.eventosFiltradosMobile.length === 0 ? 0 : this.mobilePage() * this.mobilePageSize + 1;
+    }
+
+    get mobileLastItem(): number {
+        return Math.min((this.mobilePage() + 1) * this.mobilePageSize, this.eventosFiltradosMobile.length);
     }
 
     toModel(): Evento {

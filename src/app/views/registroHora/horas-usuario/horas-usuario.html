@@ -17,6 +17,68 @@
                             }
                         </ng-template>
                     </p-toolbar>
+                    @if (isMobile()) {
+                    <div class="mobile-period-filter">
+                        <label for="mobilePeriodo">Período</label>
+                        <p-datepicker id="mobilePeriodo" [(ngModel)]="dateFilter" view="month"
+                            dateFormat="mm/yy" [readonlyInput]="true"
+                            (onClose)="onPeriodoMobileChange(dateFilter)"></p-datepicker>
+                    </div>
+                    <section class="mobile-hours-list" aria-label="Registros diarios de horas">
+                        @for (registro of registrosHorasFiltradas; track registro.id) {
+                        <article class="day-card">
+                            <header class="day-card__header">
+                                <div>
+                                    <span class="day-card__eyebrow">Día registrado</span>
+                                    <h2>{{ registro.fecha | date:'EEEE, dd MMMM' }}</h2>
+                                </div>
+                                <strong class="day-card__total">{{ registro.horasTotalesFormateadas }} hs.</strong>
+                            </header>
+                            <div class="day-card__meta">
+                                <span>{{ cantidadIntervalos(registro) }} {{ cantidadIntervalos(registro) === 1 ? 'intervalo' : 'intervalos' }}</span>
+                                <button type="button" class="btn btn-link day-card__toggle" (click)="toggleRegistro(registro)"
+                                    [attr.aria-expanded]="isRegistroExpandido(registro)"
+                                    [attr.aria-controls]="'registros-' + registroKey(registro)">
+                                    {{ isRegistroExpandido(registro) ? 'Ocultar registros' : 'Ver registros' }}
+                                </button>
+                            </div>
+                            @if (isRegistroExpandido(registro)) {
+                            <div class="interval-list" [id]="'registros-' + registroKey(registro)">
+                                @for (hora of (registro.horas ?? []); track hora.id || $index) {
+                                <div class="interval-card">
+                                    <div class="interval-card__heading">
+                                        <strong>{{ eventoLabel(hora) }}</strong>
+                                        <span class="interval-card__duration">{{ hora.diferenciaFormateada }} hs.</span>
+                                    </div>
+                                    <dl class="interval-card__details">
+                                        <div><dt>Horario</dt><dd>{{ hora.inicio | date:'HH:mm' }} - {{ hora.fin | date:'HH:mm' }}</dd></div>
+                                        <div><dt>Categoría</dt><dd>
+                                            @if (getCategoriaInfo(hora.categoriaCodigo); as cat) {
+                                            <span class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span>
+                                            } @else { <span class="text-muted">Sin categoría</span> }
+                                        </dd></div>
+                                        <div class="interval-card__detail"><dt>Detalle</dt><dd>{{ hora.detalle || 'Sin detalle' }}</dd></div>
+                                    </dl>
+                                </div>
+                                } @empty {
+                                <p class="empty-intervals">No hay intervalos cargados.</p>
+                                }
+                            </div>
+                            }
+                            <footer class="day-card__actions">
+                                <button type="button" class="btn btn-ghost-warning touch-action" (click)="mostrarModalCrud(registro, 'M')" aria-label="Editar registro del día {{ registro.fecha | date:'dd/MM/yyyy' }}">
+                                    <ng-icon name="lucidePencil" /> <span>Editar día</span>
+                                </button>
+                                <button type="button" class="btn btn-ghost-danger touch-action" (click)="delete(registro, 'el registro de horas del día')" aria-label="Eliminar registro del día {{ registro.fecha | date:'dd/MM/yyyy' }}">
+                                    <ng-icon name="lucideTrash2" /> <span>Eliminar</span>
+                                </button>
+                            </footer>
+                        </article>
+                        } @empty {
+                        <p class="mobile-empty-state">No se encontraron registros de hora.</p>
+                        }
+                    </section>
+                    } @else {
                     <p-table #dt [value]="registrosHorasFiltradas" [rows]="10" [paginator]="true"
                         [globalFilterFields]="['id', 'fecha', 'usuario.usuario', 'horasTotales']"
                         [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
@@ -138,6 +200,7 @@
                         registrosHoras.length : 0 }} Registros de Hora.</div>
                 </ng-template>
                 </p-table>
+                }
 
         </div>
         </app-ui-card>
