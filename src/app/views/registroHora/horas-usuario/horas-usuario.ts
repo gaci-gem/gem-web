@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon, UiCard } from '@app/components/index';
 import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
-import { Categoria, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
+import { Categoria, Hora, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -21,6 +21,7 @@ import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage'
 import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { finalize } from 'rxjs';
 import { formatEventoNumero } from '@core/interfaces/evento';
+import { ViewportService } from '@core/services/viewport.service';
 @Component({
   selector: 'app-horas-usuario',
   imports: [
@@ -59,7 +60,9 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
   private userStorageService = inject(UserStorageService);
+  private viewportService = inject(ViewportService);
   getFechaLocal=getFechaLocal
+  readonly isMobile = this.viewportService.isMobile;
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
 
@@ -67,6 +70,7 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
   registrosHoras!: RegistroHora[];
   registrosHorasFiltradas!: RegistroHora[];
+  private expandedRegistroKeys = new Set<string>();
 
   dateFilter = new Date();
 
@@ -95,19 +99,25 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
     return this.categoriasMap.get(codigo) ?? null;
   }
 
-  alta(registroHora: RegistroHora): void {
+  alta(registroHora: RegistroHora, onError?: () => void): void {
     delete registroHora.id
     this.registroHoraService.create(registroHora).subscribe({
       next: () => this.afterChange('Registro de Hora creado correctamente.'),
-      error: (err) => this.showError(err.error.message || 'Error al crear el registro de Hora.')
+      error: (err) => {
+        this.showError(err?.error?.message || 'Error al crear el registro de Hora.');
+        onError?.();
+      }
     });
   }
 
-  editar(registroHora: RegistroHora): void {
+  editar(registroHora: RegistroHora, onError?: () => void): void {
     let registroHoraId = registroHora.id ?? 0;
     this.registroHoraService.update(registroHoraId, registroHora).subscribe({
       next: () => this.afterChange('Registro de Hora actualizado correctamente.'),
-      error: (err) => this.showError(err.error.message || 'Error al modificar el registro de Hora.')
+      error: (err) => {
+        this.showError(err?.error?.message || 'Error al modificar el registro de Hora.');
+        onError?.();
+      }
     });
   }
 
@@ -133,7 +143,10 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
     this.ref.onClose.subscribe((registroHoraCrud: RegistroHora) => {
       if (!registroHoraCrud) return;
-      modo === 'M' ? this.editar(registroHoraCrud) : this.alta(registroHoraCrud);
+      const reopenWithData = () => this.mostrarModalCrud(registroHoraCrud, modo);
+      modo === 'M'
+        ? this.editar(registroHoraCrud, reopenWithData)
+        : this.alta(registroHoraCrud, reopenWithData);
     });
   }
 
@@ -143,7 +156,6 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        console.log(res);
         this.registrosHoras = res.map((r: any) => ({
           ...r,
           fecha: parseIsoAsLocal(r.fecha),
@@ -152,7 +164,9 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
             inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
             fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
             categoriaCodigo: h?.categoriaCodigo || null,
-            eventoTxt: formatEventoNumero(h.evento?.tipoCodigo!, h.evento?.numero!)
+            eventoTxt: h.evento?.tipoCodigo && h.evento?.numero != null
+              ? formatEventoNumero(h.evento.tipoCodigo, h.evento.numero)
+              : undefined
           }))
         })) as any;
         this.registrosHorasFiltradas = this.registrosHoras;
@@ -173,6 +187,42 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
       const a = h.fecha instanceof Date ? h.fecha : parseIsoAsLocal(h.fecha as any);
       return (a.getMonth() === aux.getMonth()) && (a.getFullYear() === aux.getFullYear())
     })
+  }
+
+  onPeriodoMobileChange(fecha: Date): void {
+    this.dateFilter = fecha;
+    this.consultarRegistros(fecha);
+  }
+
+  cantidadIntervalos(registro: RegistroHora): number {
+    return registro.horas?.length ?? 0;
+  }
+
+  registroKey(registro: RegistroHora): string {
+    if (registro.id != null) {
+      return String(registro.id);
+    }
+
+    return registro.fecha instanceof Date
+      ? registro.fecha.toISOString()
+      : String(registro.fecha);
+  }
+
+  isRegistroExpandido(registro: RegistroHora): boolean {
+    return this.expandedRegistroKeys.has(this.registroKey(registro));
+  }
+
+  toggleRegistro(registro: RegistroHora): void {
+    const key = this.registroKey(registro);
+    if (this.expandedRegistroKeys.has(key)) {
+      this.expandedRegistroKeys.delete(key);
+    } else {
+      this.expandedRegistroKeys.add(key);
+    }
+  }
+
+  eventoLabel(hora: Hora): string {
+    return hora.eventoTxt || hora.evento?.titulo || 'Evento sin título';
   }
 }
 

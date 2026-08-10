@@ -25,6 +25,7 @@ export interface Hora {
   detalle?: string;
   diferencia?: string;
   diferenciaFormateada?: string;
+  eventoTxt?: string;
 
   evento?: Evento;
   registro?: RegistroHora;

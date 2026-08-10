@@ -16,6 +16,28 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.1',
+    date: '2026-08-10',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Nueva experiencia mobile para cargar y consultar horas.',
+      },
+      {
+        type: 'improvement',
+        text: 'Selector de eventos adaptado a celulares con búsqueda y paginación.',
+      },
+      {
+        type: 'improvement',
+        text: 'Consulta mobile de horas con navegación por período y detalles expandibles.',
+      },
+      {
+        type: 'fix',
+        text: 'Corregimos la inicialización del formulario de carga de horas.',
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-06-09',
     changes: [

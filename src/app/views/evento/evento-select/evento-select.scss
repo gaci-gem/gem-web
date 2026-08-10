@@ -1,0 +1,100 @@
+.mobile-evento-select {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.mobile-evento-search-label {
+    font-weight: 600;
+}
+
+.mobile-evento-search {
+    min-height: 44px;
+    width: 100%;
+}
+
+.mobile-evento-status {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    justify-content: center;
+    min-height: 9rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.mobile-evento-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mobile-evento-card {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.mobile-evento-card-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.mobile-evento-code {
+    border-radius: 0.25rem;
+    color: #fff;
+    display: inline-block;
+    font-weight: 700;
+    line-height: 1.4;
+    max-width: 55%;
+    overflow-wrap: anywhere;
+    padding: 0.4rem 0.6rem;
+}
+
+.mobile-evento-card h3 {
+    font-size: 1rem;
+    margin: 0.85rem 0;
+    overflow-wrap: anywhere;
+}
+
+.mobile-evento-select-button,
+.mobile-evento-pagination button {
+    min-height: 44px;
+}
+
+.mobile-evento-details {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0;
+}
+
+.mobile-evento-details div {
+    min-width: 0;
+}
+
+.mobile-evento-details dt {
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.mobile-evento-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.mobile-evento-pagination {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.mobile-evento-pagination span {
+    font-size: 0.875rem;
+    text-align: center;
+}

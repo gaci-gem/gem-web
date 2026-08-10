@@ -14,6 +14,7 @@ import { Evento } from '@core/interfaces/evento';
 import { Categoria, Hora, RegistroHora } from '@core/interfaces/registro-hora';
 import { EventoService } from '@core/services/evento';
 import { RegistroHoraService } from '@core/services/registro-hora';
+import { ViewportService } from '@core/services/viewport.service';
 import {
   UserStorageService,
   UsuarioLogeado,
@@ -26,7 +27,7 @@ import { EventoSelect } from '../../evento/evento-select/evento-select';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { SelectModule } from 'primeng/select';
-import { finalize } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-hora-crud',
@@ -49,6 +50,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   private userStorageService = inject(UserStorageService);
   private dialogService = inject(DialogService);
   private cdr = inject(ChangeDetectorRef);
+  private viewportService = inject(ViewportService);
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
 
@@ -58,44 +60,43 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   categorias: Categoria[] = [];
   categoriaSugerida: Categoria | null = null;
 
-  loading: boolean = false;
-  private dataLoadedCount = 0;
-  private totalDataToLoad = 2;
+  loading = true;
+  readonly isMobile = this.viewportService.isMobile;
 
   override ngOnInit(): void {
     super.ngOnInit();
-
-    if (this.modo === 'M') {
-      this.loading = true;
-    }
 
     // Categorías sugerida desde el config (evento)
     if (this.config.data?.categoriaSugerida) {
       this.categoriaSugerida = this.config.data.categoriaSugerida;
     }
 
-    // Cargar categorías desde el backend
-    this.registroHoraService
-      .getCategorias()
-      .pipe(finalize(() => this.cdr.detectChanges()))
-      .subscribe({
-        next: (cats) => {
-          this.categorias = cats;
-          this.checkAndSetupEditMode();
-        },
-        error: () => {
+    // Render the form only after both option lists and the initial FormArray
+    // state are ready. This prevents controls from changing during their first
+    // Angular check when the dialog opens in mobile mode.
+    forkJoin({
+      categorias: this.registroHoraService.getCategorias().pipe(
+        catchError(() => {
           this.showError('Error', 'Error al cargar las categorías.');
-          this.checkAndSetupEditMode();
-        },
-      });
+          return of([] as Categoria[]);
+        }),
+      ),
+      eventos: this.eventoService.getAll(FiltroActivo.FALSE).pipe(
+        catchError(() => {
+          this.showError('Error', 'Error al cargar los eventos.');
+          return of([] as Evento[]);
+        }),
+      ),
+    }).subscribe(({ categorias, eventos }) => {
+      this.categorias = categorias;
+      this.eventos = eventos;
 
-    // Cargar eventos
-    this.eventoService.getAll(FiltroActivo.FALSE).subscribe({
-      next: (res: any) => {
-        this.eventos = res;
-        this.checkAndSetupEditMode();
-      },
-      error: () => this.showError('Error', 'Error al cargar los eventos.'),
+      if (this.modo === 'M') {
+        this.setupEditMode();
+      }
+
+      this.loading = false;
+      this.cdr.markForCheck();
     });
   }
 
@@ -167,6 +168,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   accion(event: Event) {
     event.preventDefault();
     this.normalizeAllTimeControls();
+    this.form.markAllAsTouched();
     this.submit();
   }
 
@@ -395,12 +397,14 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   addHora() {
-    const horaData =
-      this.horasFormArray.length === 0 &&
-      this.modo === 'A' &&
-      this.categoriaSugerida
-        ? { categoriaCodigo: this.categoriaSugerida.codigo }
-        : undefined;
+    const isFirstNewInterval = this.horasFormArray.length === 0 && this.modo === 'A';
+    const eventoIdPreseleccionado = this.config.data?.eventoIdPreseleccionado;
+    const horaData = isFirstNewInterval
+      ? {
+          eventoId: eventoIdPreseleccionado,
+          categoriaCodigo: this.categoriaSugerida?.codigo,
+        }
+      : undefined;
     this.horasFormArray.push(this.createHoraForm(horaData as any));
   }
 
@@ -568,23 +572,4 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     });
   }
 
-  private checkAndSetupEditMode() {
-    this.dataLoadedCount++;
-    if (this.dataLoadedCount === this.totalDataToLoad) {
-      // eventoIdPreseleccionado: si tenemos categorías cargadas y evento preseleccionado,
-      // auto-aplicar la categoriaSugerida al primer row
-      const eventoIdPre = this.config.data?.eventoIdPreseleccionado;
-      if (eventoIdPre && this.modo === 'A') {
-        this.cargarCategoriaSugeridaDeEvento(eventoIdPre);
-      }
-
-      if (this.modo === 'M') {
-        this.setupEditMode();
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        });
-      }
-    }
-  }
 }
