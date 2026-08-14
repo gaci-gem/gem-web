@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Categoria } from '@core/interfaces/registro-hora';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { RegistroHoraService } from '@core/services/registro-hora';
 
 @Component({
   selector: 'app-categoria-crud',
@@ -18,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './categoria-crud.scss'
 })
 export class CategoriaCrud extends CrudFormModal<Categoria> {
+  private registroHoraService = inject(RegistroHoraService);
 
   protected buildForm(): FormGroup {
     return new FormGroup({
@@ -49,6 +51,12 @@ export class CategoriaCrud extends CrudFormModal<Categoria> {
       color: this.get('color')?.value,
       activo: this.get('activo')?.value,
     };
+  }
+
+  protected override save(model: Categoria) {
+    return this.modo === 'M'
+      ? this.registroHoraService.updateCategoria(model.codigo, model)
+      : this.registroHoraService.createCategoria(model);
   }
 
   accion(event: Event) {

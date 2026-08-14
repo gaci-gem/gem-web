@@ -16,7 +16,7 @@ import { DynamicDialogConfig } from 'primeng/dynamicdialog';
     selector: 'app-evento-select',
     templateUrl: './proyecto-select.html',
     styleUrl: './proyecto-select.scss',
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
     imports: [
         LoadingSpinnerComponent,
         TableModule,

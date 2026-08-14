@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Entorno } from '@core/interfaces/entorno';
+import { EntornoService } from '@core/services/entorno';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -18,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './entornos-crud.scss'
 })
 export class EntornosCrud extends CrudFormModal<Entorno> {
+  private entornoService = inject(EntornoService);
 
   protected buildForm(): FormGroup {
     return new FormGroup({
@@ -44,6 +46,12 @@ export class EntornosCrud extends CrudFormModal<Entorno> {
       nombre: this.get('nombre')?.value,
       activo: this.get('activo')?.value,
     };
+  }
+
+  protected override save(model: Entorno) {
+    return this.modo === 'M'
+      ? this.entornoService.update(model.codigo, model)
+      : this.entornoService.create(model);
   }
 
   accion(event: Event) {

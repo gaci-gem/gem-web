@@ -118,6 +118,12 @@ export class KbCrud extends CrudFormModal<kb> implements OnInit {
     return model;
   }
 
+  protected override save(model: kb) {
+    return this.modo === 'M'
+      ? this.kbService.update(Number(model.id), model)
+      : this.kbService.create(({ ...model, id: undefined }));
+  }
+
   accion(event: Event) {
     event.preventDefault();
     this.submit();

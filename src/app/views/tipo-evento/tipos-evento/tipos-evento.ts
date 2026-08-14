@@ -112,9 +112,9 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((tipoEventoCrud: TipoEvento) => {
-      if (!tipoEventoCrud) return;
-      modo === 'M' ? this.editar(tipoEventoCrud) : this.alta(tipoEventoCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Tipo de Evento actualizado correctamente.' : 'Tipo de Evento creado correctamente.');
     });
   }
 

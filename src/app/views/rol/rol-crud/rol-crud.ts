@@ -221,6 +221,12 @@ export class RolCrud extends CrudFormModal<Rol> implements OnInit {
     return payload;
   }
 
+  protected override save(model: RolPayload) {
+    return this.modo === 'M'
+      ? this.rolService.update((this.config.data.item as Rol)?.codigo ?? model.codigo, model as any)
+      : this.rolService.create(model as any);
+  }
+
   accion(event: Event) {
     event.preventDefault();
     this.submit();

@@ -14,10 +14,12 @@ export class DrawerService {
   private eventoDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
   private usuarioDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
   private notaDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
+  private ticketDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
 
   eventoDrawer$ = this.eventoDrawerSubject.asObservable();
   usuarioDrawer$ = this.usuarioDrawerSubject.asObservable();
   notaDrawer$ = this.notaDrawerSubject.asObservable();
+  ticketDrawer$ = this.ticketDrawerSubject.asObservable();
 
   abrirEventoDrawer(eventoId: string, targetId?: string): void {
     this.eventoDrawerSubject.next({ visible: true, id: eventoId, targetId: targetId || null });
@@ -41,5 +43,13 @@ export class DrawerService {
 
   cerrarNotaDrawer(): void {
     this.notaDrawerSubject.next({ visible: false, id: null, targetId: null });
+  }
+
+  abrirTicketDrawer(ticketId: number): void {
+    this.ticketDrawerSubject.next({ visible: true, id: String(ticketId) });
+  }
+
+  cerrarTicketDrawer(): void {
+    this.ticketDrawerSubject.next({ visible: false, id: null });
   }
 }

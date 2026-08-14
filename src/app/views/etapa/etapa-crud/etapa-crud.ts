@@ -7,6 +7,7 @@ import { Categoria } from '@core/interfaces/registro-hora';
 import { Rol } from '@core/interfaces/rol';
 import { RolService } from '@core/services/rol';
 import { RegistroHoraService } from '@core/services/registro-hora';
+import { EtapaService } from '@core/services/etapa';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { SelectModule } from 'primeng/select';
@@ -26,6 +27,7 @@ import { SelectModule } from 'primeng/select';
 })
 export class EtapaCrud extends CrudFormModal<Etapa> implements OnInit{
   private rolService = inject(RolService);
+  private etapaService = inject(EtapaService);
   private registroHoraService = inject(RegistroHoraService);
   private cdr = inject(ChangeDetectorRef);
   Tipo_requisito = Tipo_requisito
@@ -144,6 +146,15 @@ export class EtapaCrud extends CrudFormModal<Etapa> implements OnInit{
       categoriaSugeridaCodigo: this.get('categoriaSugeridaCodigo')?.value || null,
       requisitos: this.requisitosFormArray.value
     };
+  }
+
+  protected override save(model: Etapa) {
+    if (this.modo === 'A') {
+      const { id, ...payload } = model;
+      payload.requisitos?.forEach(req => delete req.id);
+      return this.etapaService.create(payload);
+    }
+    return this.etapaService.update(model.id ?? '', model);
   }
 
   accion(event: Event) {

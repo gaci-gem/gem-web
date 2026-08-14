@@ -115,9 +115,9 @@ export class Entornos extends TrabajarCon<Entorno> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((entornoCrud: Entorno) => {
-      if (!entornoCrud) return;
-      modo === 'M' ? this.editar(entornoCrud) : this.alta(entornoCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Entorno actualizado correctamente.' : 'Entorno creado correctamente.');
     });
   }
 

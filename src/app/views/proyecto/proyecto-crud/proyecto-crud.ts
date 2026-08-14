@@ -1,5 +1,5 @@
 import { modalConfig } from '@/app/types/modals';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Proyecto } from '@core/interfaces/proyecto';
@@ -54,6 +54,14 @@ export class ProyectoCrud extends CrudFormModal<Proyecto> {
       activo: this.get('activo')?.value,
       critico: this.get('critico')?.value,
     };
+  }
+
+  private proyectoService = inject(ProyectoService);
+
+  protected override save(model: Proyecto) {
+    return this.modo === 'M'
+      ? this.proyectoService.update(model.id ?? 0, model)
+      : this.proyectoService.create(({ ...model, id: undefined }));
   }
 
   accion(event: Event) {

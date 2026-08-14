@@ -111,9 +111,9 @@ export class Categorias extends TrabajarCon<Categoria> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((categoriaCrud: Categoria) => {
-      if (!categoriaCrud) return;
-      modo === 'M' ? this.editar(categoriaCrud) : this.alta(categoriaCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Tipo de trabajo actualizado correctamente.' : 'Tipo de trabajo creado correctamente.');
     });
   }
 }

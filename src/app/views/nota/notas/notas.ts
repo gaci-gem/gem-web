@@ -214,54 +214,22 @@ export class Notas implements OnInit {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((notaEditada: Nota) => {
-      if (!notaEditada) return;
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      const notaEditada = result.result as Nota;
 
       if (modo === 'M') {
         // Actualizar nota existente
         if (!notaEditada.id) return;
 
-        this.notaService.update(notaEditada.id, notaEditada).subscribe({
-          next: (notaActualizada) => {
-            const index = this.notas.findIndex(n => n.id === notaActualizada.id);
-            if (index !== -1) {
-              this.notas[index] = { ...notaActualizada, tipoRelacion: this.notas[index].tipoRelacion };
-            }
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Nota actualizada correctamente'
-            });
-          },
-          error: (error) => {
-            console.error('Error al actualizar la nota:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo actualizar la nota'
-            });
-          }
-        });
+        const index = this.notas.findIndex(n => n.id === notaEditada.id);
+        if (index !== -1) {
+          this.notas[index] = { ...notaEditada, tipoRelacion: this.notas[index].tipoRelacion };
+        }
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Nota actualizada correctamente' });
       } else if (modo === 'A') {
-        // Crear nueva nota
-        this.notaService.create(notaEditada).subscribe({
-          next: (notaCreada) => {
-            this.notas = [{ ...notaCreada, tipoRelacion: 'P' }, ...this.notas];
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Nota creada correctamente'
-            });
-          },
-          error: (error) => {
-            console.error('Error al crear la nota:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo crear la nota'
-            });
-          }
-        });
+        this.notas = [{ ...notaEditada, tipoRelacion: 'P' }, ...this.notas];
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Nota creada correctamente' });
       }
     });
   }

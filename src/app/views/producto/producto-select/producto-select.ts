@@ -14,7 +14,7 @@ import { BooleanLabelPipe } from '@core/pipes/boolean-label.pipe';
     selector: 'app-evento-select',
     templateUrl: './producto-select.html',
     styleUrl: './producto-select.scss',
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
     imports: [
         LoadingSpinnerComponent,
         TableModule,

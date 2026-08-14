@@ -3,6 +3,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { showSuccess, showError, showWarn, showInfo } from '../../utils/message-utils';
+import { Observable, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-crud-form-modal',
@@ -33,6 +34,7 @@ export abstract class CrudFormModal<T> {
 
   form!: FormGroup;
   modo!: 'A' | 'M' | 'V';
+  submitting = false;
 
   ngOnInit(): void {
     this.modo = this.config.data.modo;
@@ -49,6 +51,15 @@ export abstract class CrudFormModal<T> {
   protected abstract buildForm(): FormGroup;
   protected abstract populateForm(data: T): void;
   protected abstract toModel(): any;
+
+  /** Return the persistence request, or null to keep the legacy close-payload behavior. */
+  protected save(_model: any): Observable<unknown> | null {
+    return null;
+  }
+
+  protected successMessage(): { summary: string; detail: string } | null {
+    return null;
+  }
 
   protected setupEditMode(): void {
     // Por defecto nada, pero overrideable
@@ -70,7 +81,29 @@ export abstract class CrudFormModal<T> {
     }
 
     const model = this.toModel();
-    this.ref.close(model);
+    const request = this.save(model);
+    if (!request) {
+      this.ref.close(model);
+      return;
+    }
+
+    this.submitting = true;
+    request.pipe(finalize(() => this.submitting = false)).subscribe({
+      next: (result) => {
+        const message = this.successMessage();
+        if (message) this.showSuccess(message.summary, message.detail);
+        this.ref.close({ changed: true, result });
+      },
+      error: (error) => {
+        this.showError('Error', this.getRequestError(error));
+      },
+    });
+  }
+
+  protected getRequestError(error: any): string {
+    const message = error?.error?.message ?? error?.message;
+    return Array.isArray(message) ? message.join(', ') : message ||
+      (this.modo === 'M' ? 'Error al modificar el registro.' : 'Error al crear el registro.');
   }
 
   cancel(): void {

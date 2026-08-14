@@ -117,9 +117,9 @@ export class Proyectos extends TrabajarCon<Proyecto> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((proyectoCrud: Proyecto) => {
-      if (!proyectoCrud) return;
-      modo === 'M' ? this.editar(proyectoCrud) : this.alta(proyectoCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Proyecto actualizado correctamente.' : 'Proyecto creado correctamente.');
     });
   }
 

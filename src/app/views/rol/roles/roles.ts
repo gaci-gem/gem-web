@@ -116,9 +116,9 @@ export class Roles extends TrabajarCon<Rol> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((rolCrud: Rol) => {
-      if (!rolCrud) return;
-      modo === 'M' ? this.editar(rolCrud) : this.alta(rolCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Rol actualizado correctamente.' : 'Rol creado correctamente.');
     });
   }
 

@@ -118,9 +118,9 @@ export class Productos extends TrabajarCon<Producto> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((productoCrud: Producto) => {
-      if (!productoCrud) return;
-      modo === 'M' ? this.editar(productoCrud) : this.alta(productoCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.');
     });
   }
 
