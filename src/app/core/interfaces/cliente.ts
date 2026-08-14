@@ -6,6 +6,7 @@ export interface Cliente {
   nombre?: string;
   activo: boolean;
   proyectoIds?: number[];
+  credentialCount?: number;
 
   proyectos?: ClienteProyecto[];
   // eventos?: Evento[];
