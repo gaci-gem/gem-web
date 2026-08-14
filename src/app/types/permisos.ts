@@ -9,6 +9,8 @@ export enum PermisoAccion {
   DOC_ELIMINAR = 'DOC_ELIMINAR',
   LOG_LEER = 'LOG_LEER',
   REQ_MODIFICAR = 'REQ_MODIFICAR',
+  GESTIONAR = 'GESTIONAR',
+  GEN_PORTAL = 'GEN_PORTAL',
 }
 
 // Tipo para permisos completos en formato "RECURSO.ACCION"

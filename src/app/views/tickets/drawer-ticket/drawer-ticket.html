@@ -1,0 +1,48 @@
+<p-drawer [(visible)]="visible" position="right" [modal]="true" styleClass="ticket-drawer" [style]="{ width: '60vw' }" (onHide)="onClose()">
+  <ng-template #headless>
+    <div class="d-flex flex-column h-100">
+      <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+        <span class="fw-semibold">Ticket{{ ticket ? ' #' + ticket.id : '' }}</span>
+        <button pButton type="button" icon="pi pi-times" class="p-button-text p-button-rounded p-button-sm" (click)="onClose()"></button>
+      </div>
+      <div class="flex-grow-1 overflow-auto p-3">
+        @if (loading) { <div class="text-muted">Cargando ticket...</div> }
+        @if (error) { <div class="alert alert-danger">{{ error }}</div> }
+        @if (ticket) {
+          <div class="mb-3">
+            <div class="text-muted">{{ ticket.clientCode }}{{ ticket.clientName ? ' - ' + ticket.clientName : '' }}</div>
+            <h5>{{ ticket.subject }}</h5>
+            <p class="mb-0 text-break">{{ ticket.description }}</p>
+          </div>
+          <div class="row g-3">
+             <div class="col-md-6"><strong>Estado</strong><div><span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ ticket.status.replaceAll('_', ' ') }}</span></div></div>
+            <div class="col-md-6"><strong>Referencia externa</strong><div>{{ ticket.externalReference || '-' }}</div></div>
+            <div class="col-md-6"><strong>Alta</strong><div>{{ ticket.createdAt | date:'short' }}</div></div>
+            <div class="col-md-6"><strong>Actualización</strong><div>{{ ticket.updatedAt | date:'short' }}</div></div>
+          </div>
+           <hr /><div class="d-flex align-items-center justify-content-between gap-2"><h6 class="mb-0">Eventos relacionados</h6>@if (canManage()) { <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEventAssociation()">Asociar evento existente</button> }</div>
+            <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
+           <hr /><h6>Comentarios y comunicación</h6>
+           @for (comment of ticket.comments; track comment.id) { <div class="border rounded p-2 mb-2"><div class="text-break">{{ comment.text }}</div>@for (file of comment.attachments; track file.id) { <a class="d-block small" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> }<small class="text-muted">{{ comment.createdAt | date:'short' }}</small></div> } @empty { <div class="text-muted">Sin comentarios.</div> }
+           <hr /><h6>Adjuntos</h6>
+           @for (file of ticket.attachments; track file.id) { <a class="d-block" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> } @empty { <div class="text-muted">Sin adjuntos.</div> }
+        }
+      </div>
+    </div>
+  </ng-template>
+</p-drawer>
+
+<p-dialog [(visible)]="associationDialogVisible" header="Asociar evento existente" [modal]="true" [style]="{ width: 'min(760px, 96vw)' }">
+  <input class="form-control mb-3" [(ngModel)]="eventSearch" placeholder="Buscar por evento, título o cliente" aria-label="Buscar eventos" />
+  @if (associationError) { <div class="alert alert-danger">{{ associationError }}</div> }
+  @if (loadingEvents) { <p class="text-muted">Cargando eventos...</p> }
+  @if (!loadingEvents && !filteredEvents.length && !associationError) { <p class="text-muted">No hay eventos disponibles para este cliente.</p> }
+  <div class="d-flex flex-column gap-2">
+    @for (event of filteredEvents; track event.id) {
+      <button type="button" class="btn btn-outline-secondary text-start" (click)="associateEvent(event)" [disabled]="associatingEventId !== null">
+        <strong>{{ event.evento || event.tipoCodigo + '-' + event.numero }}</strong>
+        <span class="d-block small text-muted">{{ event.titulo }}</span>
+      </button>
+    }
+  </div>
+</p-dialog>

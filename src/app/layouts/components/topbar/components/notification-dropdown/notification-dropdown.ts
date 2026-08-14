@@ -213,6 +213,13 @@ export class NotificationDropdown implements OnInit {
           }
         }
         break;
+      case 'PORTAL_TICKET': {
+        const ticketId = Number(notificacion.targetId);
+        if (Number.isSafeInteger(ticketId) && ticketId > 0) {
+          this.drawerService.abrirTicketDrawer(ticketId);
+        }
+        break;
+      }
     }
   }
 

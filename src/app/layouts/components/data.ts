@@ -70,6 +70,12 @@ export const menuItems: MenuItemType[] = [
     icon: 'lucideClockPlus',
     url: '/hora/horas/usuario'
   },
+  {
+    label: 'Tickets Clientes',
+    icon: 'lucideTicket',
+    url: '/portal-cliente/tickets',
+    permisoClave: PermisoClave.TICKET
+  },
   { label: 'Maestros', isTitle: true },
   {
     label: 'Eventos',

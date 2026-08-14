@@ -1,0 +1,17 @@
+<p-toast></p-toast>
+<div class="container-fluid">
+  <div class="row justify-content-center"><div class="col-12 mt-3">
+    <app-ui-card title="Tickets"><div card-body>
+      <p-toolbar styleClass="mb-4 gap-2"><ng-template pTemplate="left">
+        <input class="form-control" style="width: 260px" [(ngModel)]="search" (keyup.enter)="loadItems()" placeholder="Buscar..." />
+        <select class="form-select ms-2" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="loadItems()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
+      </ng-template><ng-template pTemplate="right"><button class="btn btn-ghost-gray" (click)="search=''; estado=''; loadItems()"><ng-icon name="tablerFilterOff" /></button></ng-template></p-toolbar>
+      <p-table #dt [value]="tickets" [rows]="10" [paginator]="true" [rowHover]="true" dataKey="id" [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']" size="small" [scrollable]="true">
+        <ng-template pTemplate="caption"><div class="d-flex justify-content-between"><strong>Tickets</strong><span>{{ tickets.length }} registros</span></div></ng-template>
+         <ng-template pTemplate="header"><tr><th pSortableColumn="id">Id</th><th pSortableColumn="subject">Asunto</th><th pSortableColumn="clientName">Cliente</th><th pSortableColumn="status">Estado</th><th>Referencia externa</th><th pSortableColumn="createdAt">Alta</th><th>Acciones</th></tr></ng-template>
+          <ng-template pTemplate="body" let-ticket><tr><td>{{ ticket.id }}</td><td>{{ ticket.subject }}</td><td>{{ ticket.clientCode }}{{ ticket.clientName ? ' - ' + ticket.clientName : '' }}</td><td><span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ statusLabel(ticket.status) }}</span></td><td>{{ ticket.externalReference || '-' }}</td><td>{{ ticket.createdAt | date:'short' }}</td><td class="text-end d-flex gap-1 justify-content-end">@if (canRead()) { <button type="button" class="btn btn-ghost-primary" title="Ver ticket" aria-label="Ver ticket" (click)="open(ticket)"><ng-icon name="lucideEye" /></button> } @if (canManage()) { <button type="button" class="btn btn-ghost-primary" title="Cambiar estado" aria-label="Cambiar estado" (click)="transition(ticket)"><ng-icon name="lucideArrowRightLeft" /></button><button type="button" class="btn btn-ghost-primary" title="Actualizar referencia externa" aria-label="Actualizar referencia externa" (click)="updateReference(ticket)"><ng-icon name="lucidePencil" /></button><button type="button" class="btn btn-ghost-primary" title="Responder ticket" aria-label="Responder ticket" (click)="reply(ticket)"><ng-icon name="lucideMessageSquare" /></button> } @if (canCreateEvent()) { <button type="button" class="btn btn-ghost-primary" title="Crear evento" aria-label="Crear evento asociado al ticket" (click)="createEvent(ticket)"><ng-icon name="lucideCalendarPlus" /></button> }</td></tr></ng-template>
+         <ng-template pTemplate="emptymessage"><tr><td colspan="7" class="text-muted">No hay tickets.</td></tr></ng-template>
+      </p-table>
+    </div></app-ui-card>
+  </div></div>
+</div>
