@@ -73,7 +73,7 @@ export const menuItems: MenuItemType[] = [
   {
     label: 'Tickets Clientes',
     icon: 'lucideTicket',
-    url: '/portal-cliente/tickets',
+    url: '/gem-clientes/tickets',
     permisoClave: PermisoClave.TICKET
   },
   { label: 'Maestros', isTitle: true },

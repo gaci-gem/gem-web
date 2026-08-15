@@ -87,7 +87,7 @@
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(cliente, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
                                      @if (permisosService.can('CLI.GEN_PORTAL')) {
-                                        <button class="btn btn-ghost-primary" aria-label="Administrar credencial del Portal Cliente" title="Administrar credencial del Portal Cliente" (click)="administrarCredencial(cliente)"><ng-icon name="lucideKeyRound"/></button>
+                                        <button class="btn btn-ghost-primary" aria-label="Administrar credencial del GEM Clientes" title="Administrar credencial del GEM Clientes" (click)="administrarCredencial(cliente)"><ng-icon name="lucideKeyRound"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(cliente)"><ng-icon name="lucideTrash2"/></button>

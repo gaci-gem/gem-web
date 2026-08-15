@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class TicketCredentialService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.BASE_URL}/v1/portal-cliente/admin/clientes`;
+  private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes`;
 
   list(clienteId: number): Observable<TicketCredential[]> {
     return this.http.get<TicketCredential[]>(`${this.baseUrl}/${clienteId}/credenciales`);

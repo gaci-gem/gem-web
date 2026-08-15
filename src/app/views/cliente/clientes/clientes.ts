@@ -130,7 +130,7 @@ export class Clientes extends TrabajarCon<Cliente> {
     if (!this.permisosService.can('CLI.GEN_PORTAL')) return;
     this.ref = this.dialogService.open(ClienteCredencial, {
       ...modalConfig,
-      header: 'Credencial del Portal Cliente',
+      header: 'Credencial del GEM Clientes',
       data: { cliente },
     });
   }

@@ -5,9 +5,9 @@ import { PermisoClave } from '@core/interfaces/rol';
 
 export const TICKET_ROUTES: Routes = [
   {
-    path: 'portal-cliente/tickets',
+    path: 'gem-clientes/tickets',
     component: Tickets,
-    data: { title: 'Tickets Portal Cliente', permisoClave: PermisoClave.TICKET },
+    data: { title: 'Tickets GEM Clientes', permisoClave: PermisoClave.TICKET },
     canActivate: [PermisoVerGuard],
   },
 ];

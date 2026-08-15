@@ -12,7 +12,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class TicketService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.BASE_URL}/v1/portal-cliente/admin/clientes/tickets`;
+  private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets`;
 
   list(filters: { search?: string; estado?: TicketState; clientId?: number }): Observable<Ticket[]> {
     let params = new HttpParams();
