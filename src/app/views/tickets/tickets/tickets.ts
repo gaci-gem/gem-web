@@ -64,7 +64,9 @@ export class Tickets implements OnInit {
   transition(ticket: Ticket): void {
     if (!this.canManage()) return;
     this.service.allowedTransitions(ticket.id).subscribe({
-      next: (transitions) => this.openAction('state', ticket, { transitions }),
+      next: (transitions) => {
+        this.openAction('state', ticket, { transitions })
+      },
       error: (error) => this.showError(error),
     });
   }
@@ -90,12 +92,24 @@ export class Tickets implements OnInit {
     return { INGRESADO: 'text-bg-secondary', EN_REVISION: 'text-bg-info', EN_DESARROLLO: 'text-bg-primary', RESUELTO: 'text-bg-success', CERRADO: 'text-bg-dark', RECHAZADO: 'text-bg-danger' }[status];
   }
 
+  /*
+  this.dialogService.open(ChangelogModalComponent, {
+        header: 'Novedades',
+        width: '600px',
+        modal: true,
+        dismissableMask: true,
+        styleClass: 'changelog-dialog'
+      });
+  */
   private openAction(mode: 'state' | 'reference' | 'comment', ticket: Ticket, data: Record<string, unknown> = {}): void {
     this.ref = this.dialog.open(TicketActionDialog, {
       header: mode === 'state' ? 'Actualizar estado' : mode === 'reference' ? 'Referencia externa' : 'Responder ticket',
-      width: 'min(520px, 96vw)', modal: true,
+      width: 'min(520px, 96vw)',
+      modal: true,
+      closable: true,
       data: { mode, ticketId: ticket.id, reference: ticket.externalReference, ...data },
     });
+
     this.ref?.onClose.subscribe((changed) => { if (changed) this.loadItems(); });
   }
 

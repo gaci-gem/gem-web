@@ -1,10 +1,11 @@
 {
   "name": "makima",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "prebuild": "npm run write-version",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:gaci": "npm run write-version && ng build --configuration gaci",

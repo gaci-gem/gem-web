@@ -12,17 +12,6 @@ import { PermisosService } from '@core/services/permisos';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="d-flex justify-content-end mb-2">
-      <button
-        type="button"
-        class="btn btn-link btn-sm text-body-secondary p-1"
-        aria-label="Close dialog"
-        title="Close dialog"
-        (click)="closeWithoutChanges()"
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
     @if (mode === 'state') {
       <form (ngSubmit)="submit()" class="d-flex flex-column gap-3">
         <label class="form-label">Nuevo estado<select class="form-select" name="state" [(ngModel)]="state" required><option value="">Seleccionar...</option>@for (value of transitions; track value) { <option [value]="value">{{ value }}</option> }</select></label>
