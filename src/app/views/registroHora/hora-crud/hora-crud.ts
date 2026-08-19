@@ -165,6 +165,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     };
   }
 
+  protected override save(model: RegistroHora) {
+    return this.modo === 'M'
+      ? this.registroHoraService.update(model.id ?? 0, model)
+      : this.registroHoraService.create(({ ...model, id: undefined }));
+  }
+
   accion(event: Event) {
     event.preventDefault();
     this.normalizeAllTimeControls();

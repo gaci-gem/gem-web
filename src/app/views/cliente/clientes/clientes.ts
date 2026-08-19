@@ -23,6 +23,7 @@ import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { PermisoAccion } from '@/app/types/permisos';
+import { ClienteCredencial } from '../credencial/cliente-credencial';
 
 @Component({
   selector: 'app-clientes',
@@ -119,9 +120,18 @@ export class Clientes extends TrabajarCon<Cliente> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((clienteCrud: Cliente) => {
-      if (!clienteCrud) return;
-      modo === 'M' ? this.editar(clienteCrud) : this.alta(clienteCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Cliente actualizado correctamente.' : 'Cliente creado correctamente.');
+    });
+  }
+
+  administrarCredencial(cliente: Cliente): void {
+    if (!this.permisosService.can('CLI.GEN_PORTAL')) return;
+    this.ref = this.dialogService.open(ClienteCredencial, {
+      ...modalConfig,
+      header: 'Credencial del GEM Clientes',
+      data: { cliente },
     });
   }
 

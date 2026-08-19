@@ -78,6 +78,21 @@
       </div>
     }
 
+    <!-- Portal tickets -->
+    @if (evento.portalTickets.length) {
+      <div class="info-cell">
+        <span class="info-label">TICKETS</span>
+        <div class="d-flex flex-column gap-1">
+          @for (ticket of evento.portalTickets; track ticket.id) {
+            <span class="info-value">
+              #{{ ticket.id }} {{ ticket.subject }} ({{ ticket.status }})
+            </span>
+          }
+          @if (!evento.portalTickets.length) { <span class="info-value text-muted">Sin tickets asociados</span> }
+        </div>
+      </div>
+    }
+
     <!-- Estimacion -->
     @if (estimacionDetalle?.totalEstimacion) {
       <div class="info-cell">

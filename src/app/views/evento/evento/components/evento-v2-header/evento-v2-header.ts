@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, inject, Input } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { EventoCompleto, Evento, eventoFromEventoCompleto } from '@core/interfaces/evento';
 import { EventoService } from '@core/services/evento';
 import { DrawerService } from '@core/services/drawer.service';
@@ -12,13 +13,12 @@ import { NgIcon } from '@ng-icons/core';
 import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
 import { finalize } from 'rxjs';
 import { EstimacionDetalle } from '../evento-v2-details-files/evento-v2-details-files';
-import { Badge } from 'primeng/badge';
 import { PopoverModule } from 'primeng/popover';
 
 @Component({
   selector: 'app-evento-v2-header',
   standalone: true,
-  imports: [DatePipe, SlicePipe, FormsModule, BadgeClickComponent, PrioridadIconComponent, NgIcon, PopoverModule],
+  imports: [CommonModule, DatePipe, SlicePipe, FormsModule, BadgeClickComponent, PrioridadIconComponent, NgIcon, PopoverModule],
   templateUrl: './evento-v2-header.html',
   styleUrl: './evento-v2-header.scss',
 })
@@ -35,7 +35,6 @@ export class EventoV2HeaderComponent {
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
   esObservador = false;
   togglingObservador = false;
-
   ngOnChanges(): void {
     this.syncObservadorState();
   }

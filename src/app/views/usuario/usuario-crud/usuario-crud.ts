@@ -10,6 +10,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ToastModule } from 'primeng/toast';
 import { Rol } from '@core/interfaces/rol';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { UsuarioService } from '@core/services/usuario';
 
 export const passwordMatchValidator: ValidatorFn = (form: AbstractControl): ValidationErrors | null => {
   const password = form.get('password')?.value;
@@ -33,6 +34,7 @@ export const passwordMatchValidator: ValidatorFn = (form: AbstractControl): Vali
 })
 export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
   private rolService = inject(RolService);
+  private usuarioService = inject(UsuarioService);
   showPassword: boolean = false
 
   listaRoles!:Rol[];
@@ -104,6 +106,15 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
     }
     console.log(usuario)
     return usuario;
+  }
+
+  protected override save(model: Usuario) {
+    if (this.modo === 'M') {
+      const { password, ...payload } = model;
+      return this.usuarioService.update(model.id ?? '', payload);
+    }
+    const { id, ...payload } = model;
+    return this.usuarioService.create(payload);
   }
 
   accion(event: Event) {

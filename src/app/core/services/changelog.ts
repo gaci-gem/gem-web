@@ -16,6 +16,24 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.2',
+    date: '2026-08-19',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Ahora es más fácil acceder a Novedades y consultar su historial.',
+      },
+      {
+        type: 'improvement',
+        text: 'Mejoramos la forma de consultar y visualizar archivos, documentos, imágenes y reportes.',
+      },
+      {
+        type: 'fix',
+        text: 'Sumamos mayor estabilidad en horas, eventos y notificaciones.',
+      },
+    ],
+  },
+  {
     version: '0.3.1',
     date: '2026-08-10',
     changes: [

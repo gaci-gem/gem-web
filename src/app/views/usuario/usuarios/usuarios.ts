@@ -146,9 +146,9 @@ export class Usuarios extends TrabajarCon<Usuario> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((usuarioCrud: Usuario) => {
-      if (!usuarioCrud) return;
-      modo === 'M' ? this.editar(usuarioCrud) : this.alta(usuarioCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
     });
   }
 

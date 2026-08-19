@@ -65,6 +65,12 @@ export class ModuloCrud extends CrudFormModal<Modulo> implements OnInit{
     };
   }
 
+  protected override save(model: Modulo) {
+    return this.modo === 'M'
+      ? this.moduloService.update(model.codigo, model)
+      : this.moduloService.create(model);
+  }
+
   accion(event: Event) {
     event.preventDefault();
     this.submit();

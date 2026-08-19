@@ -115,9 +115,9 @@ export class Modulos extends TrabajarCon<Modulo> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((moduloCrud: Modulo) => {
-      if (!moduloCrud) return;
-      modo === 'M' ? this.editar(moduloCrud) : this.alta(moduloCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Modulo actualizado correctamente.' : 'Modulo creado correctamente.');
     });
   }
 

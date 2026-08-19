@@ -4,6 +4,7 @@ import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Cliente } from '@core/interfaces/cliente';
 import { Proyecto } from '@core/interfaces/proyecto';
 import { ProyectoService } from '@core/services/proyecto';
+import { ClienteService } from '@core/services/cliente';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -25,6 +26,7 @@ import { CommonModule } from '@angular/common';
 })
 export class ClienteCrud extends CrudFormModal<Cliente> {
   private proyectoService = inject(ProyectoService);
+  private clienteService = inject(ClienteService);
   private cdr = inject(ChangeDetectorRef);
 
   proyectos: Proyecto[] = [];
@@ -97,6 +99,12 @@ export class ClienteCrud extends CrudFormModal<Cliente> {
       activo: this.get('activo')?.value,
       proyectoIds: this.get('proyectoIds')?.value || [],
     };
+  }
+
+  protected override save(model: Cliente) {
+    return this.modo === 'M'
+      ? this.clienteService.update(model.id ?? 0, model)
+      : this.clienteService.create(({ ...model, id: undefined }));
   }
 
   accion(event: Event) {

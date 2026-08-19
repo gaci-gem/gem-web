@@ -159,9 +159,9 @@ export class Horas extends TrabajarCon<RegistroHora> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((registroHoraCrud: RegistroHora) => {
-      if (!registroHoraCrud) return;
-      modo === 'M' ? this.editar(registroHoraCrud) : this.alta(registroHoraCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Registro de Hora actualizado correctamente.' : 'Registro de Hora creado correctamente.');
     });
   }
 

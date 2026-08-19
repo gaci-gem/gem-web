@@ -244,7 +244,7 @@
     </div>
 
     <div class="col-12 mb-5">
-      <button class="btn btn-primary" type="submit">
+      <button class="btn btn-primary" type="submit" [disabled]="!canSubmit()" [hidden]="!canSubmit()">
         @if (modo === 'A') {
         Crear
         } @else if (modo === 'M') {

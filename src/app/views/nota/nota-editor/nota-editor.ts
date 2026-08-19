@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/index';
 import { Nota, NotaTipo } from '@core/interfaces/nota';
@@ -6,6 +6,7 @@ import { MilkdownEditorComponent } from '@app/components/milkdown-editor/milkdow
 import { CommonModule } from '@angular/common';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { NotaService } from '@core/services/nota';
 
 @Component({
   selector: 'app-nota-editor',
@@ -65,6 +66,7 @@ import { MessageService } from 'primeng/api';
   styleUrl: './nota-editor.scss'
 })
 export class NotaEditor extends CrudFormModal<Nota> implements OnInit {
+  private notaService = inject(NotaService);
   editorConfig = {
     placeholder: 'Escribe el contenido de tu nota aquí...',
     editable: true,
@@ -116,5 +118,11 @@ export class NotaEditor extends CrudFormModal<Nota> implements OnInit {
     }
 
     return nota;
+  }
+
+  protected override save(model: Nota) {
+    return this.modo === 'M'
+      ? this.notaService.update(model.id!, model)
+      : this.notaService.create(model);
   }
 }

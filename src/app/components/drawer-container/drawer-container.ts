@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventoDrawerComponent } from '@views/evento/evento-drawer/evento-drawer';
 import { UsuarioDrawerComponent } from '@views/usuario/usuario-drawer/usuario-drawer';
+import { DrawerTicket } from '@views/tickets/drawer-ticket/drawer-ticket';
 
 @Component({
   selector: 'app-drawer-container',
@@ -11,7 +12,8 @@ import { UsuarioDrawerComponent } from '@views/usuario/usuario-drawer/usuario-dr
   standalone: true,
   imports: [
     EventoDrawerComponent,
-    UsuarioDrawerComponent
+    UsuarioDrawerComponent,
+    DrawerTicket
   ]
 })
 export class DrawerContainerComponent implements OnInit, OnDestroy {
@@ -24,6 +26,8 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
 
   showUsuarioDrawer = false;
   usuarioSeleccionadoId: string | null = null;
+  showTicketDrawer = false;
+  ticketSeleccionadoId: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -46,6 +50,14 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
         this.usuarioSeleccionadoId = state.id;
         this.crf.detectChanges();
       });
+
+    this.drawerService.ticketDrawer$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.showTicketDrawer = state.visible;
+        this.ticketSeleccionadoId = state.id;
+        this.crf.detectChanges();
+      });
   }
 
   ngOnDestroy(): void {
@@ -59,5 +71,9 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
 
   cerrarUsuarioDrawer(): void {
     this.drawerService.cerrarUsuarioDrawer();
+  }
+
+  cerrarTicketDrawer(): void {
+    this.drawerService.cerrarTicketDrawer();
   }
 }

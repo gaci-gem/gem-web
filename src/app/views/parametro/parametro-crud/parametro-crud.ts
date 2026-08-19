@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Parametro, TIPOS_PARAMETRO, AMBITOS_PARAMETRO } from '@core/interfaces/parametro';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ParametroService } from '@core/services/parametros';
 
 @Component({
   selector: 'app-parametro-crud',
@@ -18,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './parametro-crud.scss'
 })
 export class ParametroCrud extends CrudFormModal<Parametro> {
+  private parametroService = inject(ParametroService);
 
   tiposParametro = TIPOS_PARAMETRO;
   ambitosParametro = AMBITOS_PARAMETRO;
@@ -63,6 +65,13 @@ export class ParametroCrud extends CrudFormModal<Parametro> {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+  }
+
+  protected override save(model: Parametro) {
+    const { id, createdAt, updatedAt, ...payload } = model;
+    return this.modo === 'M'
+      ? this.parametroService.update(id ?? '', payload)
+      : this.parametroService.create(payload);
   }
 
   accion(event: Event) {

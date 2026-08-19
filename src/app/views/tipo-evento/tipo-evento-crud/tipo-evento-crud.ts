@@ -5,6 +5,7 @@ import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Etapa } from '@core/interfaces/etapa';
 import { TipoEvento, TipoEventoEtapa } from '@core/interfaces/tipo-evento';
 import { EtapaService } from '@core/services/etapa';
+import { TipoEventoService } from '@core/services/tipo-evento';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -24,6 +25,7 @@ import { ToastModule } from 'primeng/toast';
 export class TipoEventoCrud extends CrudFormModal<TipoEvento> implements OnInit {
   // Para el selector de etapa final
   private etapaService = inject(EtapaService);
+  private tipoEventoService = inject(TipoEventoService);
   private cdr = inject(ChangeDetectorRef);
   etapasCatalogo!: Etapa[];
   etapasArchivo!: Etapa[];
@@ -188,6 +190,12 @@ export class TipoEventoCrud extends CrudFormModal<TipoEvento> implements OnInit 
       facturableAuto: this.get('facturableAuto')?.value,
       etapas
     };
+  }
+
+  protected override save(model: TipoEvento) {
+    return this.modo === 'M'
+      ? this.tipoEventoService.update(model.codigo, model)
+      : this.tipoEventoService.create(model);
   }
 
   accion(event: Event) {

@@ -120,9 +120,9 @@ export class Reportes extends TrabajarCon<Reporte> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((reporteCrud: Reporte) => {
-      if (!reporteCrud) return;
-      modo === 'M' ? this.editar(reporteCrud) : this.alta(reporteCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Reporte actualizado correctamente.' : 'Reporte creado correctamente.');
     });
   }
 

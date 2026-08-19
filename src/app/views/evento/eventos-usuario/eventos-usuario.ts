@@ -409,20 +409,10 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       if (!this.ref) return;
 
       this.ref.onClose.subscribe((result: any) => {
-        if (!result) return;
-        this.loadingService.show();
-        // Si es FormData, usar los métodos privados
-        if (result instanceof FormData) {
-          if (modo === 'M') {
-            const id = evento?.id ?? '';
-            this.editarFormData(id, result);
-          } else {
-            console.log(result);
-            this.altaFormData(result);
-          }
-        } else {
-          // fallback por si alguna vez retorna un objeto plano
-          modo === 'M' ? this.editar(result) : this.alta(result);
+        if (result?.changed) {
+          this.afterChange(
+            modo === 'M' ? 'Evento actualizado correctamente.' : 'Evento creado correctamente.',
+          );
         }
       });
       return;

@@ -12,7 +12,6 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-novedad-create-modal',
@@ -214,7 +213,6 @@ export class NovedadCreateModal extends CrudFormModal<Novedad> implements OnInit
   private rolService = inject(RolService);
   private usuarioService = inject(UsuarioService);
 
-  submitting = false;
   roles: any[] = [];
   usuarios: any[] = [];
 
@@ -304,28 +302,11 @@ export class NovedadCreateModal extends CrudFormModal<Novedad> implements OnInit
     };
   }
 
-  override submit(): void {
-    if (!this.form.valid) {
-      this.showError('Formulario inválido', 'Por favor completá todos los campos requeridos correctamente');
-      return;
-    }
+  protected override save(model: CreateNovedadDto) {
+    return this.novedadService.create(model);
+  }
 
-    const dto = this.toModel();
-    this.submitting = true;
-
-    this.novedadService
-      .create(dto)
-      .pipe(finalize(() => {
-        this.submitting = false;
-      }))
-      .subscribe({
-        next: (created) => {
-          this.showSuccess('Éxito', 'Novedad creada correctamente');
-          this.ref.close(created);
-        },
-        error: (err) => {
-          this.showError('Error', err?.error?.message || 'No se pudo crear la novedad');
-        },
-      });
+  protected override successMessage() {
+    return { summary: 'Éxito', detail: 'Novedad creada correctamente' };
   }
 }

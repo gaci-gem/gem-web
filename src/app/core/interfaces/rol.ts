@@ -82,7 +82,8 @@ export enum PermisoClave {
   SISTEMA = 'SYS',
   KB = 'KB',
   TIPO_TRABAJO = 'TTR',
-  NOV = 'NOV'
+  NOV = 'NOV',
+  TICKET = 'TIK'
 }
 
 // Array vacío de permisos para inicialización

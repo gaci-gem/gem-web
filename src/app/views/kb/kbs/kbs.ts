@@ -188,9 +188,9 @@ export class Kbs extends TrabajarCon<kb> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((kbCrud: kb) => {
-      if (!kbCrud) return;
-      modo === 'M' ? this.editar(kbCrud) : this.alta(kbCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'KB actualizada correctamente.' : 'KB creada correctamente.');
     });
   }
 

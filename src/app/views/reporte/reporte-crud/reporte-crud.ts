@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Reporte, ReporteEstado, ReporteTipo, getReporteParametrosSugerencia, getReporteTipoDescripcion } from '@core/interfaces/reporte';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ReporteService } from '@core/services/reporte';
 
 @Component({
   selector: 'app-reportes-crud',
@@ -18,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './reporte-crud.scss'
 })
 export class ReporteCrud extends CrudFormModal<Reporte> {
+  private reporteService = inject(ReporteService);
 
   reporteTipos = Object.values(ReporteTipo);
   getReporteTipoDescripcion = getReporteTipoDescripcion;
@@ -56,6 +58,12 @@ export class ReporteCrud extends CrudFormModal<Reporte> {
       parametros: this.get('parametros')?.value,
       envMailFin: this.get('envMailFin')?.value,
     };
+  }
+
+  protected override save(model: Reporte) {
+    return this.modo === 'M'
+      ? this.reporteService.update(model.id ?? 0, model)
+      : this.reporteService.create({ ...model, id: undefined });
   }
 
   accion(event: Event) {

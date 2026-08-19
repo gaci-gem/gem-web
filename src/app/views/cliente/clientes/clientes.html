@@ -55,8 +55,9 @@
                                 <th pSortableColumn="id" hidden>Id <p-sortIcon field="id" ></p-sortIcon></th>
                                 <th pSortableColumn="sigla">Sigla <p-sortIcon field="sigla"></p-sortIcon><p-columnFilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" ></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th>Proyectos</th>
-                                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                                 <th>Proyectos</th>
+                                 <th pSortableColumn="credentialCount">Credenciales <p-sortIcon field="credentialCount"></p-sortIcon></th>
+                                 <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
                                 <th></th>
                             </tr>
                         </ng-template>
@@ -78,11 +79,15 @@
                                     } @else {
                                         <span class="text-muted">Sin proyectos</span>
                                     }
-                                </td>
-                                <td><span class="badge " style="min-width: 40%;" [ngClass]="cliente.activo ? 'text-bg-success' : 'text-bg-danger'">{{ cliente.activo | booleanLabel }}</span></td>
+                                 </td>
+                                 <td>{{ cliente.credentialCount ?? 0 }}</td>
+                                 <td><span class="badge " style="min-width: 40%;" [ngClass]="cliente.activo ? 'text-bg-success' : 'text-bg-danger'">{{ cliente.activo | booleanLabel }}</span></td>
                                 <td class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(cliente, 'M')"><ng-icon name="lucidePencil"/></button>
+                                    }
+                                     @if (permisosService.can('CLI.GEN_PORTAL')) {
+                                        <button class="btn btn-ghost-primary" aria-label="Administrar credencial del GEM Clientes" title="Administrar credencial del GEM Clientes" (click)="administrarCredencial(cliente)"><ng-icon name="lucideKeyRound"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(cliente)"><ng-icon name="lucideTrash2"/></button>

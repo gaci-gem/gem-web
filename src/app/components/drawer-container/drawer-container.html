@@ -5,3 +5,6 @@
 <!-- Drawer para mostrar el detalle del usuario -->
 <app-usuario-drawer [visible]="showUsuarioDrawer" [usuarioId]="usuarioSeleccionadoId"
     (closed)="cerrarUsuarioDrawer()"></app-usuario-drawer>
+
+<app-drawer-ticket [visible]="showTicketDrawer" [ticketId]="ticketSeleccionadoId"
+    (closed)="cerrarTicketDrawer()"></app-drawer-ticket>

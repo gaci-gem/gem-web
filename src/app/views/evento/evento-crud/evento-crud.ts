@@ -9,7 +9,7 @@ import { ClienteService } from '@core/services/cliente';
 import { ModuloService } from '@core/services/modulo';
 import { ProductoService } from '@core/services/producto';
 import { TipoEventoService } from '@core/services/tipo-evento';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { createTypeaheadFormatter, createTypeaheadSearch } from '@/app/utils/typeahead-utils';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
@@ -37,6 +37,7 @@ import { LoadingService } from '@core/services/loading.service';
 import { LoadingSpinnerComponent } from '@app/components/index';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { map } from 'rxjs';
+import { EventoService } from '@core/services/evento';
 
 
 @Component({
@@ -53,6 +54,7 @@ import { map } from 'rxjs';
   ],
   providers: [
     MessageService,
+    ConfirmationService,
   ],
   templateUrl: './evento-crud.html',
   styleUrl: './evento-crud.scss'
@@ -72,6 +74,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
   private selModulo!: DynamicDialogRef | null;
   private cdr = inject(ChangeDetectorRef);
   private loadingService = inject(LoadingService);
+  private eventoService = inject(EventoService);
 
   readonly PermisoAccion = PermisoAccion;
   getPrioridadDesc = getPrioridadDesc
@@ -358,6 +361,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
           this.clientes = res;
           this.searchCliente = createTypeaheadSearch(this.clientes, c => `${c.sigla} - ${c.nombre}`);
           this.checkAndSetupEditMode();
+          const fixedClient = this.config.data?.fixedClient as Cliente | undefined;
+          if (fixedClient?.id) {
+            this.form.patchValue({ cliente: fixedClient });
+            this.form.get('cliente')?.disable({ emitEvent: false });
+          }
           this.cdr.detectChanges();
         });
       }
@@ -620,7 +628,9 @@ export class EventoCrud extends CrudFormModal<Evento> {
       formData.append('id', this.get('id')?.value);
     }
     formData.append('tipoCodigo', tipoEvento.codigo);
-    formData.append('numero', this.get('numero')?.value);
+    if (!this.config.data?.submitExternally) {
+      formData.append('numero', this.get('numero')?.value);
+    }
     formData.append('prioridadUsu', this.get('prioridadUsu')?.value);
     formData.append('titulo', this.get('titulo')?.value);
     if (!tipoEvento.propio) {
@@ -649,7 +659,10 @@ export class EventoCrud extends CrudFormModal<Evento> {
     formData.append('cerrado', this.get('cerrado')?.value);
     formData.append('etapaActual', this.get('etapaActual')?.value);
     formData.append('usuarioAltaId', this.get('usuarioAltaId')?.value);
-    formData.append('estimacion', this.get('estimacion')?.value);
+    const estimacion = this.get('estimacion')?.value;
+    if (!this.config.data?.submitExternally || (estimacion !== '' && estimacion !== null && estimacion !== undefined && estimacion !== 0)) {
+      formData.append('estimacion', estimacion);
+    }
 
 
     this.uploadedFiles.forEach(file => formData.append('archivos', file));
@@ -657,8 +670,18 @@ export class EventoCrud extends CrudFormModal<Evento> {
     return formData;
   }
 
+  protected override save(model: FormData) {
+    const externalSubmit = this.config.data?.submitExternally;
+    if (externalSubmit) return externalSubmit(model);
+
+    return this.modo === 'M'
+      ? this.eventoService.updateAdicional(this.form.get('id')?.value ?? '', model)
+      : this.eventoService.createAdicional(model);
+  }
+
   accion(event: Event) {
     event.preventDefault();
+    if (!this.canSubmit()) return;
     
     // Marcar todos los controles como touched para mostrar errores
     Object.keys(this.form.controls).forEach(key => {
@@ -677,7 +700,16 @@ export class EventoCrud extends CrudFormModal<Evento> {
       return;
     }
 
-    this.submit();
+    super.submit();
+  }
+
+  protected override getRequestError(error: any): string {
+    const message = error?.error?.message ?? error?.message;
+    return Array.isArray(message)
+      ? message.join(', ')
+      : message || (this.modo === 'M'
+        ? 'Error al modificar el evento.'
+        : 'Error al crear el evento.');
   }
 
   private getCamposFaltantes(): string[] {
@@ -725,6 +757,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
 
   can(accion: PermisoAccion): boolean {
     return this.permisosService.can(buildPermiso(PermisoClave.EVENTO_TIPO_FAC, accion));
+  }
+
+  canSubmit(): boolean {
+    const requiredPermission = this.config.data?.requiredPermission as string | undefined;
+    return !requiredPermission || this.permisosService.can(requiredPermission);
   }
 
   private applyTipoPropioValidators(tipo: TipoEvento | null) {

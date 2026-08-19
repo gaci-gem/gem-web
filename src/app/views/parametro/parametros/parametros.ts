@@ -121,9 +121,9 @@ export class Parametros extends TrabajarCon<Parametro> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((parametroCrud: Parametro) => {
-      if (!parametroCrud) return;
-      modo === 'M' ? this.editar(parametroCrud) : this.alta(parametroCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Parámetro actualizado correctamente.' : 'Parámetro creado correctamente.');
     });
   }
 }

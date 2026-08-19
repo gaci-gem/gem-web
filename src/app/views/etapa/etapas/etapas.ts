@@ -120,9 +120,9 @@ export class Etapas extends TrabajarCon<Etapa> {
 
     if (!this.ref) return;
 
-    this.ref.onClose.subscribe((etapaCrud: Etapa) => {
-      if (!etapaCrud) return;
-      modo === 'M' ? this.editar(etapaCrud) : this.alta(etapaCrud);
+    this.ref.onClose.subscribe((result: any) => {
+      if (!result?.changed) return;
+      this.afterChange(modo === 'M' ? 'Etapa actualizada correctamente.' : 'Etapa creada correctamente.');
     });
   }
 

@@ -338,6 +338,9 @@ html[data-sidenav-size="offcanvas"] {
 // Menu Collpase Btn
 //
 .menu-collapse-box {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
   background: $sidenav-bg;
   border-top: $card-border-width solid $sidenav-border-color;
   padding: 0 10px;

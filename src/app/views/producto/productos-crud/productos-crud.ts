@@ -4,6 +4,7 @@ import { CrudFormModal } from '@app/components/crud-form-modal/crud-form-modal';
 import { Entorno } from '@core/interfaces/entorno';
 import { Producto } from '@core/interfaces/producto';
 import { EntornoService } from '@core/services/entorno';
+import { ProductoService } from '@core/services/producto';
 import { MessageService } from 'primeng/api';
 import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
 import { ToastModule } from 'primeng/toast';
@@ -23,6 +24,7 @@ import { ToastModule } from 'primeng/toast';
 })
 export class ProductosCrud extends CrudFormModal<Producto> implements OnInit {
   private entornoService = inject(EntornoService)
+  private productoService = inject(ProductoService)
 
   entornos!: Entorno[];
   entornosFiltrados!: Entorno[];
@@ -70,6 +72,12 @@ export class ProductosCrud extends CrudFormModal<Producto> implements OnInit {
       entornoCodigo: this.get('entornoCodigo')?.value,
       activo: this.get('activo')?.value,
     };
+  }
+
+  protected override save(model: Producto) {
+    return this.modo === 'M'
+      ? this.productoService.update(model.id ?? 0, model)
+      : this.productoService.create(({ ...model, id: undefined }));
   }
 
   accion(event: Event) {

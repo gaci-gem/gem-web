@@ -66,6 +66,13 @@ export const VIEWS_ROUTES: Routes = [
   {
     path: '',
     loadChildren: () =>
+      import('./tickets/ticket.route').then((mod) => mod.TICKET_ROUTES),
+    data: { permisoClave: PermisoClave.TICKET },
+    canActivate: [PermisoVerGuard]
+  },
+  {
+    path: '',
+    loadChildren: () =>
       import('./proyecto/proyecto.route').then((mod) => mod.PROYECTO_ROUTES),
     data: { permisoClave: PermisoClave.PROYECTO },
     canActivate: [PermisoVerGuard]

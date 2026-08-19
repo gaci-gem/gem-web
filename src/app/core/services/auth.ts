@@ -41,6 +41,7 @@ export class AuthService {
   }
 
   setTokens(accessToken: string, refreshToken: string, rememberMe: boolean) {
+    this.clearTokens();
     if (rememberMe) {
       localStorage.setItem(this.accessTokenKey, accessToken)
       localStorage.setItem(this.refreshTokenKey, refreshToken)
@@ -57,14 +58,12 @@ export class AuthService {
     sessionStorage.removeItem(this.refreshTokenKey)
   }
 
-  refreshToken(): Observable<string> {
+  refreshToken(): Observable<{ accessToken?: string; refreshToken?: string }> {
     const refresh = this.getRefreshToken()
-    return this.http.post<any>(`${this.URL_COMPLETA}/auth/refresh`, { refreshToken: refresh })
+    return this.http.post<{ accessToken?: string; refreshToken?: string }>(`${this.URL_COMPLETA}/auth/refresh`, refresh ? { refreshToken: refresh } : {})
   }
 
   verifyToken(): Observable<boolean> {
-    const token = this.getAccessToken();
-    if (!token) return of(false);
     return this.http.get(`${this.URL_COMPLETA}/auth/profile`).pipe(
       map(() => true), // si responde 200
       catchError(() => of(false)) // si responde 401 o error
@@ -77,7 +76,9 @@ export class AuthService {
     return this.http.post(`${this.URL_COMPLETA}/auth/login`, body).pipe(
       tap((res: any) => {
         this.eventoTrabajoService.limpiarEvento();
-        this.setTokens(res.accessToken, res.refreshToken, recordar);
+        if (res.accessToken && res.refreshToken) {
+          this.setTokens(res.accessToken, res.refreshToken, recordar);
+        }
         const usuarioData = {
           ...res.usuario,
           esCumpleanios: res.esCumpleanios,
@@ -93,12 +94,24 @@ export class AuthService {
     )
   }
 
-  logout(): void {
+  logout(): Observable<void> {
     this.heartbeatService.stop();
     this.eventoTrabajoService.limpiarEvento();
-    this.clearTokens();
-    this.userStorage.clearUsuario()
-    this.permisosService.clearPermisos();
+    return this.http.post<void>(`${this.URL_COMPLETA}/auth/logout`, {}).pipe(
+      catchError(() => of(void 0)),
+      tap(() => {
+        this.clearTokens();
+        this.userStorage.clearUsuario();
+        this.permisosService.clearPermisos();
+        try {
+          const channel = new BroadcastChannel('gem-auth');
+          channel.postMessage({ type: 'logout', at: new Date().toISOString() });
+          channel.close();
+        } catch {
+          // BroadcastChannel is optional; local cleanup remains authoritative.
+        }
+      }),
+    );
     // localStorage.removeItem('__SIMPLE_ANGULAR_CONFIG__'); // Limpia configuración de la app
   }
 

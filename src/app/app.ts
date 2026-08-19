@@ -9,7 +9,7 @@ import { provideIcons } from '@ng-icons/core';
 import { filter, map, mergeMap } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { Toast, ToastModule } from "primeng/toast";
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
 import { MessageService } from 'primeng/api';
 import { appTitle } from './constants';
 import Clarity from '@microsoft/clarity';
@@ -21,7 +21,8 @@ import { PRIMENG_ES } from './constants/primeng-es';
   imports: [
     RouterOutlet,
     LoadingSpinnerComponent,
-    ToastModule
+    ToastModule,
+    DynamicDialogModule
   ],
   providers: [
     MessageService,

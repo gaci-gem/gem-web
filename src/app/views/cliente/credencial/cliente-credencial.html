@@ -1,0 +1,30 @@
+<p-confirmDialog></p-confirmDialog>
+<div class="container-fluid">
+  <p class="text-muted">Client: <strong>{{ cliente.nombre || cliente.sigla }}</strong></p>
+  <p class="small text-muted">GEM envía contraseñas temporales por correo electrónico. Las contraseñas nunca se muestran.</p>
+   @if (canManage()) { <form [formGroup]="form" (ngSubmit)="create()" novalidate>
+    <div class="mb-3">
+      <label for="portal-login" class="form-label">Login email</label>
+      <input id="portal-login" type="email" class="form-control" formControlName="login" autocomplete="off" />
+      @if (form.controls.login.invalid && form.controls.login.touched) { <div class="invalid-feedback d-block">Ingrese un Email válido.</div> }
+    </div>
+    <button type="submit" class="btn btn-primary" [disabled]="loading">Crear credencial</button>
+    </form>
+  <hr />
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr><th>Login</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead>
+      <tbody>
+        @for (credential of credentials; track credential.id) {
+          <tr>
+            <td>{{ credential.login }}</td>
+            <td><span class="badge" [ngClass]="credential.activo ? 'text-bg-success' : 'text-bg-secondary'">{{ credential.activo ? 'Active' : 'Inactive' }}</span></td>
+            <td>{{ credential.updatedAt | date: 'short' }}</td>
+             <td class="text-end">@if (canManage()) { <button class="btn btn-sm btn-outline-primary me-2" [disabled]="loading" (click)="rotate(credential)">Blanquear</button><button class="btn btn-sm btn-outline-secondary" [disabled]="loading" (click)="confirmToggle(credential)">{{ credential.activo ? 'Desactivar' : 'Activar' }}</button> }</td>
+          </tr>
+        } @empty { <tr><td colspan="4" class="text-muted">No hay credenciales configuradas.</td></tr> }
+      </tbody>
+    </table>
+  </div>
+    } @else { <div class="alert alert-warning">No tiene permiso para gestionar las credenciales del Portal.</div> } <div class="d-flex justify-content-end"><button class="btn btn-secondary" (click)="cerrar()">Cerrar</button></div>
+</div>

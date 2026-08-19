@@ -69,6 +69,7 @@ export interface EventoCompleto extends Evento {
   requisitos: Evento_requisito[];
   observadores: UsuarioEvento[];
   documentacion: EventoDocumentacion[];
+  portalTickets: EventoPortalTicket[];
 
   etapaActualData: EventoEtapa;
   etapaSiguiente: EventoEtapa | null;
@@ -82,6 +83,14 @@ export interface EventoCompleto extends Evento {
     color: string;
     activo?: boolean;
   } | null;
+}
+
+export interface EventoPortalTicket {
+  id: number;
+  subject: string;
+  status: string;
+  externalReference: string | null;
+  createdAt: string | Date;
 }
 
 export interface EventoDocumentacion {
@@ -617,6 +626,7 @@ export const eventoMock: EventoCompleto = {
   requisitos: [],
   observadores: [],
   documentacion: [],
+  portalTickets: [],
 };
 
 export const requisitosMock: EventoV2Requisito[] = [
