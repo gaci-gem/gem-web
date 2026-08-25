@@ -17,17 +17,21 @@
       }
     </div>
 
-    <div class="col-md-6">
-      <label for="valor" class="form-label">Valor <span class="text-danger">*</span></label>
-      <input
-        id="valor"
-        type="text"
-        formControlName="valor"
-        class="form-control"
-        [class.is-invalid]="get('valor')?.invalid && get('valor')?.touched"
-        placeholder="Valor del parámetro"
-        required
-      />
+      <div class="col-md-6">
+        <label for="valor" class="form-label">Valor <span class="text-danger">*</span></label>
+        @if (modo === 'V') {
+          <pre id="valor" class="form-control parametro-value-view" aria-readonly="true">{{ get('valor')?.value }}</pre>
+        } @else {
+          <input
+            id="valor"
+            type="text"
+            formControlName="valor"
+            class="form-control"
+            [class.is-invalid]="get('valor')?.invalid && get('valor')?.touched"
+            placeholder="Valor del parámetro"
+            required
+          />
+        }
       @if (get('valor')?.invalid && get('valor')?.touched) {
         <div class="invalid-feedback">El valor es obligatorio.</div>
       }
@@ -82,14 +86,18 @@
       ></textarea>
     </div>
 
-    <div class="col-12 mb-5">
-      <button class="btn btn-primary" type="submit">
-        @if (modo === 'A') {
-          Crear Parámetro
-        } @else if (modo === 'M') {
-          Modificar
-        }
-      </button>
+    <div class="col-12 mb-5 d-flex gap-2">
+      @if (modo === 'V') {
+        <button class="btn btn-secondary" type="button" (click)="cancel()">Cerrar</button>
+      } @else {
+        <button class="btn btn-primary" type="submit">
+          @if (modo === 'A') {
+            Crear Parámetro
+          } @else if (modo === 'M') {
+            Modificar
+          }
+        </button>
+      }
     </div>
   </form>
 </div>

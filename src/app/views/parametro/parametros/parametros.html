@@ -27,7 +27,7 @@
                         [rows]="10"
                         [paginator]="true"
                         [globalFilterFields]="['clave', 'valor', 'tipo', 'ambito', 'descripcion']"
-                        [tableStyle]="{ 'min-width': '75rem' }"
+                        [tableStyle]="{ 'min-width': '75rem', 'table-layout': 'fixed' }"
                         [rowHover]="true"
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
@@ -45,9 +45,9 @@
                         </ng-template>
                         <ng-template pTemplate="header">
                             <tr>
-                                <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon><p-columnFilter type="text" field="descripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="clave">Clave <p-sortIcon field="clave"></p-sortIcon><p-columnFilter type="text" field="clave" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="valor">Valor <p-sortIcon field="valor"></p-sortIcon><p-columnFilter type="text" field="valor" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
+                                <th pSortableColumn="clave" style="width: 16%;">Código <p-sortIcon field="clave"></p-sortIcon><p-columnFilter type="text" field="clave" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
+                                <th pSortableColumn="descripcion" style="width: 32%;">Descripción <p-sortIcon field="descripcion"></p-sortIcon><p-columnFilter type="text" field="descripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
+                                <th pSortableColumn="valor" style="width: 22%;">Valor <p-sortIcon field="valor"></p-sortIcon><p-columnFilter type="text" field="valor" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo"></p-sortIcon><p-columnFilter type="text" field="tipo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="ambito">Ámbito <p-sortIcon field="ambito"></p-sortIcon><p-columnFilter type="text" field="ambito" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th></th>
@@ -55,12 +55,17 @@
                         </ng-template>
                         <ng-template pTemplate="body" let-parametro>
                             <tr>
-                                <td>{{ parametro.descripcion }}</td>
                                 <td>{{ parametro.clave }}</td>
-                                <td>{{ parametro.valor }}</td>
+                                <td>{{ parametro.descripcion }}</td>
+                                <td>
+                                    <div class="parametro-value" [title]="parametro.valor">{{ parametro.valor }}</div>
+                                </td>
                                 <td>{{ parametro.tipo }}</td>
                                 <td>{{ parametro.ambito }}</td>
                                 <td class="d-flex justify-content-end">
+                                    @if (can(PermisoAccion.LEER)) {
+                                        <button class="btn btn-ghost-info" title="Ver parámetro" aria-label="Ver parámetro" (click)="view(parametro)"><ng-icon name="lucideEye"/></button>
+                                    }
                                     @if (can(PermisoAccion.MODIFICAR) && parametro.editable) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(parametro, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }

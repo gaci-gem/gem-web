@@ -71,6 +71,8 @@ export abstract class CrudFormModal<T> {
   }
 
   submit(): void {
+    if (this.modo === 'V') return;
+
     if (!this.form.valid) {
       this.messageService.add({
         severity: 'error',

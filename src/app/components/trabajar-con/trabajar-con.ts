@@ -11,6 +11,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { Subscription } from 'rxjs';
 
+export type CrudViewAction<T> = (item: T) => void;
+
 @Component({
   selector: 'app-trabajar-con',
   imports: [],
@@ -27,6 +29,9 @@ export abstract class TrabajarCon<T> {
   readonly FiltroActivo = FiltroActivo;
   FiltroActivoOptions = FiltroActivoOptions;
   FiltroCerradoOptions = FiltroCerradoOptions;
+
+  /** Optional read-only action supplied by screens that expose entity viewing. */
+  protected viewAction?: CrudViewAction<T>;
 
   filtroActivo: FiltroActivo = FiltroActivo.TRUE;
   searchValue = signal('');
@@ -45,6 +50,10 @@ export abstract class TrabajarCon<T> {
   abstract alta(item: T): void;
   abstract editar(item: T): void;
   abstract eliminarDirecto(item: T): void;
+
+  view(item: T): void {
+    this.viewAction?.(item);
+  }
 
   exportarExcel(): void {
     this.exportarExcelImpl();
