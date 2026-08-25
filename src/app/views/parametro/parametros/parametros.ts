@@ -63,6 +63,7 @@ export class Parametros extends TrabajarCon<Parametro> {
       inject(ConfirmationService)
     );
     this.permisoClave = PermisoClave.SISTEMA;
+    this.viewAction = (parametro) => this.mostrarModalCrud(parametro, 'V');
   }
 
   protected loadItems(): void {
@@ -109,9 +110,13 @@ export class Parametros extends TrabajarCon<Parametro> {
     });
   }
 
-  mostrarModalCrud(parametro: Parametro | null, modo: 'A' | 'M') {
+  mostrarModalCrud(parametro: Parametro | null, modo: 'A' | 'M' | 'V') {
     const data = { item: parametro, modo };
-    const header = modo === 'A' ? 'Nuevo Parámetro' : 'Modificar Parámetro';
+    const header = modo === 'A'
+      ? 'Nuevo Parámetro'
+      : modo === 'M'
+        ? 'Modificar Parámetro'
+        : 'Ver Parámetro';
 
     this.ref = this.dialogService.open(ParametroCrud, {
       ...modalConfig,
