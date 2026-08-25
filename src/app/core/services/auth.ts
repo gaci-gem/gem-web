@@ -23,6 +23,7 @@ export class AuthService {
 
   private readonly accessTokenKey = 'access_token'
   private readonly refreshTokenKey = 'refresh_token'
+  private readonly deviceIdKey = 'auth_device_id'
 
 
   getAccessToken(): string | null {
@@ -72,7 +73,12 @@ export class AuthService {
 
   login(credentials: any, recordar:boolean=false): Observable<any> {
     // Enviar la fecha local del cliente para que el backend compute bien cumpleaños y ausencia
-    const body = { ...credentials, fechaActual: new Date().toISOString() };
+    const body = {
+      ...credentials,
+      recordar,
+      deviceId: this.getOrCreateDeviceId(),
+      fechaActual: new Date().toISOString(),
+    };
     return this.http.post(`${this.URL_COMPLETA}/auth/login`, body).pipe(
       tap((res: any) => {
         this.eventoTrabajoService.limpiarEvento();
@@ -92,6 +98,15 @@ export class AuthService {
         this.heartbeatService.start();
       })
     )
+  }
+
+  private getOrCreateDeviceId(): string {
+    const existing = localStorage.getItem(this.deviceIdKey);
+    if (existing) return existing;
+
+    const deviceId = crypto.randomUUID();
+    localStorage.setItem(this.deviceIdKey, deviceId);
+    return deviceId;
   }
 
   logout(): Observable<void> {
