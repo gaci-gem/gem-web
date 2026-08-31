@@ -16,6 +16,24 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.3',
+    date: '2026-08-31',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Agregamos la integración de GEM MCP con una guía de configuración para ChatGPT y Codex.',
+      },
+      {
+        type: 'improvement',
+        text: 'La URL del servidor MCP se configura al iniciar el contenedor, sin reconstruir la imagen.',
+      },
+      {
+        type: 'improvement',
+        text: 'Ahora podés filtrar el selector de eventos para mostrar sólo tus eventos asignados.',
+      },
+    ],
+  },
+  {
     version: '0.3.2',
     date: '2026-08-19',
     changes: [
