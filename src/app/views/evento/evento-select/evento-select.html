@@ -13,6 +13,17 @@
             aria-label="Buscar eventos"
         />
 
+        <label class="form-check mobile-evento-own-filter" for="mobile-solo-mis-eventos">
+            <input
+                id="mobile-solo-mis-eventos"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="soloMisEventos"
+                (change)="onSoloMisEventosChange($any($event.target).checked)"
+            />
+            <span class="form-check-label">Solo mis Eventos</span>
+        </label>
+
         @if (loadingSelect) {
             <div class="mobile-evento-status" role="status" aria-live="polite">
                 <app-loading-spinner></app-loading-spinner>
@@ -81,11 +92,21 @@
             size="small"
         >
             <ng-template pTemplate="caption">
-                <div class="flex align-items-center justify-content-between" style="display: flex;">
+                <div class="flex align-items-center" style="display: flex;">
                     <span class="p-input-icon-left">
                         <i class="pi pi-search"></i>
                         <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
                     </span>
+                    <label class="form-check evento-own-filter" for="solo-mis-eventos">
+                        <input
+                            id="solo-mis-eventos"
+                            class="form-check-input"
+                            type="checkbox"
+                            [checked]="soloMisEventos"
+                            (change)="onSoloMisEventosChange($any($event.target).checked)"
+                        />
+                        <span class="form-check-label">Solo mis Eventos</span>
+                    </label>
                 </div>
             </ng-template>
             <ng-template pTemplate="header">

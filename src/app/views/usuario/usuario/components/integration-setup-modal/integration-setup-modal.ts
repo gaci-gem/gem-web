@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AccordionModule } from 'primeng/accordion';
 import { DialogModule } from 'primeng/dialog';
+import { environment } from '@/environments/environment';
 
 @Component({
   selector: 'app-integration-setup-modal',
@@ -79,12 +80,12 @@ import { DialogModule } from 'primeng/dialog';
 export class IntegrationSetupModalComponent {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
-  readonly mcpUrl = 'http://127.0.0.1:3000/mcp';
+  readonly mcpUrl = environment.mcpUrl;
   readonly tokenEnvironmentVariable = 'GEM_MCP_TOKEN';
   readonly persistentTokenCommand =
     "[Environment]::SetEnvironmentVariable('GEM_MCP_TOKEN', '<PEGAR_TOKEN_LOCALMENTE>', 'User')";
   readonly codexCommand =
-    'codex mcp add gem-mcp --url "http://127.0.0.1:3000/mcp" --bearer-token-env-var GEM_MCP_TOKEN';
+    `codex mcp add gem-mcp --url "${this.mcpUrl}" --bearer-token-env-var GEM_MCP_TOKEN`;
   copied: 'url' | 'variable' | 'command' | 'codex' | null = null;
   copyError: string | null = null;
 

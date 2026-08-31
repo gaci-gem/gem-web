@@ -11,6 +11,7 @@ export const environment = {
 
   loginUrl: '__GEM_WEB_URL__/login',
   apiBaseUrl: '__BASE_URL__',
+  mcpUrl: '__GEM_MCP_URL__',
   cookieName: 'token',
   cookieOnlyAuth: true,
   useCookieAuth: true,

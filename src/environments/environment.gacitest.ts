@@ -9,6 +9,7 @@ export const environment = {
 
   loginUrl: 'https://gem-web.julitorossian.dev/login',
   apiBaseUrl: 'https://makima-v2.julitorossian.dev',
+  mcpUrl: 'http://127.0.0.1:3000/mcp',
   cookieName: 'token',
   cookieOnlyAuth: true,
   useCookieAuth: true,

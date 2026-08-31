@@ -14,6 +14,23 @@
     width: 100%;
 }
 
+.mobile-evento-own-filter,
+.evento-own-filter {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.evento-own-filter {
+    margin-left: 1rem;
+    white-space: nowrap;
+}
+
+.mobile-evento-own-filter .form-check-input,
+.evento-own-filter .form-check-input {
+    margin: 0;
+}
+
 .mobile-evento-status {
     align-items: center;
     display: flex;
