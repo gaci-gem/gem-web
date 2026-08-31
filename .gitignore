@@ -2,6 +2,8 @@
 
 src/assets/version.json
 
+.codegraph/
+
 # src/assets/scss
 
 # Compiled output

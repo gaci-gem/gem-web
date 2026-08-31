@@ -18,6 +18,7 @@ import { TabPerfil } from './components/tab-perfil';
 import { TabModificar } from './components/tab-modificar';
 import { TabSeguridad } from './components/tab-seguridad';
 import { TabPreferencias } from './components/tab-preferencias';
+import { TabIntegraciones } from './components/tab-integraciones';
 import { AvatarEditableComponent } from '@app/components/avatar-editable';
 import { ModalSeleccionarAvatarComponent } from './components/modal-seleccionar-avatar/modal-seleccionar-avatar';
 import { UsuarioAdicionalClave } from '@/app/constants/adicionales_usuario';
@@ -41,6 +42,7 @@ import { getDiscordUserUrl } from '@/app/constants/social-urls';
         TabModificar,
         TabPreferencias,
         TabSeguridad,
+        TabIntegraciones,
         AvatarEditableComponent,
         ModalSeleccionarAvatarComponent,
     ],

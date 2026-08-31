@@ -8,11 +8,14 @@ import { EventoService } from '@core/services/evento';
 import { DrawerService } from '@core/services/drawer.service';
 import { LoadingService } from '@core/services/loading.service';
 import { ViewportService } from '@core/services/viewport.service';
+import { UserStorageService } from '@core/services/user-storage';
+import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { EventoSelect } from './evento-select';
 
 describe('EventoSelect', () => {
   let component: EventoSelect;
   let fixture: ComponentFixture<EventoSelect>;
+  let eventoService: jasmine.SpyObj<EventoService>;
 
   const createEvento = (index: number): EventoCompleto => ({
     evento: `CAS-${String(index).padStart(3, '0')}`,
@@ -26,9 +29,13 @@ describe('EventoSelect', () => {
     TestBed.configureTestingModule({
       imports: [EventoSelect],
       providers: [
-        { provide: EventoService, useValue: { getAllComplete: () => of([]) } },
+        {
+          provide: EventoService,
+          useValue: jasmine.createSpyObj('EventoService', ['getAllComplete', 'getAllCompleteByUsuario']),
+        },
         { provide: DrawerService, useValue: { abrirEventoDrawer: jasmine.createSpy('abrirEventoDrawer') } },
         { provide: ViewportService, useValue: { isMobile: () => true } },
+        { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'user-1' }) } },
         { provide: DynamicDialogConfig, useValue: { data: {} } },
         { provide: DynamicDialogRef, useValue: { close: jasmine.createSpy('close') } },
         LoadingService,
@@ -40,6 +47,9 @@ describe('EventoSelect', () => {
 
     fixture = TestBed.createComponent(EventoSelect);
     component = fixture.componentInstance;
+    eventoService = TestBed.inject(EventoService) as jasmine.SpyObj<EventoService>;
+    eventoService.getAllComplete.and.returnValue(of([]));
+    eventoService.getAllCompleteByUsuario.and.returnValue(of([]));
     component.eventos = Array.from({ length: 21 }, (_, index) => createEvento(index + 1));
   });
 
@@ -47,6 +57,28 @@ describe('EventoSelect', () => {
     component.onMobileSearch('mÓDULO eSpEcIaL');
 
     expect(component.eventosFiltradosMobile.map((evento) => evento.evento)).toEqual(['CAS-002']);
+  });
+
+  it('starts with the own-events filter disabled and loads all events', () => {
+    component.ngOnInit();
+
+    expect(component.soloMisEventos).toBeFalse();
+    expect(eventoService.getAllComplete).toHaveBeenCalledWith(FiltroActivo.ALL);
+    expect(eventoService.getAllCompleteByUsuario).not.toHaveBeenCalled();
+  });
+
+  it('loads assigned events and resets mobile pagination when the filter changes', () => {
+    component.goToMobilePage(1);
+
+    component.onSoloMisEventosChange(true);
+
+    expect(eventoService.getAllCompleteByUsuario).toHaveBeenCalledWith('user-1');
+    expect(component.mobilePage()).toBe(0);
+
+    component.onSoloMisEventosChange(false);
+
+    expect(eventoService.getAllComplete).toHaveBeenCalledWith(FiltroActivo.ALL);
+    expect(component.mobilePage()).toBe(0);
   });
 
   it('keeps ten events per mobile page and clamps navigation', () => {

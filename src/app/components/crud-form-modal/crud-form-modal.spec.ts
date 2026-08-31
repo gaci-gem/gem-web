@@ -43,4 +43,14 @@ describe('CrudFormModal', () => {
 
     expect(component.ref.close).toHaveBeenCalledWith({ name: 'value' });
   });
+
+  it('does not save or close in read-only mode', () => {
+    const component = createComponent(of({ id: 7 }));
+    component.modo = 'V';
+
+    component.submit();
+
+    expect(component.ref.close).not.toHaveBeenCalled();
+    expect(component.submitting).toBeFalse();
+  });
 });

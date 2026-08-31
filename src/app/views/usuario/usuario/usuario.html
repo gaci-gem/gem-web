@@ -97,6 +97,15 @@
                                 }
                             </ng-template>
                         </li>
+                        <li [ngbNavItem]="5">
+                            <a href="javascript:void(0);" ngbNavLink>
+                                <ng-icon name="tablerPlugConnected" class="fs-lg me-md-1 align-middle d-inline-flex" />
+                                <span class="d-none d-md-inline-block align-middle">Integraciones</span>
+                            </a>
+                            <ng-template ngbNavContent>
+                                <app-tab-integraciones />
+                            </ng-template>
+                        </li>
                     }
                 </ul>
 

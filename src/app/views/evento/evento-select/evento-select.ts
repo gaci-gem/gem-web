@@ -15,6 +15,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ViewportService } from '@core/services/viewport.service';
 import { InputTextModule } from 'primeng/inputtext';
+import { UserStorageService } from '@core/services/user-storage';
 
 @Component({
     selector: 'app-evento-select',
@@ -36,8 +37,11 @@ export class EventoSelect extends SelectBase<Evento> {
     protected config = inject(DynamicDialogConfig);
     private drawerService = inject(DrawerService);
     private viewportService = inject(ViewportService);
+    private userStorageService = inject(UserStorageService);
 
     filtroEvento: FiltroActivo = FiltroActivo.ALL;
+    soloMisEventos = false;
+    readonly usuarioActualId = this.userStorageService.getUsuario()?.id;
 
     eventos: EventoCompleto[] = [];
     eventoSeleccionado!: Evento;
@@ -71,7 +75,11 @@ export class EventoSelect extends SelectBase<Evento> {
 
     loadItems() {
         this.loadingSelect = true;
-        this.eventoService.getAllComplete(this.filtroEvento).pipe(
+        const eventos$ = this.soloMisEventos
+            ? this.eventoService.getAllCompleteByUsuario(this.usuarioActualId ?? '')
+            : this.eventoService.getAllComplete(this.filtroEvento);
+
+        eventos$.pipe(
             finalize(() => {
                 this.loadingSelect = false
                 this.cdr.detectChanges();
@@ -89,6 +97,12 @@ export class EventoSelect extends SelectBase<Evento> {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los eventos' });
             }
         });
+    }
+
+    onSoloMisEventosChange(checked: boolean): void {
+        this.soloMisEventos = checked;
+        this.mobilePage.set(0);
+        this.loadItems();
     }
 
     select(evento:Evento) {
