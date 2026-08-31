@@ -134,6 +134,7 @@ export class TabIntegraciones implements OnInit, OnDestroy {
   copyError: string | null = null;
 
   ngOnInit(): void {
+    this.tokenActual = null;
     this.cargando = true;
     this.tokenService
       .list()
@@ -154,11 +155,9 @@ export class TabIntegraciones implements OnInit, OnDestroy {
   }
 
   get tokenAcortado(): string {
+    if (this.tokenActual) return this.tokenActual;
     if (this.tokenPreview) return this.tokenPreview;
-    if (!this.tokenActual) return '';
-    return this.tokenActual.length > 12
-      ? `${this.tokenActual.slice(0, 9)}${'*'.repeat(16)}${this.tokenActual.slice(-3)}`
-      : this.tokenActual;
+    return '';
   }
 
   generarToken(): void {
@@ -245,12 +244,54 @@ export class TabIntegraciones implements OnInit, OnDestroy {
     if (!this.tokenActual) return;
     this.copyError = null;
     this.copiaExitosa = false;
+
+    let clipboardError: unknown = null;
     try {
-      await navigator.clipboard.writeText(this.tokenActual);
-      this.copiaExitosa = true;
-    } catch {
-      this.copyError = 'No se pudo copiar el token. Copialo manualmente.';
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(this.tokenActual);
+        this.copiaExitosa = true;
+        return;
+      }
+      clipboardError = new Error('Clipboard API is unavailable');
+    } catch (error) {
+      clipboardError = error;
     }
+
+    let textarea: HTMLTextAreaElement | null = null;
+    try {
+      textarea = document.createElement('textarea');
+      textarea.value = this.tokenActual;
+      textarea.setAttribute('readonly', '');
+      textarea.setAttribute('aria-hidden', 'true');
+      textarea.tabIndex = -1;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+
+      if (!document.execCommand('copy')) {
+        throw new Error('execCommand copy returned false');
+      }
+
+      this.copiaExitosa = true;
+      return;
+    } catch (fallbackError) {
+      console.error('Failed to copy integration token.', {
+        clipboardApi: this.describeCopyError(clipboardError),
+        fallback: this.describeCopyError(fallbackError),
+      });
+      this.copyError = 'No se pudo copiar el token. Copialo manualmente.';
+    } finally {
+      if (textarea?.parentNode) {
+        textarea.parentNode.removeChild(textarea);
+      }
+    }
+  }
+
+  private describeCopyError(error: unknown): string {
+    return error instanceof Error ? error.name : typeof error;
   }
 
   ngOnDestroy(): void {
