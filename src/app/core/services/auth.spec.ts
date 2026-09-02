@@ -22,8 +22,16 @@ describe('AuthService login', () => {
     );
   });
 
-  it('sends remember me and a stable browser device id', () => {
-    spyOn(crypto, 'randomUUID').and.returnValue(
+  it('reuses an existing browser device id unchanged', () => {
+    localStorage.setItem('auth_device_id', 'existing-device-id');
+
+    service.login({ usuario: 'ada', password: 'secret' }, true).subscribe();
+
+    expect(http.post.calls.mostRecent().args[1].deviceId).toBe('existing-device-id');
+  });
+
+  it('prefers randomUUID when it is available', () => {
+    spyOn(globalThis.crypto, 'randomUUID').and.returnValue(
       '00000000-0000-4000-8000-000000000001',
     );
 
@@ -38,5 +46,25 @@ describe('AuthService login', () => {
     expect(secondBody.recordar).toBeFalse();
     expect(secondBody.deviceId).toBe('00000000-0000-4000-8000-000000000001');
     expect(crypto.randomUUID).toHaveBeenCalledTimes(1);
+  });
+
+  it('generates a UUID v4-compatible id when randomUUID is unavailable', () => {
+    const randomUUID = globalThis.crypto.randomUUID;
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      configurable: true,
+      value: undefined,
+    });
+
+    try {
+      service.login({ usuario: 'ada', password: 'secret' }).subscribe();
+      const deviceId = http.post.calls.mostRecent().args[1].deviceId as string;
+
+      expect(deviceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', {
+        configurable: true,
+        value: randomUUID,
+      });
+    }
   });
 });

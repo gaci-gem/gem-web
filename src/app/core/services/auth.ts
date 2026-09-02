@@ -104,25 +104,43 @@ export class AuthService {
     const existing = localStorage.getItem(this.deviceIdKey);
     if (existing) return existing;
 
-    const deviceId = typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : this.createUuidFallback();
+    const webCrypto = globalThis.crypto;
+    let deviceId: string | undefined;
+
+    if (typeof webCrypto?.randomUUID === 'function') {
+      try {
+        deviceId = webCrypto.randomUUID();
+      } catch {
+        // Continue with the compatible generator if randomUUID is unavailable at runtime.
+      }
+    }
+
+    if (!deviceId && typeof webCrypto?.getRandomValues === 'function') {
+      try {
+        const bytes = new Uint8Array(16);
+        webCrypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        deviceId = [
+          this.bytesToHex(bytes, 0, 4),
+          this.bytesToHex(bytes, 4, 2),
+          this.bytesToHex(bytes, 6, 2),
+          this.bytesToHex(bytes, 8, 2),
+          this.bytesToHex(bytes, 10, 6),
+        ].join('-');
+      } catch {
+        // Use the non-cryptographic fallback below when Web Crypto is unavailable.
+      }
+    }
+
+    const fallback = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    deviceId ??= fallback;
     localStorage.setItem(this.deviceIdKey, deviceId);
     return deviceId;
   }
 
-  private createUuidFallback(): string {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
-    return [...bytes]
-      .map((byte, index) => {
-        const value = byte.toString(16).padStart(2, '0');
-        return [4, 6, 8, 10].includes(index) ? `-${value}` : value;
-      })
-      .join('');
+  private bytesToHex(bytes: Uint8Array, start: number, length: number): string {
+    return Array.from(bytes.slice(start, start + length), byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   logout(): Observable<void> {
