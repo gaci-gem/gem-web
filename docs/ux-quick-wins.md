@@ -7,10 +7,10 @@ Backlog of small, high-impact improvements intended to reduce daily friction in 
 | Status | # | Improvement | Expected benefit |
 |---|---:|---|---|
 | Completed | 4 | Clearer feedback | Users always know when an action is saving, completed, or failed. |
-| Planned | 1 | Command palette + global search (`Ctrl+K`) | Reach screens, actions, and records from one keyboard-driven surface. |
-| Planned | 2 | Global search | Implemented as the record-search part of the command palette rather than a separate destination. |
+| Completed | 1 | Command palette + global search (`Ctrl+K`) | Reach screens, actions, and records from one keyboard-driven surface. |
+| Completed | 2 | Global search | Implemented as the record-search part of the command palette rather than a separate destination. |
 | Revisit | 3 | Quick table actions | Add only genuinely useful shortcuts; do not hide a small set of clear row actions behind a menu. |
-| In progress | 5 | Useful empty states | Explain why there are no results and offer the next useful action. |
+| Completed (first slice) | 5 | Useful empty states | Explain why there are no results and offer the next useful action. |
 | Planned | 6 | Recently visited screens | Return quickly to recently opened records and views. |
 | Planned | 7 | Favorites | Pin frequently used projects, clients, or views. |
 | Completed | 8 | Keyboard improvements | Make common actions faster with predictable shortcuts. |
@@ -57,9 +57,9 @@ The special flows are covered with behavior-specific local states:
 
 ## Item 5 — Useful empty states
 
-### Current slice
+### Completed first slice
 
-Added native empty-state extensions to the following screens:
+Added and validated native empty-state extensions to the following screens:
 
 - Users, clients, and projects: distinguish empty datasets from PrimeNG search/column, active-status, and role-filter results; show permitted create actions for empty datasets.
 - Events: distinguish empty datasets from active status, date-range, search, and column filters; expose `Limpiar filtros` for filtered results.
@@ -87,7 +87,7 @@ Added native empty-state extensions to the following screens:
 
 ## Items 1 and 2 — Command palette and global search
 
-The current branch includes an isolated visual and functional preview in `src/app/components/command-palette`. It uses the installed PrimeNG dialog and input components, with local demo commands only; it does not install or update PrimeNG.
+The current `desa` environment includes the functional command palette and global-search flow in `src/app/components/command-palette`, backed by the API search module. It uses the installed PrimeNG dialog and input components and does not install or update PrimeNG.
 
 > Compatibility note: the current project uses PrimeNG `21.0.0-beta.1`, while the referenced `CommandMenu` documentation is for the newer PrimeNG site. The installed version does not currently expose `primeng/commandmenu`, so implementation must either upgrade PrimeNG deliberately or reproduce the same interaction with supported components.
 
@@ -96,4 +96,4 @@ The current branch includes an isolated visual and functional preview in `src/ap
 - **Default view:** recent commands and frequent actions.
 - **Typed search:** filter local commands first; query records asynchronously when the input is specific enough.
 - **Keyboard contract:** `Ctrl+K`/`Cmd+K` opens the dialog, arrows move through results, `Enter` executes, and `Escape` closes it.
-- **Boundary:** the palette is the shared entry point; command definitions are separate from the visual component, while real record search against the API remains pending.
+- **Boundary:** the palette is the shared entry point and command definitions remain separate from the visual component. The delivered search flow now queries the API for supported records.
