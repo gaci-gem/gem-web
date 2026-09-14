@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Proyecto } from '@core/interfaces/proyecto';
@@ -8,13 +10,14 @@ import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ProyectoCrud } from '../proyecto-crud/proyecto-crud';
 import { modalConfig } from '@/app/types/modals';
 import { PermisoClave } from '@core/interfaces/rol';
 import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BooleanLabelPipe } from '@core/pipes/boolean-label.pipe';
 import { CommonModule } from '@angular/common';
 import { FiltroRadioGroupComponent } from '@app/components/filtro-check';
@@ -36,6 +39,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     CommonModule,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -46,10 +50,12 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './proyectos.scss'
 })
 export class Proyectos extends TrabajarCon<Proyecto> {
+  readonly pantalla = 'proyectos';
   private proyectoService = inject(ProyectoService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
   proyectos!: Proyecto[];
+  private pendingSearchId: number | null = null;
 
   constructor() {
     super(
@@ -57,7 +63,13 @@ export class Proyectos extends TrabajarCon<Proyecto> {
       inject(MessageService),
       inject(ConfirmationService)
     );
-        this.permisoClave = PermisoClave.CLIENTE;
+    this.permisoClave = PermisoClave.PROYECTO;
+    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(params => {
+      const id = Number(params.get('searchId'));
+      if (!Number.isInteger(id) || id < 1) return;
+      this.pendingSearchId = id;
+      this.openPendingSearchResult();
+    });
   }
 
   protected loadItems(): void {
@@ -74,6 +86,7 @@ export class Proyectos extends TrabajarCon<Proyecto> {
           });
         }
         this.cdr.detectChanges();
+        this.openPendingSearchResult();
       },
       error: () => {
         this.showError('Error al cargar los proyectos.');
@@ -81,25 +94,47 @@ export class Proyectos extends TrabajarCon<Proyecto> {
     });
   }
 
+  private openPendingSearchResult(): void {
+    if (this.pendingSearchId === null || !this.proyectos?.length) return;
+    const proyecto = this.proyectos.find(item => item.id === this.pendingSearchId);
+    if (!proyecto) return;
+    this.pendingSearchId = null;
+    this.mostrarModalCrud(proyecto, 'M');
+  }
+
+  isFiltered(table: Table): boolean {
+    return this.filtroActivo !== FiltroActivo.TRUE || this.hasTableFilters(table);
+  }
+
+  private hasTableFilters(table: Table): boolean {
+    return Object.values(table.filters ?? {}).some(value => {
+      const filter = Array.isArray(value) ? value[0] : value;
+      return filter?.value !== null && filter?.value !== undefined && filter.value !== '';
+    });
+  }
+
   alta(proyecto: Proyecto): void {
+    if (!this.beginAction()) return;
     delete proyecto.id
-    this.proyectoService.create(proyecto).subscribe({
+    this.proyectoService.create(proyecto).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Proyecto creado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear el proyecto.')
     });
   }
 
   editar(proyecto: Proyecto): void {
+    if (!this.beginAction()) return;
     let proyectoId = proyecto.id ?? 0;
-    this.proyectoService.update(proyectoId, proyecto).subscribe({
+    this.proyectoService.update(proyectoId, proyecto).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Proyecto actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el proyecto.')
     });
   }
 
   eliminarDirecto(proyecto: Proyecto): void {
+    if (!this.beginAction()) return;
     let proyectoId = proyecto.id ?? 0;
-    this.proyectoService.delete(proyectoId).subscribe({
+    this.proyectoService.delete(proyectoId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Proyecto eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Proyecto.')
     });

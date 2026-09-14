@@ -58,6 +58,7 @@ export class ClienteCredencial {
   }
 
   create(): void {
+    if (this.loading) return;
     if (!this.canManage()) return;
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.cliente.id) return;
@@ -69,6 +70,7 @@ export class ClienteCredencial {
   }
 
   rotate(credential: TicketCredential): void {
+    if (this.loading) return;
     if (!this.canManage()) return;
     if (!this.cliente.id) return;
     this.loading = true;
@@ -79,6 +81,7 @@ export class ClienteCredencial {
   }
 
   toggle(credential: TicketCredential): void {
+    if (this.loading) return;
     if (!this.canManage()) return;
     if (!this.cliente.id) return;
     this.loading = true;

@@ -35,6 +35,8 @@ export class EventoV2HeaderComponent {
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
   esObservador = false;
   togglingObservador = false;
+  fechaGuardando: string | null = null;
+  estadoFecha: 'guardado' | 'error' | null = null;
   ngOnChanges(): void {
     this.syncObservadorState();
   }
@@ -66,6 +68,7 @@ export class EventoV2HeaderComponent {
   }
 
   onFechaChange(event: any, campo: string): void {
+    if (this.fechaGuardando) return;
     const iso = event ? `${event}T00:00:00.000Z` : null;
     if (campo && this.evento) {
       (this.evento as any)[campo] = iso;
@@ -74,7 +77,15 @@ export class EventoV2HeaderComponent {
       ...eventoFromEventoCompleto(this.evento),
       [campo]: iso,
     };
-    this.eventoService.update(this.evento.id!, aux).subscribe();
+    this.fechaGuardando = campo;
+    this.estadoFecha = null;
+    this.eventoService.update(this.evento.id!, aux).pipe(finalize(() => {
+      this.fechaGuardando = null;
+      this.cdRef.detectChanges();
+    })).subscribe({
+      next: () => this.estadoFecha = 'guardado',
+      error: () => this.estadoFecha = 'error',
+    });
   }
 
   abrirUsuarioDrawer(usuarioId: string): void {

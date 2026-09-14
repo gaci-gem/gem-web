@@ -31,7 +31,7 @@ export class TendenciaEventos implements OnInit {
 
   ngOnInit(): void {
     this.dashboardService.getDashboard().subscribe(res => {
-      console.log(res.tendenciaEventos)
+      // console.log(res.tendenciaEventos)
 
       // Ordenar por periodo de más viejo a más nuevo
       const sorted = res.tendenciaEventos.sort((a, b) => a.periodo.localeCompare(b.periodo))

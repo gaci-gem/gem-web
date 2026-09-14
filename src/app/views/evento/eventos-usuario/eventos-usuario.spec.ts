@@ -15,11 +15,15 @@ import { DrawerService } from '@core/services/drawer.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Notificacion } from '@core/interfaces/notificacion';
+import { FiltroPresetService } from '@core/services/filtro-preset';
+import { FiltroPreset } from '@core/interfaces/filtro-preset';
 
 describe('EventosUsuario - SSE Refresh', () => {
   let component: EventosUsuario;
   let fixture: ComponentFixture<EventosUsuario>;
   let eventoServiceSpy: jasmine.SpyObj<EventoService>;
+  let filtroPresetServiceSpy: jasmine.SpyObj<FiltroPresetService>;
+  let drawerServiceSpy: jasmine.SpyObj<DrawerService>;
   let mockNotifications: WritableSignal<Notificacion[]>;
   let clearTimeoutSpy: jasmine.Spy;
   let setTimeoutSpy: jasmine.Spy;
@@ -88,6 +92,12 @@ describe('EventosUsuario - SSE Refresh', () => {
     ]);
     eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of([]));
 
+    filtroPresetServiceSpy = jasmine.createSpyObj<FiltroPresetService>(
+      'FiltroPresetService',
+      ['list', 'create', 'update', 'remove', 'setDefault'],
+    );
+    filtroPresetServiceSpy.list.and.returnValue(of([]));
+
     const userStorageServiceSpy: Partial<UserStorageService> = {
       getUsuario: jasmine.createSpy('getUsuario').and.returnValue(mockUser),
     };
@@ -119,7 +129,7 @@ describe('EventosUsuario - SSE Refresh', () => {
       get: () => of(null),
     });
 
-    const drawerServiceSpy = jasmine.createSpyObj<DrawerService>(
+    drawerServiceSpy = jasmine.createSpyObj<DrawerService>(
       'DrawerService',
       [
         'abrirEventoDrawer',
@@ -150,6 +160,7 @@ describe('EventosUsuario - SSE Refresh', () => {
       providers: [
         { provide: SseService, useValue: sseServiceMock },
         { provide: EventoService, useValue: eventoServiceSpy },
+        { provide: FiltroPresetService, useValue: filtroPresetServiceSpy },
         { provide: UserStorageService, useValue: userStorageServiceSpy },
         { provide: LoadingService, useValue: loadingServiceSpy },
         { provide: PermisosService, useValue: permisosServiceSpy },
@@ -263,5 +274,85 @@ describe('EventosUsuario - SSE Refresh', () => {
     }).not.toThrow();
 
     expect(eventoServiceSpy.getAllCompleteByUsuario).not.toHaveBeenCalled();
+  });
+
+  it('9. applying a preset loads and renders the result once', async () => {
+    await initComponent();
+    eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
+
+    const preset: FiltroPreset = {
+      id: 'preset-1',
+      nombre: 'Mis eventos',
+      filtros: { filtroActivo: 'all', fecha: null, globalFilter: '' },
+      esDefault: false,
+      createdAt: '',
+      updatedAt: '',
+    };
+    const evento = {
+      id: 'evento-1',
+      numero: 1,
+      titulo: 'Resultado del preset',
+      tipo: { codigo: 'TST', color: '#000', propio: false },
+    } as any;
+    component.presets.set([preset]);
+    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of([evento]));
+
+    (component as any).applyPreset(preset.id);
+    fixture.detectChanges();
+
+    expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledTimes(1);
+    expect(component.eventos).toHaveSize(1);
+    expect(fixture.nativeElement.textContent).toContain('Resultado del preset');
+  });
+
+  it('10. context menu actions use the currently selected event', () => {
+    const eventoA = { id: 'CAS-009' } as any;
+    const eventoB = { id: 'CUS-003' } as any;
+
+    component.buildContextMenu(eventoA);
+    component.menuItems[0].command?.({} as any);
+    component.buildContextMenu(eventoB);
+    component.menuItems[0].command?.({} as any);
+
+    expect(drawerServiceSpy.abrirEventoDrawer).toHaveBeenCalledWith('CAS-009');
+    expect(drawerServiceSpy.abrirEventoDrawer).toHaveBeenCalledWith('CUS-003');
+  });
+
+  it('11. clearing filters resets date, table order, page and persists clean state once', async () => {
+    await initComponent();
+    eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
+
+    component.filtroFecha = [new Date(2026, 0, 1), new Date(2026, 0, 31)];
+    component.filtroActivo = 'all' as any;
+    component.globalFilter = 'old search';
+    component.searchValue.set('old search');
+
+    const table = {
+      clear: jasmine.createSpy('clear'),
+      sortField: 'prioridad',
+      sortOrder: -1,
+      first: 20,
+      rows: 10,
+      filters: { titulo: [{ value: 'old', matchMode: 'contains' }] },
+    } as any;
+
+    component.clear(table);
+
+    expect(table.clear).toHaveBeenCalledTimes(1);
+    expect(table.sortField).toBeNull();
+    expect(table.sortOrder).toBe(0);
+    expect(table.first).toBe(0);
+    expect(component.filtroFecha).toBeNull();
+    expect(component.filtroActivo).toBe('true');
+    expect(component.searchValue()).toBe('');
+    expect(component.globalFilter).toBe('');
+    expect((component as any).captureFilterState()).toEqual(jasmine.objectContaining({
+      fecha: null,
+      sortField: null,
+      sortOrder: 0,
+      first: 0,
+      globalFilter: '',
+    }));
+    expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledTimes(1);
   });
 });

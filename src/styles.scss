@@ -39,6 +39,24 @@
   background: var(--ins-secondary-bg) !important;
 }
 
+// PrimeNG dialog internals for the command palette preview.
+.command-palette-dialog {
+  width: min(620px, calc(100vw - 2rem));
+  margin-top: -12vh;
+
+  .p-dialog-content {
+    padding: 0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .command-palette-dialog {
+    margin-top: -18vh;
+  }
+}
+
 // Forzar que el slash-menu y otros popovers se rendericen en z-index alto
 .milkdown-slash-menu,
 .milkdown .milkdown-slash-menu,
@@ -172,10 +190,6 @@
 .p-multiselect {
   width: 100%;
 }
-.p-contextmenu {
-  position: fixed !important;
-}
-
 .choices__list--dropdown {
   z-index: 1055 !important; /* Asegura que esté por encima de la mayoría de los modales (z-index 1050) */
 }

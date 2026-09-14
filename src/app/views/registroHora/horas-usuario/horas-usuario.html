@@ -5,6 +5,7 @@
         <div class="col-12 mt-3">
             <app-ui-card title="Registros de Horas Usuario">
                 <div card-body>
+                    <div #initialFocusTarget tabindex="-1" role="region" aria-label="Acciones de registros de horas">
                     <p-toolbar styleClass="mb-4 gap-2">
                         <ng-template pTemplate="left">
                         </ng-template>
@@ -17,6 +18,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
+                    </div>
                     @if (isMobile()) {
                     <div class="mobile-period-filter">
                         <label for="mobilePeriodo">Período</label>
@@ -69,8 +71,8 @@
                                 <button type="button" class="btn btn-ghost-warning touch-action" (click)="mostrarModalCrud(registro, 'M')" aria-label="Editar registro del día {{ registro.fecha | date:'dd/MM/yyyy' }}">
                                     <ng-icon name="lucidePencil" /> <span>Editar día</span>
                                 </button>
-                                <button type="button" class="btn btn-ghost-danger touch-action" (click)="delete(registro, 'el registro de horas del día')" aria-label="Eliminar registro del día {{ registro.fecha | date:'dd/MM/yyyy' }}">
-                                    <ng-icon name="lucideTrash2" /> <span>Eliminar</span>
+                                <button type="button" class="btn btn-ghost-danger touch-action" (click)="delete(registro, 'el registro de horas del día')" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" aria-label="Eliminar registro del día {{ registro.fecha | date:'dd/MM/yyyy' }}">
+                                    @if (actionInProgress) { <span>Eliminando...</span> } @else { <ng-icon name="lucideTrash2" /> <span>Eliminar</span> }
                                 </button>
                             </footer>
                         </article>
@@ -140,8 +142,7 @@
                                             name="lucidePencil" /></button>
                                     }
                                     @if (true) {
-                                    <button class="btn btn-ghost-danger" (click)="delete(registro)"><ng-icon
-                                            name="lucideTrash2" /></button>
+                                    <button class="btn btn-ghost-danger" (click)="delete(registro)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2" /> }</button>
                                     }
                                 </td>
                             </tr>

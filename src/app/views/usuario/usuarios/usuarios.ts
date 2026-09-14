@@ -5,10 +5,11 @@ import { Usuario } from '@core/interfaces/usuario';
 import { UsuarioService } from '@core/services/usuario';
 import { NgIcon } from '@ng-icons/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { UsuarioCrud } from '../usuario-crud/usuario-crud';
 import { modalConfig } from '@/app/types/modals';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -39,6 +40,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     ToastModule,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
     SelectModule,
     FormsModule,
   ],
@@ -51,6 +53,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './usuarios.scss'
 })
 export class Usuarios extends TrabajarCon<Usuario> {
+  readonly pantalla = 'usuarios';
   private usuarioService = inject(UsuarioService);
   private rolService = inject(RolService);
   private dialogService = inject(DialogService);
@@ -60,6 +63,7 @@ export class Usuarios extends TrabajarCon<Usuario> {
   usuarios!:Usuario[];
   roles: any[] = [];
   rolSeleccionado: string | null = null;
+  override actionInProgress = false;
 
  constructor() {
     super(
@@ -83,6 +87,22 @@ export class Usuarios extends TrabajarCon<Usuario> {
 
   filtrarPorRol(): void {
     this.loadItems();
+  }
+
+  isFiltered(table: Table): boolean {
+    return this.rolSeleccionado !== null || this.filtroActivo !== FiltroActivo.TRUE || this.hasTableFilters(table);
+  }
+
+  private hasTableFilters(table: Table): boolean {
+    return Object.values(table.filters ?? {}).some(value => {
+      const filter = Array.isArray(value) ? value[0] : value;
+      return filter?.value !== null && filter?.value !== undefined && filter.value !== '';
+    });
+  }
+
+  override clear(table: Table): void {
+    this.rolSeleccionado = null;
+    super.clear(table);
   }
 
   protected loadItems(): void {
@@ -110,25 +130,31 @@ export class Usuarios extends TrabajarCon<Usuario> {
   }
 
   alta(usuario: Usuario): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     delete usuario.id;
-    this.usuarioService.create(usuario).subscribe({
+    this.usuarioService.create(usuario).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Usuario creado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear el usuario.')
     });
   }
 
   editar(usuario: Usuario): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     delete usuario.password;
     let usuarioId = usuario.id ?? '';
-    this.usuarioService.update(usuarioId, usuario).subscribe({
+    this.usuarioService.update(usuarioId, usuario).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Usuario actualizado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al modificar el usuario.')
     });
   }
 
   eliminarDirecto(usuario: Usuario): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     let usuarioId = usuario.id ?? '';
-    this.usuarioService.delete(usuarioId).subscribe({
+    this.usuarioService.delete(usuarioId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Usuario eliminado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al eliminar el usuario.')
     });

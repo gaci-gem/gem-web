@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Entorno } from '@core/interfaces/entorno';
 import { EntornoService } from '@core/services/entorno';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -36,6 +37,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     BooleanLabelPipe,
     CommonModule,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -46,11 +48,13 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './entornos.scss'
 })
 export class Entornos extends TrabajarCon<Entorno> {
+  readonly pantalla = 'entornos';
   private entornoService = inject(EntornoService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
 
   entornos!:Entorno[];
+  override actionInProgress = false;
 
  constructor() {
     super(
@@ -81,23 +85,29 @@ export class Entornos extends TrabajarCon<Entorno> {
   }
 
   alta(entorno: Entorno): void {
-    this.entornoService.create(entorno).subscribe({
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
+    this.entornoService.create(entorno).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Entorno creado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear el entorno.')
     });
   }
 
   editar(entorno: Entorno): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     let entornoCodigo = entorno.codigo ?? '';
-    this.entornoService.update(entornoCodigo, entorno).subscribe({
+    this.entornoService.update(entornoCodigo, entorno).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Entorno actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el entorno.')
     });
   }
 
   eliminarDirecto(entorno: Entorno): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     let entornoCodigo = entorno.codigo ?? '';
-    this.entornoService.delete(entornoCodigo).subscribe({
+    this.entornoService.delete(entornoCodigo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Entorno eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Entorno.')
     });

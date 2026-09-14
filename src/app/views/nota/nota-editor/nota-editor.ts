@@ -56,7 +56,7 @@ import { NotaService } from '@core/services/nota';
           <button type="button" (click)="cancel()" class="btn btn-secondary">
             Cancelar
           </button>
-          <button type="submit" [disabled]="form.invalid" class="btn btn-primary">
+          <button type="submit" [disabled]="form.invalid || submitting" [attr.aria-busy]="submitting" class="btn btn-primary">
             {{ modo === 'A' ? 'Crear Nota' : 'Guardar Cambios' }}
           </button>
         }

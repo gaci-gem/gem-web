@@ -8,7 +8,7 @@
       <input id="portal-login" type="email" class="form-control" formControlName="login" autocomplete="off" />
       @if (form.controls.login.invalid && form.controls.login.touched) { <div class="invalid-feedback d-block">Ingrese un Email válido.</div> }
     </div>
-    <button type="submit" class="btn btn-primary" [disabled]="loading">Crear credencial</button>
+    <button type="submit" class="btn btn-primary" [disabled]="loading">@if (loading) { Creando... } @else { Crear credencial }</button>
     </form>
   <hr />
   <div class="table-responsive">
@@ -20,7 +20,7 @@
             <td>{{ credential.login }}</td>
             <td><span class="badge" [ngClass]="credential.activo ? 'text-bg-success' : 'text-bg-secondary'">{{ credential.activo ? 'Active' : 'Inactive' }}</span></td>
             <td>{{ credential.updatedAt | date: 'short' }}</td>
-             <td class="text-end">@if (canManage()) { <button class="btn btn-sm btn-outline-primary me-2" [disabled]="loading" (click)="rotate(credential)">Blanquear</button><button class="btn btn-sm btn-outline-secondary" [disabled]="loading" (click)="confirmToggle(credential)">{{ credential.activo ? 'Desactivar' : 'Activar' }}</button> }</td>
+             <td class="text-end">@if (canManage()) { <button class="btn btn-sm btn-outline-primary me-2" [disabled]="loading" (click)="rotate(credential)">@if (loading) { Blanqueando... } @else { Blanquear }</button><button class="btn btn-sm btn-outline-secondary" [disabled]="loading" (click)="confirmToggle(credential)">@if (loading) { Actualizando... } @else { {{ credential.activo ? 'Desactivar' : 'Activar' }} }</button> }</td>
           </tr>
         } @empty { <tr><td colspan="4" class="text-muted">No hay credenciales configuradas.</td></tr> }
       </tbody>

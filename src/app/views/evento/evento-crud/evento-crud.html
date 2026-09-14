@@ -55,10 +55,10 @@
               </div>
               <div class="col-md-2">
                 <div class="btn-group" role="group">
-                  <button card-actions class="btn btn-icon btn-outline-info" (click)="modalSelCliente($event)">
+                  <button type="button" card-actions class="btn btn-icon btn-outline-info" (click)="modalSelCliente($event)" aria-label="Seleccionar cliente" title="Seleccionar cliente">
                     <ng-icon name="lucideSearch" />
                   </button>
-                  <button card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarCliente($event)">
+                  <button type="button" card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarCliente($event)" aria-label="Limpiar cliente" title="Limpiar cliente">
                     <ng-icon name="lucideX" />
                   </button>
                 </div>
@@ -90,10 +90,10 @@
               </div>
               <div class="col-md-2">
                 <div class="btn-group" role="group">
-                  <button card-actions class="btn btn-icon btn-outline-info" (click)="modalSelProyecto($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-info" (click)="modalSelProyecto($event)" aria-label="Seleccionar proyecto" title="Seleccionar proyecto">
                     <ng-icon name="lucideSearch" />
                   </button>
-                  <button card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarProyecto($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarProyecto($event)" aria-label="Limpiar proyecto" title="Limpiar proyecto">
                     <ng-icon name="lucideX" />
                   </button>
                 </div>
@@ -122,10 +122,10 @@
               </div>
               <div class="col-md-2">
                 <div class="btn-group" role="group">
-                  <button card-actions class="btn btn-icon btn-outline-info" (click)="modalSelProducto($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-info" (click)="modalSelProducto($event)" aria-label="Seleccionar producto" title="Seleccionar producto">
                     <ng-icon name="lucideSearch" />
                   </button>
-                  <button card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarProducto($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarProducto($event)" aria-label="Limpiar producto" title="Limpiar producto">
                     <ng-icon name="lucideX" />
                   </button>
                 </div>
@@ -151,10 +151,10 @@
               </div>
               <div class="col-md-2">
                 <div class="btn-group" role="group">
-                  <button card-actions class="btn btn-icon btn-outline-info" (click)="modalSelModulo($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-info" (click)="modalSelModulo($event)" aria-label="Seleccionar módulo" title="Seleccionar módulo">
                     <ng-icon name="lucideSearch" />
                   </button>
-                  <button card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarModulo($event)">
+                   <button type="button" card-actions class="btn btn-icon btn-outline-secondary" (click)="limpiarModulo($event)" aria-label="Limpiar módulo" title="Limpiar módulo">
                     <ng-icon name="lucideX" />
                   </button>
                 </div>
@@ -244,13 +244,16 @@
     </div>
 
     <div class="col-12 mb-5">
-      <button class="btn btn-primary" type="submit" [disabled]="!canSubmit()" [hidden]="!canSubmit()">
-        @if (modo === 'A') {
+       <button class="btn btn-primary" type="submit" [disabled]="!canSubmit() || submitting" [hidden]="!canSubmit()" [attr.aria-busy]="submitting">
+        @if (submitting) {
+        Guardando...
+        } @else if (modo === 'A') {
         Crear
         } @else if (modo === 'M') {
         Modificar
         }
-      </button>
+       </button>
+       <button class="btn btn-outline-secondary" type="button" (click)="cancel()">Cancelar</button>
     </div>
   </form>
 </div>

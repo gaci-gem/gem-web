@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { kb } from '@core/interfaces/kb';
 import { KbService } from '@core/services/kb';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -39,6 +40,7 @@ import { CatalogoFiltroItemConfig, CatalogoFiltroState } from '@core/interfaces/
     BooleanLabelPipe,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
     PanelModule,
     CatalogoFiltrosComponent,
   ],
@@ -51,6 +53,7 @@ import { CatalogoFiltroItemConfig, CatalogoFiltroState } from '@core/interfaces/
   styleUrl: './kbs.scss'
 })
 export class Kbs extends TrabajarCon<kb> {
+  readonly pantalla = 'kbs';
   private kbService = inject(KbService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
@@ -150,27 +153,30 @@ export class Kbs extends TrabajarCon<kb> {
   }
 
   alta(kb: kb): void {
+    if (!this.beginAction()) return;
     const kbData = { ...kb };
     delete (kbData as any).id;
-    this.kbService.create(kbData).subscribe({
+    this.kbService.create(kbData).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('KB creada correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear la KB.')
     });
   }
 
   editar(kb: kb): void {
+    if (!this.beginAction()) return;
     let kbId = kb.id ?? 0;
     // Extraer id del objeto para no enviarlo en el body
     const { id, ...kbData } = kb;
-    this.kbService.update(kbId, kbData).subscribe({
+    this.kbService.update(kbId, kbData).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('KB actualizada correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al modificar la KB.')
     });
   }
 
   eliminarDirecto(kb: kb): void {
+    if (!this.beginAction()) return;
     let kbId = kb.id ?? 0;
-    this.kbService.remove(kbId).subscribe({
+    this.kbService.remove(kbId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('KB eliminada correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al eliminar la KB.')
     });
@@ -233,7 +239,6 @@ export class Kbs extends TrabajarCon<kb> {
   }
 
   getDeploysInactivos(kb: kb): number {
-    console.log(kb.deploys);
     return kb.deploys?.filter(d => !d.activo)?.length || 0;
   }
 

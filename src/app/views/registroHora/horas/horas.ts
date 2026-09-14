@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TrabajarCon, UiCard } from '@app/components/index';
 import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
 import { modalConfig } from '@/app/types/modals';
 import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
@@ -19,7 +20,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SelectModule } from 'primeng/select';
-import { TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
+import { Table, TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { HoraCrud } from '../hora-crud/hora-crud';
@@ -38,6 +39,7 @@ import { HoraCrud } from '../hora-crud/hora-crud';
     FormsModule,
     SelectModule,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -48,6 +50,7 @@ import { HoraCrud } from '../hora-crud/hora-crud';
   styleUrl: './horas.scss'
 })
 export class Horas extends TrabajarCon<RegistroHora> {
+  readonly pantalla = 'horas';
   private registroHoraService = inject(RegistroHoraService);
   private dialogService = inject(DialogService);
 
@@ -124,24 +127,27 @@ export class Horas extends TrabajarCon<RegistroHora> {
   }
 
   alta(registroHora: RegistroHora): void {
+    if (!this.beginAction()) return;
     delete registroHora.id
-    this.registroHoraService.create(registroHora).subscribe({
+    this.registroHoraService.create(registroHora).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora creado correctamente.'),
       error: () => this.showError('Error al crear el registro de Hora.')
     });
   }
 
   editar(registroHora: RegistroHora): void {
+    if (!this.beginAction()) return;
     let registroHoraId = registroHora.id ?? 0;
-    this.registroHoraService.update(registroHoraId, registroHora).subscribe({
+    this.registroHoraService.update(registroHoraId, registroHora).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora actualizado correctamente.'),
       error: () => this.showError('Error al modificar el registro de Hora.')
     });
   }
 
   eliminarDirecto(registroHora: RegistroHora): void {
+    if (!this.beginAction()) return;
     let registroHoraId = registroHora.id ?? 0;
-    this.registroHoraService.delete(registroHoraId).subscribe({
+    this.registroHoraService.delete(registroHoraId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora eliminado correctamente.'),
       error: () => this.showError('Error al eliminar el registro de Hora.')
     });
@@ -172,6 +178,25 @@ export class Horas extends TrabajarCon<RegistroHora> {
   }
 
   onClearFecha(): void {
+    this.inicializarFiltroFecha();
+    this.onFechaChange();
+  }
+
+  isFiltered(table: Table): boolean {
+    return !!this.dateRangeFilter?.length || !!this.categoriaFiltro || this.hasTableFilters(table);
+  }
+
+  private hasTableFilters(table: Table): boolean {
+    return Object.values(table.filters ?? {}).some(value => {
+      const filter = Array.isArray(value) ? value[0] : value;
+      return filter?.value !== null && filter?.value !== undefined && filter.value !== '';
+    });
+  }
+
+  override clear(table: Table): void {
+    this.dateRangeFilter = undefined;
+    this.categoriaFiltro = null;
+    super.clear(table);
     this.inicializarFiltroFecha();
     this.onFechaChange();
   }

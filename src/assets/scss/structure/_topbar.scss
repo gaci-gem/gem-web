@@ -51,6 +51,13 @@
                 right: -1px;
             }
         }
+
+        .topbar-divider {
+            height: 18px;
+            opacity: 0.35;
+            width: 1px;
+            border-left: 1px solid $topbar-item-color;
+        }
     }
 
     ul {
@@ -133,6 +140,7 @@ html[data-topbar-color="dark"] {
                 }
             }
         }
+
     }
 }
 

@@ -1,0 +1,79 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [dismissableMask]="true"
+  [showHeader]="false"
+  styleClass="command-palette-dialog"
+  (onShow)="focusSearch()"
+  (onHide)="close()"
+>
+  <div class="command-palette" role="dialog" aria-label="Paleta de comandos">
+    <div class="command-palette-search">
+      <ng-icon name="lucideSearch" aria-hidden="true" />
+       <input #searchInput pInputText type="search" [(ngModel)]="query" (ngModelChange)="onQueryChange()" (keydown)="onKeydown($event)" placeholder="Buscar comandos y registros..." aria-label="Buscar comandos y registros" [attr.aria-activedescendant]="activeCommandId()" autocomplete="off" />
+      <kbd>Alt K</kbd>
+    </div>
+
+     <div #results class="command-palette-results" role="listbox" aria-label="Comandos y resultados disponibles">
+      @for (section of groupedCommands; track section.group) {
+        <div class="command-group">
+          <p class="command-group-label">{{ section.group }}</p>
+          @for (command of section.commands; track command.id) {
+            <button
+              type="button"
+              [id]="'command-' + command.id"
+              class="command-item"
+              [class.is-active]="isActive(command)"
+              [class.is-current]="isCurrent(command)"
+              [style.background-color]="isActive(command) ? 'var(--bs-primary-bg-subtle)' : null"
+              [style.border]="isActive(command) ? '2px solid var(--bs-primary)' : null"
+              [disabled]="command.disabled"
+              [attr.aria-selected]="isActive(command)"
+              [attr.aria-current]="isCurrent(command) ? 'page' : null"
+              [attr.title]="command.disabled ? command.disabledReason : null"
+               (mouseenter)="activateCommand(command)"
+              (click)="execute(command)"
+              role="option"
+              >
+              @if (isActive(command)) { <span class="command-active-indicator" aria-hidden="true">›</span> }
+              <ng-icon [name]="command.icon" aria-hidden="true" />
+              <span>{{ command.label }}</span>
+              @if (command.disabled) { <small>{{ command.disabledReason }}</small> }
+            </button>
+          }
+        </div>
+       }
+       @if (query.trim()) {
+         <div class="command-group global-search-group">
+           <p class="command-group-label">Resultados globales</p>
+            @if (searchLoading()) {
+             <p class="command-palette-status">Buscando...</p>
+            } @else if (searchError()) {
+             <p class="command-palette-status">No se pudo completar la búsqueda.</p>
+           } @else {
+              @for (result of globalResults(); track result.entity + '-' + result.id) {
+               <button type="button" [id]="'global-' + result.entity + '-' + result.id" class="command-item" [class.is-active]="isGlobalActive(result)" [style.background-color]="isGlobalActive(result) ? 'var(--bs-primary-bg-subtle)' : null" [style.border]="isGlobalActive(result) ? '2px solid var(--bs-primary)' : null" [attr.aria-selected]="isGlobalActive(result)" (mouseenter)="activateGlobalResult(result)" (click)="openGlobalResult(result)" role="option">
+                 @if (isGlobalActive(result)) { <span class="command-active-indicator" aria-hidden="true">›</span> }
+                 <ng-icon [name]="result.entity === 'clientes' ? 'lucideIdCard' : result.entity === 'proyectos' ? 'lucideTarget' : 'lucideCalendar'" aria-hidden="true" />
+                 <span><strong>{{ result.title }}</strong>@if (result.subtitle) { <small>{{ result.subtitle }}</small> }</span>
+               </button>
+             } @empty {
+               <p class="command-palette-status">No se encontraron registros.</p>
+             }
+           }
+         </div>
+       } @else if (groupedCommands.length === 0) {
+         <p class="command-palette-empty">No se encontraron comandos.</p>
+       }
+    </div>
+
+    <footer class="command-palette-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+      <span><kbd>Enter</kbd> ejecutar</span>
+      <span><kbd>Esc</kbd> cerrar</span>
+    </footer>
+  </div>
+</p-dialog>

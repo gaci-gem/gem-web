@@ -100,6 +100,18 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     });
   }
 
+  protected override focusFirstField(): void {
+    setTimeout(() => {
+      if (this.modo === 'A' && this.horasFormArray.length === 0) {
+        this.addHora();
+        setTimeout(() => this.focusEventInput(0));
+        return;
+      }
+
+      this.focusEventInput(0);
+    });
+  }
+
   protected buildForm(): FormGroup {
     const today = new Date().toISOString().slice(0, 10);
     return new FormGroup({
@@ -412,6 +424,24 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         }
       : undefined;
     this.horasFormArray.push(this.createHoraForm(horaData as any));
+    const newIndex = this.horasFormArray.length - 1;
+    setTimeout(() => this.focusEventSearchButton(newIndex));
+  }
+
+  private focusEventInput(index: number): void {
+    document.getElementById(this.getEventInputId(index))?.focus();
+  }
+
+  private focusEventSearchButton(index: number): void {
+    document.getElementById(this.getEventSearchButtonId(index))?.focus();
+  }
+
+  getEventInputId(index: number): string {
+    return `hora-evento-${index}`;
+  }
+
+  getEventSearchButtonId(index: number): string {
+    return `hora-evento-search-${index}`;
   }
 
   removeHora(index: number) {
@@ -519,8 +549,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
 
   modalSelEvento(hora: any, event: Event) {
     event.preventDefault();
+    event.stopPropagation();
+    const opener = event.currentTarget as HTMLElement | null;
     this.modalSel = this.dialogService.open(EventoSelect, {
       ...modalConfig,
+      closeOnEscape: false,
       header: 'Seleccionar Evento',
       data: {
         filtroEvento: FiltroActivo.FALSE,
@@ -530,21 +563,17 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     if (!this.modalSel) return;
 
     this.modalSel.onClose.subscribe((result: any) => {
-      if (!result) return;
-
-      let newHora: any = {
-        eventoId: result.id,
-      };
-      if (result.etapaActualData?.categoriaSugerida) {
-        newHora = {
-          ...newHora,
-          categoriaCodigo: result.etapaActualData.categoriaSugerida.codigo,
-        };
+      if (result) {
+        let newHora: any = { eventoId: result.id };
+        if (result.etapaActualData?.categoriaSugerida) {
+          newHora = {
+            ...newHora,
+            categoriaCodigo: result.etapaActualData.categoriaSugerida.codigo,
+          };
+        }
+        hora.patchValue(newHora);
       }
-
-      hora.patchValue({
-        ...newHora,
-      });
+      setTimeout(() => opener?.focus());
     });
   }
 

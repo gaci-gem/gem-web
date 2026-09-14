@@ -76,7 +76,7 @@ export class ModalSel implements OnInit{
     
     // Inicializar valores de requisitos
     this.requisitos.forEach(req => {
-      this.requisitosValores[req.id] = '';
+      this.requisitosValores[req.id] = req.valor ?? '';
     });
 
     
@@ -158,7 +158,7 @@ export class ModalSel implements OnInit{
 
     // Validar que los requisitos obligatorios tengan valor
     const requisitosObligatoriosIncumplidos = this.requisitos.filter(
-      req => req.obligatorio && (!this.requisitosValores[req.id] || this.requisitosValores[req.id].toString().trim() === '')
+      req => req.obligatorio && !this.tieneValor(this.requisitosValores[req.id])
     );
 
     if (requisitosObligatoriosIncumplidos.length > 0) {
@@ -172,7 +172,7 @@ export class ModalSel implements OnInit{
 
     // Obtener requisitos con valor
     const requisitosConValor = Object.keys(this.requisitosValores)
-      .filter(key => this.requisitosValores[+key] && this.requisitosValores[+key].toString().trim() !== '')
+      .filter(key => this.tieneValor(this.requisitosValores[+key]))
       .map(key => ({
         requisitoId: +key,
         valor: this.requisitosValores[+key]
@@ -210,7 +210,7 @@ export class ModalSel implements OnInit{
           dto.valorFecha = data.valor;
           break;
         case 'boolean':
-          dto.valorBooleano = Boolean(data.valor);
+          dto.valorBooleano = this.toBoolean(data.valor);
           break;
         case 'file':
           dto.url = data.valor;
@@ -270,6 +270,16 @@ export class ModalSel implements OnInit{
 
   cerrar(res:any){
     this.ref.close(res);
+  }
+
+  private tieneValor(valor: any): boolean {
+    return valor !== null && valor !== undefined &&
+      (typeof valor !== 'string' || valor.trim() !== '');
+  }
+
+  private toBoolean(valor: any): boolean {
+    if (typeof valor === 'string') return valor.toLowerCase() === 'true';
+    return Boolean(valor);
   }
   
   get mensajeHtml(): string {

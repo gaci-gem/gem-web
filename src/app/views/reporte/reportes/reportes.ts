@@ -45,6 +45,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './reportes.scss'
 })
 export class Reportes extends TrabajarCon<Reporte> {
+  readonly pantalla = 'reportes';
   protected override exportarExcelImpl(): void {
     throw new Error('Method not implemented.');
   }
@@ -85,24 +86,27 @@ export class Reportes extends TrabajarCon<Reporte> {
   }
 
   alta(reporte: Reporte): void {
+    if (!this.beginAction()) return;
     delete reporte.id; // Asegurarse de no enviar un id al crear
-    this.reporteService.create(reporte).subscribe({
+    this.reporteService.create(reporte).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Reporte creado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear el reporte.')
     });
   }
 
   editar(reporte: Reporte): void {
+    if (!this.beginAction()) return;
     let ReporteId = reporte.id ?? 0;
-    this.reporteService.update(ReporteId, reporte).subscribe({
+    this.reporteService.update(ReporteId, reporte).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Reporte actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el reporte.')
     });
   }
 
   eliminarDirecto(reporte: Reporte): void {
+    if (!this.beginAction()) return;
     let reporteId = reporte.id ?? 0;
-    this.reporteService.delete(reporteId).subscribe({
+    this.reporteService.delete(reporteId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Reporte eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Reporte.')
     });

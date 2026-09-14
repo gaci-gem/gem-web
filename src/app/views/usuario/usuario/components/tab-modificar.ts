@@ -5,6 +5,7 @@ import { UsuarioService } from "@core/services/usuario";
 import { ConfirmationService, MessageService } from "primeng/api";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import { UsuarioAdicionalClave } from "@/app/constants/adicionales_usuario";
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-tab-modificar',
@@ -85,9 +86,10 @@ import { UsuarioAdicionalClave } from "@/app/constants/adicionales_usuario";
                     }
                 </div>
             </div>
-            <button class="btn btn-primary mt-3" type="submit" form="formUsuario">
-                Modificar Información
+            <button class="btn btn-primary mt-3" type="submit" form="formUsuario" [disabled]="guardandoUsuario" [attr.aria-busy]="guardandoUsuario">
+                {{ guardandoUsuario ? 'Guardando...' : 'Modificar Información' }}
             </button>
+            @if (estadoUsuario) { <div class="small mt-2" [class.text-success]="estadoUsuario === 'guardado'" [class.text-danger]="estadoUsuario === 'error'" role="status">{{ estadoUsuario === 'guardado' ? 'Información personal guardada.' : 'No se pudo guardar la información personal.' }}</div> }
         </form>
 
         <hr class="my-4">
@@ -106,13 +108,14 @@ import { UsuarioAdicionalClave } from "@/app/constants/adicionales_usuario";
                             class="form-control"
                             placeholder="ID de Discord"
                         />
-                        <button class="btn btn-primary" type="submit">
-                            Actualizar
+                        <button class="btn btn-primary" type="submit" [disabled]="guardandoAdicional" [attr.aria-busy]="guardandoAdicional">
+                            {{ guardandoAdicional ? 'Actualizando...' : 'Actualizar' }}
                         </button>
                     </div>
                     <small class="form-text text-muted">
                         Ingresa tu ID de usuario de Discord
                     </small>
+                    @if (estadoAdicional) { <div class="small mt-2" [class.text-success]="estadoAdicional === 'guardado'" [class.text-danger]="estadoAdicional === 'error'" role="status">{{ estadoAdicional === 'guardado' ? 'Discord actualizado.' : 'No se pudo actualizar el ID de Discord.' }}</div> }
                 </div>
             </div>
         </form>
@@ -126,6 +129,10 @@ export class TabModificar implements OnInit {
     protected confirmationService = inject(ConfirmationService);
     private usuarioService = inject(UsuarioService);
     protected messageService = inject(MessageService);
+    guardandoUsuario = false;
+    guardandoAdicional = false;
+    estadoUsuario: 'guardado' | 'error' | null = null;
+    estadoAdicional: 'guardado' | 'error' | null = null;
     
     formUsuario = this.fb.group({
         nombre: ['', Validators.required],
@@ -169,6 +176,11 @@ export class TabModificar implements OnInit {
     }
 
     modificarUsuario(event: any) {
+        event?.preventDefault();
+        if (this.guardandoUsuario || this.formUsuario.invalid) {
+            this.formUsuario.markAllAsTouched();
+            return;
+        }
         const fechaNacimiento = this.formUsuario.get('fechaNacimiento')?.value;
         let usuario: any = {
             id: this.usuario.id,
@@ -186,12 +198,17 @@ export class TabModificar implements OnInit {
             header: 'Confirmar modificación',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.usuarioService.update(usuario.id!, usuario).subscribe({
+                if (this.guardandoUsuario) return;
+                this.guardandoUsuario = true;
+                this.estadoUsuario = null;
+                this.usuarioService.update(usuario.id!, usuario).pipe(finalize(() => this.guardandoUsuario = false)).subscribe({
                     next: () => {
+                        this.estadoUsuario = 'guardado';
                         this.showSuccess('Usuario actualizado', 'Los datos se actualizaron correctamente');
                         this.usuarioModificado.emit();
                     },
                     error: () => {
+                        this.estadoUsuario = 'error';
                         this.showError('Error', 'No se pudo modificar el usuario');
                     }
                 });
@@ -201,18 +218,23 @@ export class TabModificar implements OnInit {
 
     modificarAdicionales(event: any) {
         event.preventDefault();
+        if (this.guardandoAdicional) return;
         const discordId = this.formAdicionales.get('urlDiscord')?.value || '';
 
+        this.guardandoAdicional = true;
+        this.estadoAdicional = null;
         this.usuarioService.actualizarAdicional(
             this.usuario.id!,
             UsuarioAdicionalClave.URL_DISCORD,
             discordId
-        ).subscribe({
+        ).pipe(finalize(() => this.guardandoAdicional = false)).subscribe({
             next: () => {
+                this.estadoAdicional = 'guardado';
                 this.showSuccess('Discord actualizado', 'El ID de Discord se actualizó correctamente');
                 this.usuarioModificado.emit();
             },
             error: () => {
+                this.estadoAdicional = 'error';
                 this.showError('Error', 'No se pudo actualizar el ID de Discord');
             }
         });

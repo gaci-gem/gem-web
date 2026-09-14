@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Categoria } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -29,6 +30,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     ToastModule,
     ShortcutDirective,
     CommonModule,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -39,6 +41,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './categorias.scss'
 })
 export class Categorias extends TrabajarCon<Categoria> {
+  readonly pantalla = 'categorias';
   protected override exportarExcelImpl(): void {
     // No aplica
   }
@@ -78,22 +81,25 @@ export class Categorias extends TrabajarCon<Categoria> {
   }
 
   alta(categoria: Categoria): void {
-    this.registroHoraService.createCategoria(categoria).subscribe({
+    if (!this.beginAction()) return;
+    this.registroHoraService.createCategoria(categoria).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de trabajo creado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear el tipo de trabajo.')
     });
   }
 
   editar(categoria: Categoria): void {
+    if (!this.beginAction()) return;
     const codigo = categoria.codigo;
-    this.registroHoraService.updateCategoria(codigo, categoria).subscribe({
+    this.registroHoraService.updateCategoria(codigo, categoria).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de trabajo actualizado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al modificar el tipo de trabajo.')
     });
   }
 
   eliminarDirecto(categoria: Categoria): void {
-    this.registroHoraService.deleteCategoria(categoria.codigo).subscribe({
+    if (!this.beginAction()) return;
+    this.registroHoraService.deleteCategoria(categoria.codigo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de trabajo eliminado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al eliminar el tipo de trabajo.')
     });

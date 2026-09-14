@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Producto } from '@core/interfaces/producto';
@@ -38,6 +39,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     FiltroRadioGroupComponent,
     NgbDropdownModule,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -48,6 +50,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './productos.scss'
 })
 export class Productos extends TrabajarCon<Producto> {
+  readonly pantalla = 'productos';
   private productoService = inject(ProductoService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
@@ -83,24 +86,27 @@ export class Productos extends TrabajarCon<Producto> {
   }
 
   alta(producto: Producto): void {
+    if (!this.beginAction()) return;
     delete producto.id
-    this.productoService.create(producto).subscribe({
+    this.productoService.create(producto).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Producto creado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear el producto.')
     });
   }
 
   editar(producto: Producto): void {
+    if (!this.beginAction()) return;
     let productoId = producto.id ?? 0;
-    this.productoService.update(productoId, producto).subscribe({
+    this.productoService.update(productoId, producto).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Producto actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el producto.')
     });
   }
 
   eliminarDirecto(producto: Producto): void {
+    if (!this.beginAction()) return;
     let productoId = producto.id ?? 0;
-    this.productoService.delete(productoId).subscribe({
+    this.productoService.delete(productoId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Producto eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Producto.')
     });

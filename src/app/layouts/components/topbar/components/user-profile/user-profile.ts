@@ -10,10 +10,10 @@ import { NgIcon } from '@ng-icons/core'
 import { AuthService } from '@core/services/auth'
 import { toTitleCase } from '@/app/utils/string-utils'
 import { UserStorageService } from '@core/services/user-storage'
-import { Adicional, UsuarioCompleto } from '@core/interfaces/usuario'
+import { Adicional } from '@core/interfaces/usuario'
 import { UsuarioService } from '@core/services/usuario'
 import { UsuarioAdicionalClave } from '@/app/constants/adicionales_usuario'
-import { AVATAR_POR_DEFECTO, getAvatarPath } from '@/app/constants/avatares-disponibles';
+import { AVATAR_POR_DEFECTO, AvatarUser, getAvatarImage } from '@/app/constants/avatares-disponibles';
 import { AvatarSyncService } from '@core/services/avatar-sync.service';
 
 @Component({
@@ -37,7 +37,8 @@ export class UserProfile implements OnInit, AfterViewInit {
 
   menuItems: UserDropdownItemType[] = []
   imagenPerfil: Adicional | null = null;
-  fotoPerfil: string = getAvatarPath(AVATAR_POR_DEFECTO);
+  fotoPerfil: string = getAvatarImage(AVATAR_POR_DEFECTO, {});
+  private usuario: AvatarUser | null = null;
   private usuarioId: string | null = null;
 
   ngOnInit() {
@@ -58,9 +59,10 @@ export class UserProfile implements OnInit, AfterViewInit {
       ];
 
       // Escuchar cambios de avatar
-      this.avatarSyncService.avatarCambiado$.subscribe(nombreImagen => {
-        if (nombreImagen) {
-          this.fotoPerfil = getAvatarPath(nombreImagen);
+      this.avatarSyncService.avatarCambiado$.subscribe(cambio => {
+        if (cambio) {
+          this.usuario = cambio.user;
+          this.fotoPerfil = getAvatarImage(cambio.strategy, cambio.user);
           this.cdr.detectChanges();
         }
       });
@@ -69,7 +71,13 @@ export class UserProfile implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     if (this.usuarioId) {
-      this.cargarFotoPerfil(this.usuarioId);
+      this.usuarioService.getByID(this.usuarioId).subscribe({
+        next: usuario => {
+          this.usuario = usuario;
+          this.cargarFotoPerfil(this.usuarioId!);
+        },
+        error: () => this.cargarFotoPerfil(this.usuarioId!),
+      });
     }
   }
 
@@ -78,12 +86,12 @@ export class UserProfile implements OnInit, AfterViewInit {
       next: (adicional: Adicional) => {
         this.imagenPerfil = adicional;
         this.fotoPerfil = adicional 
-          ? getAvatarPath(adicional.valor)
-          : getAvatarPath(AVATAR_POR_DEFECTO);
+          ? getAvatarImage(adicional.valor, this.usuario ?? {})
+          : getAvatarImage(AVATAR_POR_DEFECTO, this.usuario ?? {});
         this.cdr.detectChanges();
       },
       error: () => {
-        this.fotoPerfil = getAvatarPath(AVATAR_POR_DEFECTO);
+        this.fotoPerfil = getAvatarImage(AVATAR_POR_DEFECTO, this.usuario ?? {});
         this.cdr.detectChanges();
       }
     });

@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { PermisoClave, Rol } from '@core/interfaces/rol';
 import { RolService } from '@core/services/rol';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -36,6 +37,7 @@ import { getColor } from '@/app/utils/color-utils';
     CommonModule,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -46,6 +48,7 @@ import { getColor } from '@/app/utils/color-utils';
   styleUrl: './roles.scss'
 })
 export class Roles extends TrabajarCon<Rol> {
+  readonly pantalla = 'roles';
   private rolService = inject(RolService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
@@ -82,23 +85,26 @@ export class Roles extends TrabajarCon<Rol> {
   }
 
   alta(rol: Rol): void {
-    this.rolService.create(rol).subscribe({
+    if (!this.beginAction()) return;
+    this.rolService.create(rol).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Rol creado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear el rol.')
     });
   }
 
   editar(rol: Rol): void {
+    if (!this.beginAction()) return;
     let rolCodigo = rol.codigo ?? '';
-    this.rolService.update(rolCodigo, rol).subscribe({
+    this.rolService.update(rolCodigo, rol).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Rol actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el rol.')
     });
   }
 
   eliminarDirecto(rol: Rol): void {
+    if (!this.beginAction()) return;
     let rolCodigo = rol.codigo ?? '';
-    this.rolService.delete(rolCodigo).subscribe({
+    this.rolService.delete(rolCodigo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Rol eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Rol.')
     });

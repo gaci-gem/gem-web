@@ -61,6 +61,9 @@
 
   <!-- Info grid: producto, cliente, prioridad, fechas inicio/fin, fechas editables, usuarios -->
   <div class="evento-header__info-grid">
+    @if (fechaGuardando) { <div class="small text-muted" role="status">Guardando fecha...</div> }
+    @if (estadoFecha === 'guardado') { <div class="small text-success" role="status">Fecha guardada.</div> }
+    @if (estadoFecha === 'error') { <div class="small text-danger" role="alert">No se pudo guardar la fecha.</div> }
 
     <!-- Producto -->
     @if (evento.producto) {
@@ -163,6 +166,8 @@
         <input
           type="date"
           class="form-control form-control-sm info-date-input"
+          [disabled]="fechaGuardando !== null"
+          [attr.aria-busy]="fechaGuardando === 'fechaFinEst'"
           [ngModel]="formatDateForInput(evento.fechaFinEst)"
           (ngModelChange)="onFechaChange($event, 'fechaFinEst')"
         />
@@ -178,6 +183,8 @@
         <input
           type="date"
           class="form-control form-control-sm info-date-input"
+          [disabled]="fechaGuardando !== null"
+          [attr.aria-busy]="fechaGuardando === 'fechaEntrega'"
           [ngModel]="formatDateForInput(evento.fechaEntrega)"
           (ngModelChange)="onFechaChange($event, 'fechaEntrega')"
         />

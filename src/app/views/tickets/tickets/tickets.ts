@@ -19,10 +19,11 @@ import { PermisosService } from '@core/services/permisos';
 import { PermisoClave } from '@core/interfaces/rol';
 import { PermisoAccion } from '@/app/types/permisos';
 import { buildPermiso } from '@/app/utils/permiso-utils';
+import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation/keyboard-list-navigation';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, ToastModule, ToolbarModule, NgIcon, DatePipe],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
   styles: ['.ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; }'],

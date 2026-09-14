@@ -118,6 +118,7 @@
 
 <app-modal-seleccionar-avatar
     [(visible)]="mostrarModalAvatar"
+    [usuario]="usuario"
     [imagenActual]="getNombreFotoPerfil()"
     (imagenCambiada)="cambiarFotoPerfil($event)">
 </app-modal-seleccionar-avatar>

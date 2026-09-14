@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Parametro } from '@core/interfaces/parametro';
 import { ParametroService } from '@core/services/parametros';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -31,6 +32,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     ToastModule,
     ShortcutDirective,
     CommonModule,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -41,6 +43,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './parametros.scss'
 })
 export class Parametros extends TrabajarCon<Parametro> {
+  readonly pantalla = 'parametros';
   protected override exportarExcelImpl(): void {
     throw new Error('Method not implemented.');
   }
@@ -80,31 +83,34 @@ export class Parametros extends TrabajarCon<Parametro> {
   }
 
   alta(parametro: Parametro): void {
+    if (!this.beginAction()) return;
     delete parametro.id;
     delete parametro.createdAt;
     delete parametro.updatedAt;
-    this.parametroService.create(parametro).subscribe({
+    this.parametroService.create(parametro).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Parámetro creado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear el parámetro.')
     });
   }
 
   editar(parametro: Parametro): void {
+    if (!this.beginAction()) return;
     const parametroId = parametro.id ?? '';
     delete parametro.id;
     delete parametro.createdAt;
     delete parametro.updatedAt;
-    this.parametroService.update(parametroId, parametro).subscribe({
+    this.parametroService.update(parametroId, parametro).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Parámetro actualizado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al modificar el parámetro.')
     });
   }
 
   eliminarDirecto(parametro: Parametro): void {
+    if (!this.beginAction()) return;
     const parametroId = parametro.id ?? '';
     delete parametro.createdAt;
     delete parametro.updatedAt;
-    this.parametroService.delete(parametroId).subscribe({
+    this.parametroService.delete(parametroId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Parámetro eliminado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al eliminar el parámetro.')
     });

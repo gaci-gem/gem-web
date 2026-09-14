@@ -1,4 +1,4 @@
-import { ShortcutKey } from '@/app/constants/shortcut';
+import { SHORTCUTS, ShortcutKey } from '@/app/constants/shortcut';
 import { Injectable, OnDestroy } from '@angular/core';
 import { filter, fromEvent, map, Observable, shareReplay, Subject, takeUntil } from 'rxjs';
 
@@ -10,13 +10,26 @@ export class ShortcutService implements OnDestroy {
 
   private keydown$ = fromEvent<KeyboardEvent>(document, 'keydown').pipe(
     filter(event => !event.repeat),
+    filter(event => {
+      const target = event.target as HTMLElement | null;
+      const isTyping = !!target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+      const dialogOpen = Array.from(document.querySelectorAll<HTMLElement>('.p-dialog-mask, .p-confirmdialog'))
+        .some(element => getComputedStyle(element).display !== 'none' && element.getAttribute('aria-hidden') !== 'true');
+      return (!isTyping && !dialogOpen) || event.key === 'Escape';
+    }),
     map(event => {
       const combo = this.normalizeShortcut(event);
 
       // Lista de combos para los que queremos evitar el comportamiento por defecto
-      const combosPreventDefault = ['CTRL+S', 'ALT+A', 'ALT+N', 'ESCAPE'];
+      const combosPreventDefault = Object.values(SHORTCUTS).flatMap(definition =>
+        'combos' in definition ? definition.combos : [definition.combo]
+      );
 
-      if (combosPreventDefault.includes(combo.toUpperCase())) {
+      const target = event.target as HTMLElement | null;
+      const isTyping = !!target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+      const dialogOpen = Array.from(document.querySelectorAll<HTMLElement>('.p-dialog-mask, .p-confirmdialog'))
+        .some(element => getComputedStyle(element).display !== 'none' && element.getAttribute('aria-hidden') !== 'true');
+      if (!isTyping && (!dialogOpen || combo === 'ESCAPE') && (combosPreventDefault as readonly string[]).map(value => value.toUpperCase()).includes(combo.toUpperCase())) {
         event.preventDefault();
       }
 

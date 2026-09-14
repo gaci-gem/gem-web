@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService } from "@core/services/usuario";
 import { UiCard } from "@app/components/ui-card";
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-tab-preferencias',
@@ -16,6 +17,11 @@ import { UiCard } from "@app/components/ui-card";
     ],
     template: `
 
+        <div class="small mb-2" [class.text-success]="estadoGuardado === 'guardado'" [class.text-danger]="estadoGuardado === 'error'" role="status">
+            @if (estadoGuardado === 'guardando') { Guardando preferencias... }
+            @if (estadoGuardado === 'guardado') { Preferencias guardadas. }
+            @if (estadoGuardado === 'error') { No se pudieron guardar las preferencias. Intentá nuevamente. }
+        </div>
         <app-ui-card title="Notificaciones" titleIcon="lucideBell" helperText="Notificación vía Aplicación">
             <div card-body class="container">
                 <div class="row">
@@ -138,10 +144,13 @@ export class TabPreferencias implements OnInit {
     pref_general:PreferenceItem[] = PREFERENCIAS_GENERALES;
     pref_otros:PreferenceItem[] = PREFERENCIAS_OTROS;
     pref_recordatorios:PreferenceItem[] = PREFERENCIAS_RECORDATORIOS;
+    estadoGuardado: 'idle' | 'guardando' | 'guardado' | 'error' = 'idle';
+    private preferenciasGuardadas: Preferencia[] = [];
+    private preferenciasPendientes: Preferencia[] | null = null;
+    private guardandoPreferencias = false;
 
     ngOnInit(): void {
-        // console.log(this.usuario);
-        // console.log(this.grupos);
+        this.preferenciasGuardadas = this.copiarPreferencias();
     }
 
     isPreferenciaActiva(pref: any): boolean {
@@ -160,14 +169,7 @@ export class TabPreferencias implements OnInit {
         } else {
             this.usuario.preferencias = this.usuario.preferencias.filter((p: any) => p.clave !== pref.clave);
         }
-        this.usuarioService.setPreferencias(this.usuario.id!, this.usuario.preferencias).subscribe({
-            next: (res) => {
-                this.cdr.detectChanges();
-            },
-            error: (err) => {
-                console.error('Error al actualizar preferencias:', err);
-            }
-        });
+        this.guardarPreferencias();
     }
 
     setPreferenciaValor(pref: any, valor: string) {
@@ -179,12 +181,40 @@ export class TabPreferencias implements OnInit {
         } else {
             this.usuario.preferencias.push({ usuarioId: this.usuario.id!, clave: pref.clave, descripcion: valor });
         }
-        this.usuarioService.setPreferencias(this.usuario.id!, this.usuario.preferencias).subscribe({
-            next: (res) => {
+        this.guardarPreferencias();
+    }
+
+    private copiarPreferencias(): Preferencia[] {
+        return (this.usuario?.preferencias ?? []).map(pref => ({ ...pref }));
+    }
+
+    private guardarPreferencias(): void {
+        if (!this.usuario?.id) return;
+        const preferencias = this.copiarPreferencias();
+        if (this.guardandoPreferencias) {
+            this.preferenciasPendientes = preferencias;
+            return;
+        }
+        this.guardandoPreferencias = true;
+        this.estadoGuardado = 'guardando';
+        this.usuarioService.setPreferencias(this.usuario.id, preferencias).pipe(
+            finalize(() => {
+                this.guardandoPreferencias = false;
+                const pendientes = this.preferenciasPendientes;
+                this.preferenciasPendientes = null;
+                if (pendientes) this.guardarPreferencias();
                 this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: (guardadas) => {
+                this.preferenciasGuardadas = guardadas.map(pref => ({ ...pref }));
+                this.estadoGuardado = 'guardado';
             },
-            error: (err) => {
-                console.error('Error al actualizar preferencias:', err);
+            error: () => {
+                if (!this.preferenciasPendientes && this.usuario) {
+                    this.usuario.preferencias = this.preferenciasGuardadas.map(pref => ({ ...pref }));
+                }
+                this.estadoGuardado = 'error';
             }
         });
     }

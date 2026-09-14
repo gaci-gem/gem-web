@@ -37,7 +37,7 @@
           <header class="mobile-hour-card__header">
             <div class="mobile-hour-card__event">
               <label [for]="'mobile-evento-' + $index">Evento</label>
-              <select class="form-control" [id]="'mobile-evento-' + $index" formControlName="eventoId">
+              <select class="form-control" [id]="getEventInputId($index)" formControlName="eventoId">
                 <option [ngValue]="null">-- Seleccionar evento --</option>
                 @for (e of eventos; track e.id) {
                 <option [ngValue]="e.id">{{ e.titulo }}</option>
@@ -47,7 +47,7 @@
               <div class="invalid-feedback d-block">Seleccioná un evento.</div>
               }
             </div>
-            <button type="button" class="btn btn-icon btn-outline-info touch-action" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento para el intervalo {{ $index + 1 }}">
+            <button type="button" class="btn btn-icon btn-outline-info touch-action" [id]="getEventSearchButtonId($index)" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento para el intervalo {{ $index + 1 }}">
               <ng-icon name="lucideSearch" />
             </button>
           </header>
@@ -168,7 +168,7 @@
             <div class="row">
               <div class="col-10">
              <label class="mobile-field-label" [for]="'evento-' + $index">Evento</label>
-             <select class="form-control" [id]="'evento-' + $index" formControlName="eventoId" aria-label="Evento">
+              <select class="form-control" [id]="getEventInputId($index)" formControlName="eventoId" aria-label="Evento">
                   <option [ngValue]="null">-- Seleccionar --</option>
                   @for (e of eventos; track e.id) {
                   <!-- ngValue preserva el tipo (number si e.id es number) -->
@@ -177,7 +177,7 @@
                 </select>
               </div>
               <div class="col-2">
-                 <button type="button" card-actions class="btn btn-icon btn-outline-info touch-action" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento">
+                  <button type="button" card-actions class="btn btn-icon btn-outline-info touch-action" [id]="getEventSearchButtonId($index)" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento">
                   <ng-icon name="lucideSearch" />
                 </button>
              </div>
@@ -288,12 +288,8 @@
        @if (form.invalid && form.touched) {
        <div class="invalid-feedback d-block" role="alert">Revisá los campos marcados antes de guardar. Los horarios no pueden superponerse y el final debe ser mayor que el inicio.</div>
        }
-       <button class="btn btn-primary touch-action" type="submit">
-        @if (modo === 'A') {
-        Crear
-        } @else if (modo === 'M') {
-        Modificar
-         }
+         <button class="btn btn-primary touch-action" type="submit" [disabled]="form.invalid || submitting" [attr.aria-busy]="submitting">
+         @if (submitting) { Guardando... } @else if (modo === 'A') { Crear } @else if (modo === 'M') { Modificar }
        </button>
        <button class="btn btn-outline-secondary touch-action" type="button" (click)="cancel()">Cancelar</button>
     </div>

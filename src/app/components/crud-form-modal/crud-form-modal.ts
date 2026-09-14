@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, inject } from '@angular/core';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -15,6 +15,8 @@ export abstract class CrudFormModal<T> {
   protected ref = inject(DynamicDialogRef);
   protected config = inject(DynamicDialogConfig);
   protected messageService = inject(MessageService);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly opener = document.activeElement as HTMLElement | null;
 
   showSuccess(summary: string, detail: string) {
     showSuccess(this.messageService, summary, detail);
@@ -46,6 +48,7 @@ export abstract class CrudFormModal<T> {
 
     if (this.modo === 'M') this.setupEditMode();
     if (this.modo === 'V') this.setupViewMode();
+    setTimeout(() => this.focusFirstField());
   }
 
   protected abstract buildForm(): FormGroup;
@@ -71,6 +74,9 @@ export abstract class CrudFormModal<T> {
   }
 
   submit(): void {
+    if (this.submitting) return;
+    this.submitting = false;
+
     if (this.modo === 'V') return;
 
     if (!this.form.valid) {
@@ -85,16 +91,28 @@ export abstract class CrudFormModal<T> {
     const model = this.toModel();
     const request = this.save(model);
     if (!request) {
-      this.ref.close(model);
+      this.closeWithFocus(model);
       return;
     }
 
+    const originalClosable = this.config?.closable;
+    const originalCloseOnEscape = this.config?.closeOnEscape;
+    if (this.config) {
+      this.config.closable = false;
+      this.config.closeOnEscape = false;
+    }
     this.submitting = true;
-    request.pipe(finalize(() => this.submitting = false)).subscribe({
+    request.pipe(finalize(() => {
+      this.submitting = false;
+      if (this.config) {
+        this.config.closable = originalClosable;
+        this.config.closeOnEscape = originalCloseOnEscape;
+      }
+    })).subscribe({
       next: (result) => {
         const message = this.successMessage();
         if (message) this.showSuccess(message.summary, message.detail);
-        this.ref.close({ changed: true, result });
+        this.closeWithFocus({ changed: true, result });
       },
       error: (error) => {
         this.showError('Error', this.getRequestError(error));
@@ -109,7 +127,34 @@ export abstract class CrudFormModal<T> {
   }
 
   cancel(): void {
-    this.ref.close(null);
+    if (this.submitting) return;
+    this.closeWithFocus(null);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected onModalKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target || !this.host.nativeElement.contains(target)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancel();
+      return;
+    }
+    if (event.key === 'Enter' && !event.isComposing && !['TEXTAREA', 'SELECT'].includes(target.tagName) && !target.isContentEditable && target.tagName !== 'BUTTON') {
+      event.preventDefault();
+      this.submit();
+    }
+  }
+
+  protected focusFirstField(): void {
+    const host = this.host.nativeElement as HTMLElement;
+    const field = host.querySelector<HTMLElement>('input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])');
+    field?.focus();
+  }
+
+  private closeWithFocus(value: unknown): void {
+    this.ref.close(value);
+    setTimeout(() => this.opener?.focus());
   }
 
   get(campo: string): AbstractControl | null {

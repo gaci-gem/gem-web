@@ -1,6 +1,6 @@
 import { PermisoAccion } from '@/app/types/permisos';
 import { EventoDrawerComponent } from '@/app/views/evento/evento-drawer/evento-drawer';
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { LoadingService } from '@core/services/loading.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -38,6 +38,17 @@ export abstract class SelectBase<T> {
   submit(): void {
     const model = this.toModel();
     this.modalSel.close(model);
+  }
+
+  @HostListener('keydown', ['$event'])
+  protected onSelectorKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') return;
+
+    // DynamicDialog's document handler must not close the CRUD dialog behind us.
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    this.modalSel.close();
   }
 
   protected afterChange(mensaje: string = 'Cambios guardados correctamente.'): void {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { TrabajarCon, UiCard } from '@app/components/index';
 import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
 import { Categoria, Hora, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
@@ -47,6 +47,8 @@ import { ViewportService } from '@core/services/viewport.service';
   styleUrl: './horas-usuario.scss'
 })
 export class HorasUsuario extends TrabajarCon<RegistroHora> {
+  readonly pantalla = 'horas-usuario';
+  @ViewChild('initialFocusTarget') private initialFocusTarget?: ElementRef<HTMLElement>;
   protected override exportarExcelImpl(): void {
     throw new Error('Method not implemented.');
   }
@@ -82,6 +84,10 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
     );
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initialFocusTarget?.nativeElement.focus());
+  }
+
   protected loadItems(): void {
     this.cargarCategorias();
     this.consultarRegistros(this.dateFilter);
@@ -100,8 +106,9 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   }
 
   alta(registroHora: RegistroHora, onError?: () => void): void {
+    if (!this.beginAction()) return;
     delete registroHora.id
-    this.registroHoraService.create(registroHora).subscribe({
+    this.registroHoraService.create(registroHora).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora creado correctamente.'),
       error: (err) => {
         this.showError(err?.error?.message || 'Error al crear el registro de Hora.');
@@ -111,8 +118,9 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   }
 
   editar(registroHora: RegistroHora, onError?: () => void): void {
+    if (!this.beginAction()) return;
     let registroHoraId = registroHora.id ?? 0;
-    this.registroHoraService.update(registroHoraId, registroHora).subscribe({
+    this.registroHoraService.update(registroHoraId, registroHora).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora actualizado correctamente.'),
       error: (err) => {
         this.showError(err?.error?.message || 'Error al modificar el registro de Hora.');
@@ -122,8 +130,9 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   }
 
   eliminarDirecto(registroHora: RegistroHora): void {
+    if (!this.beginAction()) return;
     let registroHoraId = registroHora.id ?? 0;
-    this.registroHoraService.delete(registroHoraId).subscribe({
+    this.registroHoraService.delete(registroHoraId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Registro de Hora eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el registro de Hora.')
     });

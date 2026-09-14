@@ -38,7 +38,7 @@ import { ACCIONES } from '@/app/constants/actividad_acciones';
 import { EstadosEvento } from '@/app/constants/evento_estados';
 import { EventoService } from '@core/services/evento';
 import { ActivatedRoute } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { TipoEventoService } from '@core/services/tipo-evento';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { HorasPorCategoriaResponse } from '@core/interfaces/registro-hora';
@@ -68,6 +68,8 @@ export class Evento {
   private readonly dialogService = inject(DialogService);
   private tipoEventoService = inject(TipoEventoService);
   private observer?: IntersectionObserver;
+  private routeSubscription?: Subscription;
+  private viewInitialized = false;
 
   @Input() eventoIdParam?: string;
 
@@ -118,21 +120,30 @@ export class Evento {
   etapaActualSecuencia = 1;
 
   ngOnInit(): void {
-    this.eventoId = this.eventoIdParam || this.route.snapshot.params['id'];
+    this.routeSubscription = this.route.paramMap.subscribe((params) => {
+      const nextEventoId = this.eventoIdParam || params.get('id') || '';
+      if (nextEventoId === this.eventoId) return;
 
-    if (!this.eventoId) {
-      this.applyLegacyMock();
-      return;
-    }
+      this.eventoId = nextEventoId;
+      this.resetEventState();
 
-    this.loadEventoBase();
+      if (!this.eventoId) {
+        this.applyLegacyMock();
+        return;
+      }
+
+      this.loadEventoBase();
+      if (this.viewInitialized) this.observeLazySections();
+    });
   }
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
+    this.routeSubscription?.unsubscribe();
   }
 
   ngAfterViewInit(): void {
+    this.viewInitialized = true;
     if (!('IntersectionObserver' in window)) {
       this.loadRequisitos();
       this.loadAdjuntos();
@@ -141,6 +152,19 @@ export class Evento {
       return;
     }
 
+    this.observeLazySections();
+  }
+
+  private observeLazySections(): void {
+    if (!('IntersectionObserver' in window)) {
+      this.loadRequisitos();
+      this.loadAdjuntos();
+      this.loadPorCategoria();
+      this.loadActividad();
+      return;
+    }
+
+    this.observer?.disconnect();
     this.observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -173,20 +197,23 @@ export class Evento {
   loadEventoBase(force = false): void {
     if (!this.eventoId || (this.loadingEvento && !force)) return;
 
+    const eventoId = this.eventoId;
     this.loadingEvento = true;
     this.loadingMap.evento = true;
     this.errorEvento = null;
 
     this.eventoService
-      .getEventoVista(this.eventoId)
-      .pipe(finalize(() => this.finalizeBlockLoading('evento')))
+      .getEventoVista(eventoId)
+      .pipe(finalize(() => this.finalizeBlockLoading('evento', eventoId)))
       .subscribe({
         next: (res) => {
+          if (this.eventoId !== eventoId) return;
           this.applyVistaResponse(res);
         },
         error: () => {
+          if (this.eventoId !== eventoId) return;
           if (this.usarFallbackLegacy) {
-            this.loadEventoBaseLegacy();
+            this.loadEventoBaseLegacy(eventoId);
             return;
           }
           this.errorEvento = 'No se pudo cargar el evento.';
@@ -198,19 +225,22 @@ export class Evento {
     if (!this.eventoId || this.loadingActividad) return;
     if (!force && this.actividadLoaded) return;
 
+    const eventoId = this.eventoId;
     this.loadingActividad = true;
     this.loadingMap.actividad = true;
     this.errorActividad = null;
 
     this.eventoService
-      .getEventoVista(this.eventoId, { incluirActividad: true })
-      .pipe(finalize(() => this.finalizeBlockLoading('actividad')))
+      .getEventoVista(eventoId, { incluirActividad: true })
+      .pipe(finalize(() => this.finalizeBlockLoading('actividad', eventoId)))
       .subscribe({
         next: (res) => {
+          if (this.eventoId !== eventoId) return;
           this.actividades = res.actividad ?? [];
           this.actividadLoaded = true;
         },
         error: () => {
+          if (this.eventoId !== eventoId) return;
           if (this.usarFallbackLegacy) {
             this.loadActividadLegacy(force);
             return;
@@ -224,22 +254,25 @@ export class Evento {
     if (!this.eventoId || this.loadingAdjuntos) return;
     if (!force && this.adjuntosLoaded) return;
 
+    const eventoId = this.eventoId;
     this.loadingAdjuntos = true;
     this.loadingMap.adjuntos = true;
     this.errorAdjuntos = null;
 
     this.eventoService
-      .getEventoVista(this.eventoId, {
+      .getEventoVista(eventoId, {
         incluirAdjuntos: true,
         adjuntosActivo: 'all',
       })
-      .pipe(finalize(() => this.finalizeBlockLoading('adjuntos')))
+      .pipe(finalize(() => this.finalizeBlockLoading('adjuntos', eventoId)))
       .subscribe({
         next: (res) => {
+          if (this.eventoId !== eventoId) return;
           this.adjuntos = res.adjuntos ?? [];
           this.adjuntosLoaded = true;
         },
         error: () => {
+          if (this.eventoId !== eventoId) return;
           if (this.usarFallbackLegacy) {
             this.loadAdjuntosLegacy(force);
             return;
@@ -253,19 +286,22 @@ export class Evento {
     if (!this.eventoId || this.loadingRequisitos) return;
     if (!force && this.requisitosLoaded) return;
 
+    const eventoId = this.eventoId;
     this.loadingRequisitos = true;
     this.loadingMap.requisitos = true;
     this.errorRequisitos = null;
 
     this.eventoService
-      .getEventoVista(this.eventoId, { incluirRequisitos: true })
-      .pipe(finalize(() => this.finalizeBlockLoading('requisitos')))
+      .getEventoVista(eventoId, { incluirRequisitos: true })
+      .pipe(finalize(() => this.finalizeBlockLoading('requisitos', eventoId)))
       .subscribe({
         next: (res) => {
+          if (this.eventoId !== eventoId) return;
           this.requisitos = this.mapRequisitos(res.requisitos ?? []);
           this.requisitosLoaded = true;
         },
         error: () => {
+          if (this.eventoId !== eventoId) return;
           if (this.usarFallbackLegacy) {
             this.loadRequisitosLegacy(force);
             return;
@@ -279,23 +315,27 @@ export class Evento {
     if (!this.eventoId || this.loadingPorCategoria) return;
     if (!force && this.porCategoriaLoaded) return;
 
+    const eventoId = this.eventoId;
     this.loadingPorCategoria = true;
     this.errorPorCategoria = null;
 
     this.registroHoraService
-      .getPorCategoria(this.eventoId)
+      .getPorCategoria(eventoId)
       .pipe(
         finalize(() => {
+          if (this.eventoId !== eventoId) return;
           this.loadingPorCategoria = false;
           this.cdRef.detectChanges();
         }),
       )
       .subscribe({
         next: (res) => {
+          if (this.eventoId !== eventoId) return;
           this.porCategoriaData = res;
           this.porCategoriaLoaded = true;
         },
         error: () => {
+          if (this.eventoId !== eventoId) return;
           this.errorPorCategoria =
             'No se pudo cargar el desglose por categoría.';
         },
@@ -324,7 +364,9 @@ export class Evento {
 
   private finalizeBlockLoading(
     block: 'evento' | 'actividad' | 'adjuntos' | 'requisitos',
+    eventoId = this.eventoId,
   ): void {
+    if (this.eventoId !== eventoId) return;
     this.zone.run(() => {
       this.loadingMap[block] = false;
 
@@ -453,14 +495,16 @@ export class Evento {
     return '';
   }
 
-  private loadEventoBaseLegacy(): void {
-    this.eventoService.getByIdCompleto(this.eventoId).subscribe({
+  private loadEventoBaseLegacy(eventoId = this.eventoId): void {
+    this.eventoService.getByIdCompleto(eventoId).subscribe({
       next: (evento) => {
+        if (this.eventoId !== eventoId) return;
         this.evento = evento;
         this.documentacion = evento.documentacion ?? [];
         this.loadingEvento = false;
       },
       error: () => {
+        if (this.eventoId !== eventoId) return;
         this.loadingEvento = false;
         this.errorEvento = 'No se pudo cargar el evento (fallback legacy).';
         this.applyLegacyMock();
@@ -474,13 +518,16 @@ export class Evento {
       return;
     }
 
-    this.eventoService.getActividad(this.eventoId).subscribe({
+    const eventoId = this.eventoId;
+    this.eventoService.getActividad(eventoId).subscribe({
       next: (actividad) => {
+        if (this.eventoId !== eventoId) return;
         this.actividades = actividad;
         this.actividadLoaded = true;
         this.loadingActividad = false;
       },
       error: () => {
+        if (this.eventoId !== eventoId) return;
         this.loadingActividad = false;
         this.errorActividad =
           'No se pudo cargar la actividad (fallback legacy).';
@@ -494,13 +541,16 @@ export class Evento {
       return;
     }
 
-    this.eventoService.getAdjuntos(this.eventoId).subscribe({
+    const eventoId = this.eventoId;
+    this.eventoService.getAdjuntos(eventoId).subscribe({
       next: (adjuntos) => {
+        if (this.eventoId !== eventoId) return;
         this.adjuntos = adjuntos;
         this.adjuntosLoaded = true;
         this.loadingAdjuntos = false;
       },
       error: () => {
+        if (this.eventoId !== eventoId) return;
         this.loadingAdjuntos = false;
         this.errorAdjuntos =
           'No se pudieron cargar los adjuntos (fallback legacy).';
@@ -514,13 +564,16 @@ export class Evento {
       return;
     }
 
-    this.eventoService.getRequisitos(this.eventoId).subscribe({
+    const eventoId = this.eventoId;
+    this.eventoService.getRequisitos(eventoId).subscribe({
       next: (requisitos) => {
+        if (this.eventoId !== eventoId) return;
         this.requisitos = this.mapRequisitos(requisitos);
         this.requisitosLoaded = true;
         this.loadingRequisitos = false;
       },
       error: () => {
+        if (this.eventoId !== eventoId) return;
         this.loadingRequisitos = false;
         this.errorRequisitos =
           'No se pudieron cargar los requisitos (fallback legacy).';
@@ -538,5 +591,39 @@ export class Evento {
     this.actividadLoaded = true;
     this.adjuntosLoaded = true;
     this.requisitosLoaded = true;
+  }
+
+  private resetEventState(): void {
+    this.evento = null;
+    this.documentacion = [];
+    this.adjuntos = [];
+    this.requisitos = [];
+    this.actividades = [];
+    this.estimacionDetalle = null;
+    this.etapas = [];
+    this.etapaActualSecuencia = 1;
+
+    this.loadingEvento = false;
+    this.loadingAdjuntos = false;
+    this.loadingRequisitos = false;
+    this.loadingActividad = false;
+    this.loadingPorCategoria = false;
+    this.loadingMap = {
+      evento: false,
+      actividad: false,
+      adjuntos: false,
+      requisitos: false,
+    };
+
+    this.errorEvento = null;
+    this.errorAdjuntos = null;
+    this.errorRequisitos = null;
+    this.errorActividad = null;
+    this.errorPorCategoria = null;
+
+    this.adjuntosLoaded = false;
+    this.requisitosLoaded = false;
+    this.actividadLoaded = false;
+    this.porCategoriaLoaded = false;
   }
 }

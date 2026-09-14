@@ -1,0 +1,39 @@
+<div class="btn-group" ngbDropdown>
+  <button type="button" class="btn btn-soft-primary btn-md" title="Limpiar Filtros" aria-label="Limpiar Filtros" (click)="clearFilters.emit()">
+    <ng-icon name="tablerFilterOff" />
+  </button>
+  <button type="button" class="btn btn-soft-primary dropdown-toggle-split drop-arrow-none btn-md" title="Presets" aria-label="Presets" ngbDropdownToggle>
+    <ng-icon name="tablerChevronDown" />
+  </button>
+  <div ngbDropdownMenu>
+    <button ngbDropdownItem (click)="openManager()">Gestionar presets</button>
+    <div class="dropdown-divider"></div>
+    <p class="titulo_dropdown">Aplicar preset</p>
+    @for (preset of presets; track preset.id) {
+      <button ngbDropdownItem (click)="apply.emit(preset.id)">
+        {{ preset.nombre }}{{ preset.esDefault ? ' (predeterminada)' : '' }}
+      </button>
+    } @empty {
+      <span class="dropdown-item-text text-muted">No hay presets guardados</span>
+    }
+  </div>
+</div>
+
+<p-dialog header="Gestionar presets" [(visible)]="manageVisible" [modal]="true" [style]="{ width: 'min(640px, 94vw)' }">
+  <div class="d-flex gap-2 mb-3">
+    <select class="form-select" [ngModel]="selectedPresetId" (ngModelChange)="select($event); draftName = presetName($event)">
+      <option value="">Nuevo preset</option>
+      @for (preset of presets; track preset.id) {
+        <option [value]="preset.id">{{ preset.nombre }}{{ preset.esDefault ? ' (predeterminada)' : '' }}</option>
+      }
+    </select>
+    <input class="form-control" [(ngModel)]="draftName" maxlength="80" placeholder="Nombre" />
+  </div>
+  <div class="d-flex gap-2 justify-content-end">
+    <button class="btn btn-primary" (click)="savePreset()">{{ selectedPresetId ? 'Modificar' : 'Guardar' }}</button>
+    @if (selectedPresetId) {
+      <button class="btn btn-outline-secondary" (click)="setDefault.emit(selectedPresetId)">Marcar predeterminado</button>
+      <button class="btn btn-outline-danger" (click)="remove.emit(selectedPresetId)">Eliminar</button>
+    }
+  </div>
+</p-dialog>

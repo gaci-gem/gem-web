@@ -49,13 +49,14 @@
                         [showCurrentPageReport]="true"
                         size="small"
                     >
-                        <ng-template pTemplate="caption">
+                                <ng-template pTemplate="caption">
                             <div class="flex align-items-center justify-content-between" style="display: flex;">
                                 <span class="p-input-icon-left">
                                     <i class="pi pi-search"></i>
                                     <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
-                                </span>
-                            </div>
+                                 </span>
+                                    <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
+                             </div>
                         </ng-template>
                         <ng-template pTemplate="header">
                             <tr>
@@ -104,8 +105,8 @@
                                         </button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
-                                        <button class="btn btn-ghost-danger" (click)="delete(kb)" title="Eliminar">
-                                            <ng-icon name="lucideTrash2"/>
+                                        <button class="btn btn-ghost-danger" (click)="delete(kb)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">
+                                            @if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }
                                         </button>
                                     }
                                 </td>

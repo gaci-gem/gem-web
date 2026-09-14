@@ -50,9 +50,8 @@
                                         class="p-component p-element p-inputtext" type="text"
                                         (input)="dt.filterGlobal(getEventValue($event), 'contains')"
                                         placeholder="Buscar..." />
-                                </span>
-                                <div class="flex align-items-center gap-1" style="margin:auto 10px">
-                                </div>
+                                 </span>
+                            <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                             </div>
                         </ng-template>
                         <ng-template pTemplate="header">
@@ -162,11 +161,18 @@
                 </tr>
                 </ng-template>
 
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="5">No se encontraron registros de hora.</td>
-                    </tr>
-                </ng-template>
+                 <ng-template pTemplate="emptymessage">
+                     <tr>
+                         <td colspan="5" class="text-center py-4">
+                             @if (isFiltered(dt)) {
+                                 <div>No se encontraron registros de hora con los filtros actuales.</div>
+                                 <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="clear(dt)">Limpiar filtros</button>
+                             } @else {
+                                 <div>No hay registros de hora cargados todavía.</div>
+                             }
+                         </td>
+                     </tr>
+                 </ng-template>
                 </p-table>
         </div>
         </td>

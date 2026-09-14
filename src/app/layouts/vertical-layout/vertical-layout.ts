@@ -4,9 +4,6 @@ import { SidenavComponent } from '@layouts/components/sidenav/sidenav.component'
 import { Topbar } from '@layouts/components/topbar/topbar'
 import { debounceTime, fromEvent, Subscription } from 'rxjs'
 import { LayoutStoreService } from '@core/services/layout-store.service'
-import { DialogModule } from 'primeng/dialog'
-import { SHORTCUTS } from '@/app/constants/shortcut'
-import { ShortcutTable } from "@layouts/components/shortcut-table/shortcut-table";
 import { EventoCronometroComponent } from '@app/components/evento-cronometro';
 import { Footer } from '@layouts/components/footer/footer'
 import { DrawerContainerComponent } from '@app/components/drawer-container/drawer-container'
@@ -21,7 +18,6 @@ import { ChangelogModalComponent } from '@views/changelog/changelog-modal'
     RouterOutlet,
     SidenavComponent,
     Topbar,
-    ShortcutTable,
     EventoCronometroComponent,
     Footer,
     DrawerContainerComponent,

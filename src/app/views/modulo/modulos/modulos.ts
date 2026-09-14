@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Modulo } from '@core/interfaces/modulo';
@@ -36,6 +37,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     CommonModule,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -46,6 +48,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './modulos.scss'
 })
 export class Modulos extends TrabajarCon<Modulo> {
+  readonly pantalla = 'modulos';
   private moduloService = inject(ModuloService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
@@ -81,23 +84,26 @@ export class Modulos extends TrabajarCon<Modulo> {
   }
 
   alta(modulo: Modulo): void {
-    this.moduloService.create(modulo).subscribe({
+    if (!this.beginAction()) return;
+    this.moduloService.create(modulo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Modulo creado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear el modulo.')
     });
   }
 
   editar(modulo: Modulo): void {
+    if (!this.beginAction()) return;
     let moduloCodigo = modulo.codigo ?? '';
-    this.moduloService.update(moduloCodigo, modulo).subscribe({
+    this.moduloService.update(moduloCodigo, modulo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Modulo actualizado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar el modulo.')
     });
   }
 
   eliminarDirecto(modulo: Modulo): void {
+    if (!this.beginAction()) return;
     let moduloCodigo = modulo.codigo ?? '';
-    this.moduloService.delete(moduloCodigo).subscribe({
+    this.moduloService.delete(moduloCodigo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Modulo eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Modulo.')
     });

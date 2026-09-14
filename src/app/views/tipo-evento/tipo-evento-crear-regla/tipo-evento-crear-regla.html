@@ -6,6 +6,13 @@
     editMode="row"
     [tableStyle]="{'min-width': '50rem'}"
   >
+    <caption class="text-start small" role="status">
+      @if (accionEnCurso === 'guardando') { Guardando regla... }
+      @if (accionEnCurso === 'eliminando') { Eliminando regla... }
+      @if (estadoAccion === 'guardado') { Regla guardada. }
+      @if (estadoAccion === 'eliminado') { Regla eliminada. }
+      @if (estadoAccion === 'error') { No se pudo completar la acción. Intentá nuevamente. }
+    </caption>
     <ng-template #header>
       <tr>
         <th style="width:22%">Contexto</th>
@@ -71,15 +78,15 @@
           <div class="flex items-center justify-center gap-2">
             @if (!editing) {
               <button pButton pRipple type="button" pInitEditableRow icon="pi pi-pencil"
-                            (click)="onRowEditInit(regla)" text rounded severity="secondary"></button>
+                            (click)="onRowEditInit(regla)" text rounded severity="secondary" [disabled]="accionEnCurso"></button>
               <button pButton pRipple type="button" pInitEditableRow icon="pi pi-trash"
-                            (click)="onRowDelete(regla)" text rounded severity="danger"></button>
+                            (click)="onRowDelete(regla)" text rounded severity="danger" [disabled]="accionEnCurso" [attr.aria-busy]="accionEnCurso === 'eliminando' && reglaEnCursoId === regla.id"></button>
             }
             @if (editing) {
               <button pButton pRipple type="button" pSaveEditableRow icon="pi pi-check"
-                (click)="onRowEditSave(regla)" text rounded severity="secondary"></button>
+                (click)="onRowEditSave(regla)" text rounded severity="secondary" [disabled]="accionEnCurso" [attr.aria-busy]="accionEnCurso === 'guardando' && reglaEnCursoId === regla.id"></button>
               <button pButton pRipple type="button" pCancelEditableRow icon="pi pi-times"
-                (click)="onRowEditCancel(regla, ri)" text rounded severity="secondary"></button>
+                (click)="onRowEditCancel(regla, ri)" text rounded severity="secondary" [disabled]="accionEnCurso"></button>
             }
           </div>
         </td>

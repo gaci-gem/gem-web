@@ -46,8 +46,15 @@
                     <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
                     <p-table
                         #dt
+                        appKeyboardListNavigation
+                        [keyboardListItems]="eventos"
+                        [keyboardListSelectable]="true"
+                        (keyboardRowActivate)="abrirEventoDrawer($event)"
                         [value]="eventos"
                         [(selection)]="selectedEventos"
+                        [(contextMenuSelection)]="selectedEvento"
+                        [contextMenu]="cm"
+                        (contextMenuSelectionChange)="buildContextMenu($event)"
                         [rows]="10"
                         [paginator]="true"
                         [globalFilterFields]="['id', 'tipo.codigo', 'numero', 'evento', 'titulo', 'etapaActualData.nombre', 'cliente.sigla', 'cliente.nombre', 'producto.sigla', 'producto.nombre', 'producto.entornoCodigo', 'modulo.codigo', 'modulo.nombre', 'usuarioActual.usuario']"
@@ -61,15 +68,18 @@
                         [scrollable]="true" [resizableColumns]="true"
                         sortField="prioridadFin" [sortOrder]="-1"
                         selectionMode="multiple"
-                        [metaKeySelection]="true"
+                         [metaKeySelection]="true"
+                         (onFilter)="onTableFilter()"
+                         (onSort)="onTableSort()"
+                         (onPage)="onTablePage()"
                     >
                         <ng-template pTemplate="caption">
                             <div class="flex align-items-center justify-content-between" style="display: flex;">
                                 <span class="p-input-icon-left">
                                     <i class="pi pi-search"></i>
-                                    <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
+                                     <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" [(ngModel)]="globalFilter" (input)="dt.filterGlobal(getEventValue($event), 'contains'); saveState()" placeholder="Buscar..." />
                                 </span>
-                                <button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff"/></button>
+                                 <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                             </div>
                         </ng-template>
                         <ng-template pTemplate="header">
@@ -80,10 +90,10 @@
                                 <th pSortableColumn="id" hidden>Id</th>
                                 <th pSortableColumn="tipo.codigo" hidden>Tipo</th>
                                 <th pSortableColumn="numero" hidden>Numero</th>
-                                <th pSortableColumn="eventoSearch" style="min-width: 110px;" pFrozenColumn>
+                                 <th pSortableColumn="evento" style="min-width: 110px;" pFrozenColumn>
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Evento
-                                        <p-columnFilter type="text" field="eventoSearch" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
+                                         <p-columnFilter type="text" field="evento" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
                                 <th pSortableColumn="titulo">
@@ -130,7 +140,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-evento>
-                            <tr style="min-height: 55px" [pSelectableRow]="evento" [class.table-success]="eventoEnTrabajo?.id === evento.id" (contextmenu)="onContextMenu($event, evento)">
+                            <tr style="min-height: 55px" [pSelectableRow]="evento" [pContextMenuRow]="evento" [class.table-success]="eventoEnTrabajo?.id === evento.id">
                                 <td pFrozenColumn>
                                     @if (!eventoEnTrabajo || eventoEnTrabajo.id !== evento.id) {
                                         <button 

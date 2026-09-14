@@ -12,6 +12,7 @@ import { NotaCompartirModal } from '../nota-compartir-modal/nota-compartir-modal
 import { modalConfig } from '@/app/types/modals';
 import { NotaService } from '@core/services/nota';
 import { marked } from 'marked';
+import { finalize } from 'rxjs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
@@ -33,6 +34,8 @@ export class Notas implements OnInit {
 
   notas: NotaComplete[] = [];
   loading = false;
+  eliminandoNotaId: number | null = null;
+  errorEliminacionId: number | null = null;
 
   constructor() {
     // Configurar marked para usar marked.parse en lugar de marked()
@@ -119,6 +122,7 @@ export class Notas implements OnInit {
   }
 
   eliminarNota(nota: NotaComplete): void {
+    if (this.eliminandoNotaId !== null) return;
     // No permitir eliminar notas compartidas
     if (this.esCompartida(nota)) {
       this.messageService.add({
@@ -138,7 +142,9 @@ export class Notas implements OnInit {
       accept: () => {
         if (!nota.id) return;
 
-        this.notaService.delete(nota.id).subscribe({
+        this.eliminandoNotaId = nota.id;
+        this.errorEliminacionId = null;
+        this.notaService.delete(nota.id).pipe(finalize(() => this.eliminandoNotaId = null)).subscribe({
           next: () => {
             this.notas = this.notas.filter(n => n.id !== nota.id);
             this.messageService.add({
@@ -148,6 +154,7 @@ export class Notas implements OnInit {
             });
           },
           error: (error) => {
+            this.errorEliminacionId = nota.id!;
             console.error('Error al eliminar la nota:', error);
             this.messageService.add({
               severity: 'error',

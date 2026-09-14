@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { EventoService } from '@core/services/evento';
 import { EventoCompleto } from '@core/interfaces/evento';
 import { EstadosEvento } from '@/app/constants/evento_estados';
@@ -12,6 +12,9 @@ describe('Evento', () => {
   let component: Evento;
   let fixture: ComponentFixture<Evento>;
   let eventoServiceSpy: jasmine.SpyObj<EventoService>;
+  let routeParams: BehaviorSubject<ParamMapLike>;
+
+  type ParamMapLike = { get(name: string): string | null };
 
   const eventoBaseMock: EventoCompleto = {
     id: 'evt-1',
@@ -85,6 +88,7 @@ describe('Evento', () => {
     requisitos: [],
     observadores: [],
     documentacion: [],
+    portalTickets: [],
     etapaActualData: {
       id: 2,
       nombre: 'AUTORIZAR',
@@ -114,15 +118,18 @@ describe('Evento', () => {
     eventoServiceSpy.getEventoVista.and.callFake(
       (_id: string, opciones?: any) => {
         if (opciones?.incluirActividad)
-          return of({ evento: eventoBaseMock, actividad: [] } as any);
+          return of({ evento: { ...eventoBaseMock, id: _id }, actividad: [] } as any);
         if (opciones?.incluirAdjuntos)
-          return of({ evento: eventoBaseMock, adjuntos: [] } as any);
+          return of({ evento: { ...eventoBaseMock, id: _id }, adjuntos: [] } as any);
         if (opciones?.incluirRequisitos)
-          return of({ evento: eventoBaseMock, requisitos: [] } as any);
-        return of({ evento: eventoBaseMock } as any);
+          return of({ evento: { ...eventoBaseMock, id: _id }, requisitos: [] } as any);
+        return of({ evento: { ...eventoBaseMock, id: _id } } as any);
       },
     );
     eventoServiceSpy.agregarAdicional.and.returnValue(of({} as any));
+    routeParams = new BehaviorSubject<ParamMapLike>({
+      get: (name) => (name === 'id' ? 'evt-1' : null),
+    });
 
     await TestBed.configureTestingModule({
       imports: [Evento],
@@ -130,7 +137,7 @@ describe('Evento', () => {
         { provide: EventoService, useValue: eventoServiceSpy },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { params: { id: 'evt-1' } } },
+          useValue: { paramMap: routeParams.asObservable() },
         },
         {
           provide: DialogService,
@@ -190,5 +197,36 @@ describe('Evento', () => {
     expect(eventoServiceSpy.getEventoVista).toHaveBeenCalledWith('evt-1', {
       incluirActividad: true,
     });
+  });
+
+  it('recarga y limpia el estado al cambiar el id de la ruta', () => {
+    component.actividades = [{ accion: 'ANTERIOR' } as any];
+    component.adjuntos = [{ id: 1 }];
+    component.requisitos = [{ requisito: 'Anterior' } as any];
+    component.documentacion = [{ id: 1 } as any];
+    component.estimacionDetalle = { totalEstimacion: 10 } as any;
+    component['actividadLoaded'] = true;
+    component['adjuntosLoaded'] = true;
+    component['requisitosLoaded'] = true;
+    component['porCategoriaLoaded'] = true;
+    component.errorActividad = 'error anterior';
+    component.errorPorCategoria = 'error anterior';
+
+    routeParams.next({ get: (name) => (name === 'id' ? 'evt-2' : null) });
+
+    expect(eventoServiceSpy.getEventoVista).toHaveBeenCalledWith('evt-2');
+    expect(component.eventoId).toBe('evt-2');
+    expect(component.evento?.id).toBe('evt-2');
+    expect(component.actividades).toEqual([]);
+    expect(component.adjuntos).toEqual([]);
+    expect(component.requisitos).toEqual([]);
+    expect(component.documentacion).toEqual([]);
+    expect(component.estimacionDetalle).toBeNull();
+    expect(component['actividadLoaded']).toBeFalse();
+    expect(component['adjuntosLoaded']).toBeFalse();
+    expect(component['requisitosLoaded']).toBeFalse();
+    expect(component['porCategoriaLoaded']).toBeFalse();
+    expect(component.errorActividad).toBeNull();
+    expect(component.errorPorCategoria).toBeNull();
   });
 });

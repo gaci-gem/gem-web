@@ -11,6 +11,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const token = authService.getAccessToken();
+  const publicExcluded = ['/auth/crearUsuario'];
   const excluded = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/profile'];
 
   // Si el request ya tiene la marca de intento de refresh, no lo reintentes
@@ -27,6 +28,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
+        // Public form errors must not be interpreted as an expired session.
+        if (publicExcluded.some(path => req.url.includes(path))) {
+          return throwError(() => error);
+        }
+
         // Si la petición que devolvió 401 es la del refresh token → no reintentamos
         // (evita bucle cuando el refresh token también expiró)
         if (excluded.some(path => req.url.includes(path))) {

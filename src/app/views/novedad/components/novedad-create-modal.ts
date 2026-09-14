@@ -198,7 +198,7 @@ import { MessageService } from 'primeng/api';
         <button type="button" (click)="cancel()" class="btn btn-secondary">
           Cancelar
         </button>
-        <button type="submit" [disabled]="form.invalid || submitting" class="btn btn-primary">
+        <button type="submit" [disabled]="form.invalid || submitting" [attr.aria-busy]="submitting" class="btn btn-primary">
           @if (submitting) {
             <span class="spinner-border spinner-border-sm me-1" role="status"></span>
           }

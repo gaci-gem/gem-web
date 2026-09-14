@@ -4,6 +4,9 @@ export const modalConfig = {
     baseZIndex: 10000,
     maximizable: true,
     closable: true,
+    closeOnEscape: true,
+    focusOnShow: true,
+    focusTrap: true,
     modal: true,
     breakpoints: {
         '960px': '85vw',

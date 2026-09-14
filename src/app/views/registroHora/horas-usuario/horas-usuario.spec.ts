@@ -10,6 +10,7 @@ import { UserStorageService } from '@core/services/user-storage';
 import { LoadingService } from '@core/services/loading.service';
 import { PermisosService } from '@core/services/permisos';
 import { ViewportService } from '@core/services/viewport.service';
+import { FiltroPresetService } from '@core/services/filtro-preset';
 
 describe('HorasUsuario', () => {
   it('should reload the selected month from the mobile period control handler', () => {
@@ -27,6 +28,7 @@ describe('HorasUsuario', () => {
         { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
         { provide: LoadingService, useValue: { show: jasmine.createSpy('show'), hide: jasmine.createSpy('hide') } },
         { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
         { provide: ViewportService, useValue: { isMobile: signal(true) } },
         DialogService,
         MessageService,
@@ -46,6 +48,32 @@ describe('HorasUsuario', () => {
     expect(registroHoraService.getByUsuario).toHaveBeenCalledWith('u-1', 7, 2026);
   });
 
+  it('should focus the toolbar region instead of a filter input on entry', async () => {
+    TestBed.configureTestingModule({
+      imports: [HorasUsuario],
+      providers: [
+        { provide: RegistroHoraService, useValue: { getCategorias: () => of([]), getByUsuario: () => of([]) } },
+        { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
+        { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
+        { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
+        { provide: ViewportService, useValue: { isMobile: signal(false) } },
+        DialogService,
+        MessageService,
+        ConfirmationService,
+        provideZonelessChangeDetection(),
+      ],
+    });
+
+    const fixture = TestBed.createComponent(HorasUsuario);
+    fixture.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[aria-label="Acciones de registros de horas"]'));
+    expect(document.activeElement?.tagName).not.toBe('INPUT');
+    expect(document.activeElement?.getAttribute('tabindex')).toBe('-1');
+  });
+
   it('should expand only the selected mobile day card', () => {
     TestBed.configureTestingModule({
       imports: [HorasUsuario],
@@ -54,6 +82,7 @@ describe('HorasUsuario', () => {
         { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
         { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
         { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
         { provide: ViewportService, useValue: { isMobile: signal(true) } },
         DialogService,
         MessageService,

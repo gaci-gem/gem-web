@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { TipoEvento } from '@core/interfaces/tipo-evento';
 import { TipoEventoService } from '@core/services/tipo-evento';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -36,7 +37,8 @@ import { BadgeClickComponent } from "@app/components/badge-click";
     ToastModule,
     BooleanLabelPipe,
     CommonModule,
-    ControlTrabajarCon
+    ControlTrabajarCon,
+    FiltroPresetsComponent
 ],
   providers: [
     DialogService,
@@ -47,6 +49,7 @@ import { BadgeClickComponent } from "@app/components/badge-click";
   styleUrl: './tipos-evento.scss'
 })
 export class TiposEvento extends TrabajarCon<TipoEvento> {
+  readonly pantalla = 'tipos-evento';
   private tipoEventoService = inject(TipoEventoService);
   private prioridadService = inject(PrioridadService);
   private dialogService = inject(DialogService);
@@ -78,23 +81,26 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
   }
 
   alta(tipoEvento: TipoEvento): void {
-    this.tipoEventoService.create(tipoEvento).subscribe({
+    if (!this.beginAction()) return;
+    this.tipoEventoService.create(tipoEvento).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de Evento creado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al crear el tipo de Evento.')
     });
   }
 
   editar(tipoEvento: TipoEvento): void {
+    if (!this.beginAction()) return;
     let tipoEventoId = tipoEvento.codigo ?? '';
-    this.tipoEventoService.update(tipoEventoId, tipoEvento).subscribe({
+    this.tipoEventoService.update(tipoEventoId, tipoEvento).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de Evento actualizado correctamente.'),
       error: (err) => this.showError(err.error.message || 'Error al modificar el tipo de Evento.')
     });
   }
 
   eliminarDirecto(tipoEvento: TipoEvento): void {
+    if (!this.beginAction()) return;
     let tipoEventoId = tipoEvento.codigo ?? '';
-    this.tipoEventoService.delete(tipoEventoId).subscribe({
+    this.tipoEventoService.delete(tipoEventoId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Tipo de Evento eliminado correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar el Tipo de Evento.')
     });

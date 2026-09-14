@@ -50,6 +50,7 @@ export class KbDeploys implements OnInit {
   deploys: deploy[] = [];
   deploysFiltrados: deploy[] = [];
   loading: boolean = false;
+  actionInProgress = false;
   clientes: Cliente[] = [];
   
   // Filtros
@@ -203,10 +204,12 @@ export class KbDeploys implements OnInit {
   }
 
   guardar(): void {
+    if (this.actionInProgress) return;
     if (this.form.invalid) {
       this.showError('Por favor complete los campos obligatorios');
       return;
     }
+    this.actionInProgress = true;
 
     // Asegurar que clienteId sea number o null (no string)
     const raw = this.form.value;
@@ -222,6 +225,7 @@ export class KbDeploys implements OnInit {
     if (this.deployEditandoId) {
       // Actualizar
       this.kbService.updateDeploy(this.kbId, this.deployEditandoId, deployData)
+        .pipe(finalize(() => this.actionInProgress = false))
         .subscribe({
           next: () => {
             this.showSuccess('Deploy actualizado correctamente');
@@ -235,6 +239,7 @@ export class KbDeploys implements OnInit {
     } else {
       // Crear
       this.kbService.createDeploy(this.kbId, deployData)
+        .pipe(finalize(() => this.actionInProgress = false))
         .subscribe({
           next: () => {
             this.showSuccess('Deploy creado correctamente');
@@ -249,7 +254,10 @@ export class KbDeploys implements OnInit {
   }
 
   eliminarDirecto(deploy: deploy): void {
+    if (this.actionInProgress) return;
+    this.actionInProgress = true;
     this.kbService.removeDeploy(this.kbId, deploy.id)
+      .pipe(finalize(() => this.actionInProgress = false))
       .subscribe({
         next: () => {
           this.showSuccess('Deploy eliminado correctamente');

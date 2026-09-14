@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { EventoCrud } from './evento-crud';
 
 describe('EventoCrud', () => {
@@ -79,5 +79,31 @@ describe('EventoCrud', () => {
     const formData = component.toModel() as FormData;
 
     expect(formData.get('estimacion')).toBe('2.5');
+  });
+
+  it('opens selectors with focus enabled and returns focus to their opener on cancel', async () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    const onClose = new Subject<any>();
+    const selectorRef = { onClose } as any;
+    const component = Object.create(EventoCrud.prototype) as any;
+    component.dialogService = { open: jasmine.createSpy('open').and.returnValue(selectorRef) };
+    component.form = { get: () => ({ value: null }) };
+
+    component.modalSelCliente({
+      preventDefault: jasmine.createSpy('preventDefault'),
+      stopPropagation: jasmine.createSpy('stopPropagation'),
+      currentTarget: opener,
+    } as any);
+
+    expect(component.dialogService.open).toHaveBeenCalledWith(
+      jasmine.anything(),
+      jasmine.objectContaining({ focusOnShow: true }),
+    );
+    onClose.next(null);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
   });
 });

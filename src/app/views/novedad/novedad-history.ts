@@ -15,6 +15,7 @@ import { BadgeClickComponent } from '@app/components/badge-click';
 import { DrawerService } from '@core/services/drawer.service';
 import { FiltroRadioGroupComponent } from '@app/components/filtro-check';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { NovedadService } from '@core/services/novedad';
 import {
   Novedad,
@@ -47,11 +48,13 @@ import { finalize } from 'rxjs';
     ToolbarModule,
     FiltroRadioGroupComponent,
     BadgeClickComponent,
+    FiltroPresetsComponent,
   ],
   providers: [DialogService, ConfirmationService, MessageService],
   templateUrl: './novedad-history.html',
 })
 export class NovedadHistory extends TrabajarCon<Novedad> {
+  readonly pantalla = 'novedad-history';
   private novedadService = inject(NovedadService);
   private dialogService = inject(DialogService);
   private drawerService = inject(DrawerService);
@@ -216,7 +219,8 @@ export class NovedadHistory extends TrabajarCon<Novedad> {
   }
 
   eliminarDirecto(item: Novedad): void {
-    this.novedadService.archive(item.id).subscribe({
+    if (!this.beginAction()) return;
+    this.novedadService.archive(item.id).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Novedad archivada correctamente'),
       error: () => this.showError('No se pudo archivar la novedad'),
     });

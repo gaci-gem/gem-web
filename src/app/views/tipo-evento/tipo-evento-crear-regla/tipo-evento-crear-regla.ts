@@ -13,6 +13,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NgIcon } from '@ng-icons/core';
 import { PrioridadService } from '@core/services/prioridad-regla';
 import { showError, showSuccess } from '@/app/utils/message-utils';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-tipo-evento-crear-regla',
@@ -45,6 +46,9 @@ export class TipoEventoPrioridadReglas implements OnInit {
   clonedReglas: { [s: string]: PrioridadRegla } = {};
 
   tipoEventoCodigo: string = '';
+  accionEnCurso: 'guardando' | 'eliminando' | null = null;
+  reglaEnCursoId: number | null = null;
+  estadoAccion: 'guardado' | 'eliminado' | 'error' | null = null;
 
   ngOnInit(): void {
     this.tipoEventoCodigo = this.config.data.tipoEventoCodigo;
@@ -69,13 +73,22 @@ export class TipoEventoPrioridadReglas implements OnInit {
   }
 
   onRowEditSave(regla: PrioridadRegla) {
-    console.log(regla)
+    if (this.accionEnCurso) return;
     regla.tipoEventoCodigo = this.tipoEventoCodigo;
-    this.prioridadService.upsert(regla).subscribe({
+    this.accionEnCurso = 'guardando';
+    this.reglaEnCursoId = regla.id ?? null;
+    this.estadoAccion = null;
+    this.prioridadService.upsert(regla).pipe(finalize(() => {
+      this.accionEnCurso = null;
+      this.reglaEnCursoId = null;
+      this.cdr.detectChanges();
+    })).subscribe({
       next: (updatedRegla) => {
+        this.estadoAccion = 'guardado';
         this.loadReglas();
       },
       error: (error) => {
+        this.estadoAccion = 'error';
         console.error('Error al guardar la regla de prioridad:', error);
       }
     });
@@ -87,12 +100,22 @@ export class TipoEventoPrioridadReglas implements OnInit {
   }
 
   onRowDelete(regla: PrioridadRegla) {
-    this.prioridadService.delete(regla.id!).subscribe({
+    if (this.accionEnCurso || !regla.id) return;
+    this.accionEnCurso = 'eliminando';
+    this.reglaEnCursoId = regla.id;
+    this.estadoAccion = null;
+    this.prioridadService.delete(regla.id).pipe(finalize(() => {
+      this.accionEnCurso = null;
+      this.reglaEnCursoId = null;
+      this.cdr.detectChanges();
+    })).subscribe({
       next: () => {
+        this.estadoAccion = 'eliminado';
         this.reglasPrioridad = this.reglasPrioridad.filter(r => r.id !== regla.id);
         this.loadReglas();
       },
       error: (error) => {
+        this.estadoAccion = 'error';
         console.error('Error al eliminar la regla de prioridad:', error);
       }
     });

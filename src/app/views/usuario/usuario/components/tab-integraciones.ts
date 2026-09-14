@@ -103,6 +103,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
           Cómo configurar
         </button>
       </div>
+      @if (accionEnCurso) {
+        <div class="small text-muted mt-2" role="status">
+          {{ accionEnCurso === 'revocando' ? 'Revocando token...' : tokenId ? 'Regenerando token...' : 'Generando token...' }}
+        </div>
+      }
     </div>
     @if (copiaExitosa) {
       <div class="text-success small mt-2" role="status">
@@ -132,13 +137,19 @@ export class TabIntegraciones implements OnInit, OnDestroy {
   error: string | null = null;
   copiaExitosa = false;
   copyError: string | null = null;
+  accionEnCurso: 'generando' | 'regenerando' | 'revocando' | null = null;
+  private confirmacionPendiente = false;
 
   ngOnInit(): void {
     this.tokenActual = null;
     this.cargando = true;
     this.tokenService
       .list()
-      .pipe(finalize(() => this.cdf.detectChanges()))
+       .pipe(finalize(() => {
+         this.cargando = false;
+         this.accionEnCurso = null;
+         this.cdf.detectChanges();
+       }))
       .subscribe({
         next: (tokens) => {
           const activeToken = tokens.find((token) => !token.revokedAt);
@@ -161,7 +172,7 @@ export class TabIntegraciones implements OnInit, OnDestroy {
   }
 
   generarToken(): void {
-    if (this.cargando) return;
+    if (this.cargando || this.confirmacionPendiente) return;
 
     if (this.tokenId) {
       this.confirmationService.confirm({
@@ -170,8 +181,13 @@ export class TabIntegraciones implements OnInit, OnDestroy {
         icon: 'pi pi-exclamation-triangle',
         acceptLabel: 'Regenerar',
         rejectLabel: 'Cancelar',
-        accept: () => this.crearToken(),
-      });
+         accept: () => {
+           this.confirmacionPendiente = false;
+           this.crearToken();
+         },
+         reject: () => { this.confirmacionPendiente = false; },
+       });
+       this.confirmacionPendiente = true;
       return;
     }
 
@@ -179,45 +195,55 @@ export class TabIntegraciones implements OnInit, OnDestroy {
   }
 
   private crearToken(): void {
-    if (this.cargando) return;
+    if (this.cargando || this.confirmacionPendiente) return;
 
     this.cargando = true;
+    this.accionEnCurso = this.tokenId ? 'regenerando' : 'generando';
     this.error = null;
     this.copiaExitosa = false;
     this.copyError = null;
     this.tokenService
       .create({ label: 'gem-mcp', kind: 'mcp' })
-      .pipe(finalize(() => this.cdf.detectChanges()))
+           .pipe(finalize(() => {
+             this.cargando = false;
+             this.accionEnCurso = null;
+             this.cdf.detectChanges();
+           }))
       .subscribe({
         next: (response) => {
           this.tokenId = response.id;
           this.tokenActual = response.token ?? null;
           this.tokenPreview = response.tokenPreview;
-          this.cargando = false;
         },
         error: (response) => {
           this.error =
             response?.error?.message || 'No se pudo generar el token MCP.';
-          this.cargando = false;
         },
       });
   }
 
   revocarToken(): void {
-    if (!this.tokenId || this.cargando) return;
+     if (!this.tokenId || this.cargando || this.confirmacionPendiente) return;
 
     this.confirmationService.confirm({
       header: 'Eliminar token MCP',
       message: 'El token dejará de funcionar y no se podrá recuperar. ¿Querés eliminarlo?',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Eliminar',
-      rejectLabel: 'Cancelar',
-      accept: () => {
-        this.cargando = true;
+         acceptLabel: 'Eliminar',
+         rejectLabel: 'Cancelar',
+       reject: () => { this.confirmacionPendiente = false; },
+       accept: () => {
+         this.confirmacionPendiente = false;
+         this.cargando = true;
+         this.accionEnCurso = 'revocando';
         this.error = null;
         this.tokenService
           .revoke(this.tokenId!)
-          .pipe(finalize(() => this.cdf.detectChanges()))
+           .pipe(finalize(() => {
+             this.cargando = false;
+             this.accionEnCurso = null;
+             this.cdf.detectChanges();
+           }))
           .subscribe({
             next: () => {
               this.tokenId = null;
@@ -228,16 +254,15 @@ export class TabIntegraciones implements OnInit, OnDestroy {
                 summary: 'Token revocado',
                 detail: 'El token MCP ya no puede utilizarse.',
               });
-              this.cargando = false;
             },
             error: (response) => {
               this.error =
                 response?.error?.message || 'No se pudo revocar el token MCP.';
-              this.cargando = false;
             },
           });
       },
     });
+    this.confirmacionPendiente = true;
   }
 
   async copiarToken(): Promise<void> {

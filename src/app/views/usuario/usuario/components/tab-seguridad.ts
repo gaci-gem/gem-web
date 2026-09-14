@@ -5,6 +5,7 @@ import { UsuarioService } from "@core/services/usuario";
 import { NgIcon } from "@ng-icons/core";
 import { ConfirmationService, MessageService } from "primeng/api";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-tab-seguridad',
@@ -31,6 +32,7 @@ import { ConfirmDialogModule } from "primeng/confirmdialog";
                             class="btn btn-light btn-icon"
                             type="button"
                             (click)="togglePassword('actual')"
+                            [disabled]="cambiandoPassword"
                         >
                             <ng-icon
                                 name="tablerEye"
@@ -63,6 +65,7 @@ import { ConfirmDialogModule } from "primeng/confirmdialog";
                             class="btn btn-light btn-icon"
                             type="button"
                             (click)="togglePassword('nueva')"
+                            [disabled]="cambiandoPassword"
                         >
                             <ng-icon
                                 name="tablerEye"
@@ -95,6 +98,7 @@ import { ConfirmDialogModule } from "primeng/confirmdialog";
                             class="btn btn-light btn-icon"
                             type="button"
                             (click)="togglePassword('confirm')"
+                            [disabled]="cambiandoPassword"
                         >
                             <ng-icon
                                 name="tablerEye"
@@ -113,9 +117,10 @@ import { ConfirmDialogModule } from "primeng/confirmdialog";
                     }
                 </div>
             </div>
-            <button class="btn btn-primary mt-3" type="submit" form="formPassword">
-                Cambiar contraseña
+            <button class="btn btn-primary mt-3" type="submit" form="formPassword" [disabled]="cambiandoPassword" [attr.aria-busy]="cambiandoPassword">
+                {{ cambiandoPassword ? 'Cambiando...' : 'Cambiar contraseña' }}
             </button>
+            @if (cambiandoPassword) { <div class="small text-muted mt-2" role="status">Cambiando contraseña...</div> }
         </form>
     `,
 })
@@ -135,6 +140,8 @@ export class TabSeguridad implements OnInit {
     showPasswordActual:boolean = false;
     showPasswordNueva:boolean = false;
     showPasswordConfirm:boolean = false;
+    cambiandoPassword = false;
+    private confirmacionPendiente = false;
 
     ngOnInit(): void {
         
@@ -151,6 +158,7 @@ export class TabSeguridad implements OnInit {
     }
 
     cambiarPassword() {
+        if (this.cambiandoPassword || this.confirmacionPendiente) return;
         if (this.formPassword.invalid) {
             this.formPassword.markAllAsTouched();
             return;
@@ -167,17 +175,23 @@ export class TabSeguridad implements OnInit {
             header: 'Confirmar cambio de contraseña',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.usuarioService.cambiarPassword(this.usuario.id ?? '', actual, nueva).subscribe({
+                this.confirmacionPendiente = false;
+                this.cambiandoPassword = true;
+                this.usuarioService.cambiarPassword(this.usuario.id ?? '', actual, nueva).pipe(finalize(() => {
+                    this.cambiandoPassword = false;
+                })).subscribe({
                     next: () => {
                         this.showSuccess('Contraseña cambiada', 'La contraseña se cambió correctamente');
                         this.formPassword.reset();
                     },
                     error: (err) => {
-                        this.showError('Error', err.error.message);
+                        this.showError('Error', err?.error?.message || 'No se pudo cambiar la contraseña');
                     }
                 });
-            }
+            },
+            reject: () => { this.confirmacionPendiente = false; }
         });
+        this.confirmacionPendiente = true;
     }
 
     

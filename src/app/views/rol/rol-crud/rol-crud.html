@@ -107,13 +107,10 @@
 
     <div class="row mt-3">
       <div class="col-12 mb-5">
-        <button class="btn btn-primary" type="submit" [disabled]="loading">
-          @if (modo === 'A') {
-            Crear
-          } @else if (modo === 'M') {
-            Modificar
-          }
+        <button class="btn btn-primary" type="submit" [disabled]="loading || submitting" [attr.aria-busy]="submitting">
+          @if (submitting) { Guardando... } @else if (modo === 'A') { Crear } @else if (modo === 'M') { Modificar }
         </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="cancel()">Cancelar</button>
       </div>
     </div>
   </form>

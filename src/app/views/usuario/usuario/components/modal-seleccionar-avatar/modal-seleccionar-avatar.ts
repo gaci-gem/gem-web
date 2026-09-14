@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { AVATARES_DISPONIBLES } from '@/app/constants/avatares-disponibles';
+import { AVATAR_OPTIONS, AVATAR_STRATEGIES, AvatarStrategy, getAvatarImage, getAvatarStrategy } from '@/app/constants/avatares-disponibles';
+import { Usuario } from '@core/interfaces/usuario';
 
 @Component({
     selector: 'app-modal-seleccionar-avatar',
@@ -16,18 +17,18 @@ import { AVATARES_DISPONIBLES } from '@/app/constants/avatares-disponibles';
             header="Seleccionar foto de perfil"
             (onHide)="onClose()">
             <div class="row g-3">
-                @for (imagen of imagenesDisponibles; track imagen) {
+                @for (opcion of opciones; track opcion.strategy) {
                     <div class="col-3">
                         <div class="text-center">
                             <img 
-                                [src]="'assets/images/users/' + imagen" 
+                                [src]="getPreview(opcion.strategy)"
                                 class="rounded-circle cursor-pointer border"
-                                [class.border-primary]="imagenSeleccionada === imagen"
-                                [class.border-3]="imagenSeleccionada === imagen"
-                                width="100" 
-                                height="100"
-                                (click)="seleccionarImagen(imagen)"
-                                [alt]="imagen">
+                                [class.border-primary]="imagenSeleccionada === opcion.strategy"
+                                [class.border-3]="imagenSeleccionada === opcion.strategy"
+                                width="120"
+                                height="120"
+                                (click)="seleccionarImagen(opcion.strategy)"
+                                [alt]="opcion.label">
                         </div>
                     </div>
                 }
@@ -58,21 +59,28 @@ import { AVATARES_DISPONIBLES } from '@/app/constants/avatares-disponibles';
         }
     `]
 })
-export class ModalSeleccionarAvatarComponent {
+export class ModalSeleccionarAvatarComponent implements OnChanges {
     @Input() visible: boolean = false;
-    @Input() imagenActual: string = 'User-1.png';
+    @Input() imagenActual: string = AVATAR_STRATEGIES.ID;
+    @Input() usuario!: Usuario;
     @Output() visibleChange = new EventEmitter<boolean>();
-    @Output() imagenCambiada = new EventEmitter<string>();
+    @Output() imagenCambiada = new EventEmitter<AvatarStrategy>();
 
-    imagenSeleccionada: string = '';
-    imagenesDisponibles: string[] = AVATARES_DISPONIBLES;
+    imagenSeleccionada: AvatarStrategy = AVATAR_STRATEGIES.ID;
+    opciones = AVATAR_OPTIONS;
 
-    ngOnInit() {
-        this.imagenSeleccionada = this.imagenActual;
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['imagenActual'] || changes['visible']) {
+            this.imagenSeleccionada = getAvatarStrategy(this.imagenActual);
+        }
     }
 
-    seleccionarImagen(imagen: string) {
-        this.imagenSeleccionada = imagen;
+    getPreview(strategy: AvatarStrategy): string {
+        return getAvatarImage(strategy, this.usuario ?? {});
+    }
+
+    seleccionarImagen(strategy: AvatarStrategy): void {
+        this.imagenSeleccionada = strategy;
     }
 
     onGuardar() {

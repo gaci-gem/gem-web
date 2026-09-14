@@ -44,7 +44,7 @@
                                     <i class="pi pi-search"></i>
                                     <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
                                 </span>
-                                <button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff"/></button>
+                                 <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                             </div>
                         </ng-template>
                         <ng-template pTemplate="header">
@@ -90,7 +90,24 @@
                                         <button class="btn btn-ghost-primary" aria-label="Administrar credencial del GEM Clientes" title="Administrar credencial del GEM Clientes" (click)="administrarCredencial(cliente)"><ng-icon name="lucideKeyRound"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
-                                        <button class="btn btn-ghost-danger" (click)="delete(cliente)"><ng-icon name="lucideTrash2"/></button>
+                                         <button class="btn btn-ghost-danger" (click)="delete(cliente)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">
+                                             @if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }
+                                         </button>
+                                    }
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    @if (isFiltered(dt)) {
+                                        <div>No se encontraron clientes con los filtros actuales.</div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="clear(dt)">Limpiar filtros</button>
+                                    } @else {
+                                        <div>No hay clientes cargados todavía.</div>
+                                        @if (can(PermisoAccion.CREAR)) {
+                                            <button type="button" class="btn btn-primary btn-sm mt-2" (click)="mostrarModalCrud(null, 'A')">Nuevo cliente</button>
+                                        }
                                     }
                                 </td>
                             </tr>

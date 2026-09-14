@@ -1,15 +1,21 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AvatarStrategy, AvatarUser } from '@/app/constants/avatares-disponibles';
+
+export interface AvatarChange {
+  strategy: AvatarStrategy;
+  user: AvatarUser;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AvatarSyncService {
-  private avatarCambiadoSubject = new BehaviorSubject<string | null>(null);
+  private avatarCambiadoSubject = new BehaviorSubject<AvatarChange | null>(null);
   
-  avatarCambiado$: Observable<string | null> = this.avatarCambiadoSubject.asObservable();
+  avatarCambiado$: Observable<AvatarChange | null> = this.avatarCambiadoSubject.asObservable();
 
-  notificarCambioAvatar(nombreImagen: string): void {
-    this.avatarCambiadoSubject.next(nombreImagen);
+  notificarCambioAvatar(strategy: AvatarStrategy, user: AvatarUser): void {
+    this.avatarCambiadoSubject.next({ strategy, user });
   }
 }

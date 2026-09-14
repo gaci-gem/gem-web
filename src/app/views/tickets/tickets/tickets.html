@@ -14,7 +14,8 @@
             </ng-template><ng-template pTemplate="right"><button class="btn btn-ghost-gray"
                 (click)="search=''; estado=''; loadItems()"><ng-icon
                   name="tablerFilterOff" /></button></ng-template></p-toolbar>
-          <p-table #dt [value]="tickets" [rows]="10" [paginator]="true" [rowHover]="true" dataKey="id"
+           <p-table #dt [value]="tickets" [rows]="10" [paginator]="true" [rowHover]="true" dataKey="id"
+             appKeyboardListNavigation [keyboardListItems]="tickets" (keyboardRowActivate)="open($event)"
             [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']"
             size="small" [scrollable]="true">
             <ng-template pTemplate="caption">

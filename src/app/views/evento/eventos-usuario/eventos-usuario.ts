@@ -5,6 +5,7 @@ import {
   ComponentRef,
   effect,
   inject,
+  NgZone,
   ViewChild,
   ViewContainerRef,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import { EventoCronometroComponent } from '@app/components/evento-cronometro';
 import { PrioridadIconComponent } from '@app/components/priority-icon';
 import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { modalConfig } from '@/app/types/modals';
 import { parseIsoAsLocal } from '@/app/utils/datetime-utils';
@@ -27,6 +29,8 @@ import {
 } from '@core/interfaces/evento';
 import { PermisoClave } from '@core/interfaces/rol';
 import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
+import { EventoFilterState, FiltroState } from '@core/interfaces/filtro-preset';
+import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { DrawerService } from '@core/services/drawer.service';
 import { EventoAccionesService } from '@core/services/evento-acciones';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
@@ -50,7 +54,8 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { EventoCrud } from '../evento-crud/evento-crud';
 import { ModalSel } from './components/modal-sel/modal-sel';
 import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propio';
-import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
+import { ContextMenuModule } from 'primeng/contextmenu';
+import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation/keyboard-list-navigation';
 
 @Component({
   selector: 'app-eventos-usuario',
@@ -71,13 +76,16 @@ import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
     DatePickerModule,
     FormsModule,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
     ContextMenuModule,
+    KeyboardListNavigation,
   ],
   providers: [DialogService, MessageService, ConfirmationService],
   templateUrl: './eventos-usuario.html',
   styleUrl: './eventos-usuario.scss',
 })
 export class EventosUsuario extends TrabajarCon<Evento> {
+  readonly pantalla = 'eventos-usuario';
   private eventoService = inject(EventoService);
   private eventoAccionesService = inject(EventoAccionesService);
   private dialogService = inject(DialogService);
@@ -86,9 +94,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   private eventoTrabajoService = inject(EventoTrabajoService);
   private drawerService = inject(DrawerService);
   private sseService = inject(SseService);
+  private zone = inject(NgZone);
   private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
   @ViewChild('dt') table!: Table;
-  @ViewChild('cm') cm!: ContextMenu;
   private selecionarEventoPropio!: DynamicDialogRef | null;
 
   usuarioActivo: UsuarioLogeado | null = this.userStorageService.getUsuario();
@@ -96,7 +104,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   eventos: EventoCompleto[] = [];
   selectedEventos: EventoCompleto[] = [];
 
-  filtroFecha: Date[] | undefined;
+  filtroFecha: Date[] | null = null;
+  globalFilter = '';
 
   selectedEvento: EventoCompleto | null = null;
   menuItems: MenuItem[] = [];
@@ -125,11 +134,18 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   override ngOnInit(): void {
-    setTimeout(() => {
+    const restored = this.restoreFilterSession() as EventoFilterState | null;
+    this.filtroActivo = restored?.filtroActivo as FiltroActivo ?? this.filtroActivo;
+    if (restored && Object.prototype.hasOwnProperty.call(restored, 'fecha')) {
+      this.filtroFecha = this.normalizeDateRange(restored.fecha);
+    } else if (!restored) {
       this.inicializarFiltroFecha();
-      this.verificarEventoEnTrabajo();
-      this.loadItems();
-    });
+    }
+    this.globalFilter = restored?.globalFilter ?? '';
+    this.searchValue.set(this.globalFilter);
+    this.loadPresets();
+    this.verificarEventoEnTrabajo();
+    this.loadItems();
 
     // Suscribirse a cambios en el evento en trabajo
     this.eventoTrabajoService.eventoEnTrabajo$.subscribe((evento) => {
@@ -143,20 +159,23 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     });
   }
 
-  onContextMenu(event: MouseEvent, evento: EventoCompleto): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.selectedEvento = evento;
-    this.buildContextMenu(evento);
-    setTimeout(() => this.cm.show(event));
+  ngAfterViewInit(): void {
+    const state = this.restoreFilterSession();
+    if (state) this.restoreTableState(state, this.table);
   }
 
-  buildContextMenu(e: EventoCompleto): void {
+  buildContextMenu(e: EventoCompleto | null): void {
+    this.selectedEvento = e;
+    if (!e) {
+      this.menuItems.splice(0, this.menuItems.length);
+      return;
+    }
+
     const items: MenuItem[] = [
       {
         label: 'Ver Detalle',
         icon: 'pi pi-eye',
-        command: () => this.abrirEventoDrawer(e),
+        command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.abrirEventoDrawer(evento)),
       },
     ];
 
@@ -168,13 +187,13 @@ export class EventosUsuario extends TrabajarCon<Evento> {
           accionItems.push({
             label: 'Autorizar',
             icon: 'pi pi-check-circle',
-            command: () => this.mostrarModalCrud(e, 'AUT'),
+            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'AUT')),
           });
         } else {
           accionItems.push({
             label: 'Avanzar',
             icon: 'pi pi-forward',
-            command: () => this.mostrarModalCrud(e, 'AVZ'),
+            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'AVZ')),
           });
         }
       }
@@ -184,13 +203,13 @@ export class EventosUsuario extends TrabajarCon<Evento> {
           accionItems.push({
             label: 'Rechazar',
             icon: 'pi pi-ban',
-            command: () => this.mostrarModalCrud(e, 'REC'),
+            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'REC')),
           });
         } else {
           accionItems.push({
             label: 'Retroceder',
             icon: 'pi pi-backward',
-            command: () => this.mostrarModalCrud(e, 'RTO'),
+            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'RTO')),
           });
         }
       }
@@ -198,7 +217,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       accionItems.push({
         label: 'Reasignar',
         icon: 'pi pi-arrow-right-arrow-left',
-        command: () => this.mostrarModalCrud(e, 'RAS'),
+        command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'RAS')),
       });
 
       items.push({ separator: true }, ...accionItems);
@@ -210,12 +229,16 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         {
           label: 'Tomar Evento',
           icon: 'pi pi-play',
-          command: () => this.tomarEvento(e),
+          command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.tomarEvento(evento)),
         },
       );
     }
 
     this.menuItems.splice(0, this.menuItems.length, ...items);
+  }
+
+  private ejecutarSobreEventoSeleccionado(action: (evento: EventoCompleto) => void): void {
+    if (this.selectedEvento) action(this.selectedEvento);
   }
 
   ngOnDestroy(): void {
@@ -240,6 +263,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   onFechaChange(): void {
+    this.filtroFecha = this.normalizeDateRange(this.filtroFecha);
     if (
       this.filtroFecha &&
       this.filtroFecha.length === 2 &&
@@ -248,23 +272,70 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     ) {
       this.loadItems();
     }
+    this.saveState();
   }
 
   onClearFecha(): void {
-    this.filtroFecha = undefined;
+    this.filtroFecha = null;
+    this.saveState();
     this.loadItems();
+  }
+
+  onTableFilter(): void { this.saveState(); }
+  onTableSort(): void { this.saveState(); }
+  onTablePage(): void { this.saveState(); }
+
+  protected override restoreFilterState(state: FiltroState): void {
+    const eventState = state as EventoFilterState;
+    if (eventState.filtroActivo) this.filtroActivo = eventState.filtroActivo as FiltroActivo;
+    this.filtroFecha = this.normalizeDateRange(eventState.fecha);
+    this.globalFilter = eventState.globalFilter ?? '';
+    this.searchValue.set(this.globalFilter);
+    this.restoreTableState(eventState, this.table);
+  }
+
+  protected override captureFilterState(): EventoFilterState {
+    return {
+      filtroActivo: this.filtroActivo,
+      fecha: this.filtroFecha
+        ? [this.formatDateKey(this.filtroFecha[0]), this.formatDateKey(this.filtroFecha[1])]
+        : null,
+      ...this.captureTableState(this.table),
+      globalFilter: this.globalFilter,
+    };
+  }
+
+  saveState(): void { this.saveFilterSession(); }
+
+  protected override clearFilterState(): void {
+    super.clearFilterState();
+    this.filtroFecha = null;
+    this.globalFilter = '';
+  }
+
+  private formatDateKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  private parseDate(value: unknown): Date | null {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null;
+  }
+
+  private normalizeDateRange(value: unknown): Date[] | null {
+    if (!Array.isArray(value) || value.length !== 2) return null;
+    const dates = value.map(item => item instanceof Date ? item : this.parseDate(item));
+    return dates.every((date): date is Date => date instanceof Date && !Number.isNaN(date.getTime())) ? dates : null;
   }
 
   protected loadItems(): void {
     this.loadingService.show();
 
     let params: any = {};
-    if (
-      this.filtroFecha &&
-      this.filtroFecha.length === 2 &&
-      this.filtroFecha[0] &&
-      this.filtroFecha[1]
-    ) {
+    this.filtroFecha = this.normalizeDateRange(this.filtroFecha);
+    if (this.filtroFecha) {
       params.desde = this.formatearFecha(this.filtroFecha[0]);
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
@@ -274,32 +345,30 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       .pipe(
         finalize(() => {
           this.loadingService.hide();
-          this.cdr.detectChanges();
         }),
       )
       .subscribe({
         next: (res) => {
-          console.log(res);
-          setTimeout(() => {
-            this.eventos = res.map((e) => ({
-              ...e,
-              evento: formatEventoNumero(e.tipo.codigo, e.numero),
-              fechaInicio: (e as any).fechaInicio
-                ? parseIsoAsLocal((e as any).fechaInicio)
-                : null,
-              fechaFinReal: (e as any).fechaFinReal
-                ? parseIsoAsLocal((e as any).fechaFinReal)
-                : null,
-              fechaFinEst: (e as any).fechaFinEst
-                ? parseIsoAsLocal((e as any).fechaFinEst)
-                : null,
-              fechaEntrega: (e as any).fechaEntrega
-                ? parseIsoAsLocal((e as any).fechaEntrega)
-                : null,
-            })) as unknown as EventoCompleto[];
-            if (this.table) {
-              this.table.reset();
-            }
+          const eventos = res.map((e) => ({
+            ...e,
+            evento: formatEventoNumero(e.tipo.codigo, e.numero),
+            fechaInicio: (e as any).fechaInicio
+              ? parseIsoAsLocal((e as any).fechaInicio)
+              : null,
+            fechaFinReal: (e as any).fechaFinReal
+              ? parseIsoAsLocal((e as any).fechaFinReal)
+              : null,
+            fechaFinEst: (e as any).fechaFinEst
+              ? parseIsoAsLocal((e as any).fechaFinEst)
+              : null,
+            fechaEntrega: (e as any).fechaEntrega
+              ? parseIsoAsLocal((e as any).fechaEntrega)
+              : null,
+          })) as unknown as EventoCompleto[];
+
+          this.zone.run(() => {
+            this.eventos = eventos;
+            this.cdr.markForCheck();
           });
         },
         error: () => {
@@ -365,8 +434,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   alta(evento: Evento): void {
+    if (!this.beginAction()) return;
     delete evento.id;
-    this.eventoService.create(evento).subscribe({
+    this.eventoService.create(evento).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Evento creado correctamente.'),
       error: (err) =>
         this.showError(err.error.message || 'Error al crear el evento.'),
@@ -374,8 +444,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   editar(evento: Evento): void {
+    if (!this.beginAction()) return;
     let eventoCodigo = evento.id ?? '';
-    this.eventoService.update(eventoCodigo, evento).subscribe({
+    this.eventoService.update(eventoCodigo, evento).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Evento actualizado correctamente.'),
       error: (err) =>
         this.showError(err.error.message || 'Error al modificar el evento.'),
@@ -383,8 +454,9 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   eliminarDirecto(evento: Evento): void {
+    if (!this.beginAction()) return;
     let eventoCodigo = evento.id ?? '';
-    this.eventoService.delete(eventoCodigo).subscribe({
+    this.eventoService.delete(eventoCodigo).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Evento eliminado correctamente.'),
       error: (err) =>
         this.showError(err.error.message || 'Error al eliminar el Evento.'),
@@ -445,6 +517,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       case 'RTO':
         header = 'Retroceder Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
+        data.requisitos = evento?.etapaActualData?.requisitos ?? [];
         data.proximaEtapa = evento?.etapaSiguiente?.nombre ?? '';
         data.rol = evento?.etapaAnterior?.rolPreferido ?? '';
         break;
@@ -463,6 +536,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       case 'REC':
         header = 'Rechazar Evento';
         data.etapaActual = evento?.etapaActualData?.nombre ?? '';
+        data.requisitos = evento?.etapaActualData?.requisitos ?? [];
         data.proximaEtapa = evento?.etapaAnterior?.nombre ?? '';
         // data.rol = evento?.etapaActualData?.rolPreferido ?? '';
         break;

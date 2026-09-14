@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core'
+import { ChangeDetectorRef, Component, ViewChild } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { NgIcon } from '@ng-icons/core'
 import { LayoutStoreService } from '@core/services/layout-store.service'
@@ -12,6 +12,8 @@ import { ThemeDropdown } from '@layouts/components/topbar/components/theme-dropd
 import { AppLogo } from "@app/components/app-logo";
 import { appLogo } from '@/app/constants'
 import { UserNotes } from '../user-notes/user-notes'
+import { CommandPalette } from '@app/components/command-palette/command-palette'
+import { ShortcutTable } from '@layouts/components/shortcut-table/shortcut-table'
 
 @Component({
   selector: 'app-topbar',
@@ -23,12 +25,16 @@ import { UserNotes } from '../user-notes/user-notes'
     NotificationDropdown,
     AppLogo,
     UserNotes,
+    CommandPalette,
+    ShortcutTable,
     // ThemeDropdown,
   ],
   templateUrl: './topbar.html',
   standalone: true
 })
 export class Topbar {
+  @ViewChild(CommandPalette) commandPalette!: CommandPalette;
+  @ViewChild(ShortcutTable) shortcutTable!: ShortcutTable;
   constructor(
     public layout: LayoutStoreService,
     private drawerService: DrawerService,

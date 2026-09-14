@@ -185,6 +185,8 @@ export interface Requisito {
   codigo: string;
   descripcion: string;
   obligatorio?: boolean;
+  cumplido?: boolean;
+  valor?: any;
 }
 
 export interface EventoEtapa {

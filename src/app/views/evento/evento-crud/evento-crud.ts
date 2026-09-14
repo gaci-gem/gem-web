@@ -137,11 +137,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
   modalSelModulo(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    const opener = event.currentTarget as HTMLElement | null;
     
     this.selModulo = this.dialogService.open(ModuloSelect, {
       ...modalConfig,
       header: "Seleccionar Modulo",
-      focusOnShow: false
     });
 
     if (!this.selModulo) return;
@@ -152,14 +152,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
           modulo: result
         });
       }
-      // Prevenir el comportamiento por defecto y mantener foco
-      setTimeout(() => {
-        const moduloInput = document.getElementById('modulo') as HTMLInputElement;
-        if (moduloInput) {
-          moduloInput.focus();
-          moduloInput.select();
-        }
-      }, 200);
+      this.restoreSelectorFocus(opener);
     });
   }
 
@@ -205,11 +198,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
   modalSelCliente(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    const opener = event.currentTarget as HTMLElement | null;
     
     this.selCliente = this.dialogService.open(ClienteSelect, {
       ...modalConfig,
       header: "Seleccionar Cliente",
-      focusOnShow: false
     });
 
     if (!this.selCliente) return;
@@ -220,14 +213,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
           cliente: result
         });
       }
-      // Prevenir el comportamiento por defecto y mantener foco
-      setTimeout(() => {
-        const clienteInput = document.getElementById('cliente') as HTMLInputElement;
-        if (clienteInput) {
-          clienteInput.focus();
-          clienteInput.select();
-        }
-      }, 200);
+      this.restoreSelectorFocus(opener);
     });
   }
 
@@ -241,12 +227,12 @@ export class EventoCrud extends CrudFormModal<Evento> {
   modalSelProyecto(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    const opener = event.currentTarget as HTMLElement | null;
     
     const clienteId = this.form.get('cliente')?.value?.id ?? null;
     this.selProyecto = this.dialogService.open(ProyectoSelect, {
       ...modalConfig,
       header: "Seleccionar Proyecto",
-      focusOnShow: false,
       data: {
         clienteId: clienteId
       }
@@ -260,14 +246,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
           proyecto: result
         });
       }
-      // Prevenir el comportamiento por defecto y mantener foco
-      setTimeout(() => {
-        const proyectoInput = document.getElementById('proyecto') as HTMLInputElement;
-        if (proyectoInput) {
-          proyectoInput.focus();
-          proyectoInput.select();
-        }
-      }, 200);
+      this.restoreSelectorFocus(opener);
     });
   }
 
@@ -281,11 +260,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
   modalSelProducto(event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    const opener = event.currentTarget as HTMLElement | null;
     
     this.selProducto = this.dialogService.open(ProductoSelect, {
       ...modalConfig,
       header: "Seleccionar Producto",
-      focusOnShow: false
     });
 
     if (!this.selProducto) return;
@@ -296,15 +275,12 @@ export class EventoCrud extends CrudFormModal<Evento> {
           producto: result
         });
       }
-      // Prevenir el comportamiento por defecto y mantener foco
-      setTimeout(() => {
-        const productoInput = document.getElementById('producto') as HTMLInputElement;
-        if (productoInput) {
-          productoInput.focus();
-          productoInput.select();
-        }
-      }, 200);
+      this.restoreSelectorFocus(opener);
     });
+  }
+
+  private restoreSelectorFocus(opener: HTMLElement | null): void {
+    setTimeout(() => opener?.focus());
   }
 
   onFilesChange(files: File[]) {

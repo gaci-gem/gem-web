@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Etapa } from '@core/interfaces/etapa';
 import { EtapaService } from '@core/services/etapa';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -36,6 +37,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     BooleanLabelPipe,
     FiltroRadioGroupComponent,
     ControlTrabajarCon,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,
@@ -46,6 +48,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   styleUrl: './etapas.scss'
 })
 export class Etapas extends TrabajarCon<Etapa> {
+  readonly pantalla = 'etapas';
   private etapaService = inject(EtapaService);
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
@@ -81,28 +84,31 @@ export class Etapas extends TrabajarCon<Etapa> {
   }
 
   alta(etapa: Etapa): void {
+    if (!this.beginAction()) return;
     delete etapa.id;
     etapa.requisitos?.map(req => {
       delete req.id
       return req;
     });
-    this.etapaService.create(etapa).subscribe({
+    this.etapaService.create(etapa).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Etapa creada correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al crear la etapa.')
     });
   }
 
   editar(etapa: Etapa): void {
+    if (!this.beginAction()) return;
     let etapaId = etapa.id ?? '';
-    this.etapaService.update(etapaId, etapa).subscribe({
+    this.etapaService.update(etapaId, etapa).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Etapa actualizada correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al modificar la etapa.')
     });
   }
 
   eliminarDirecto(etapa: Etapa): void {
+    if (!this.beginAction()) return;
     let etapaId = etapa.id ?? '';
-    this.etapaService.delete(etapaId).subscribe({
+    this.etapaService.delete(etapaId).pipe(finalize(() => this.actionInProgress = false)).subscribe({
       next: () => this.afterChange('Etapa eliminada correctamente.'),
       error: (err) => this.showError(err.error.message ||'Error al eliminar la Etapa.')
     });

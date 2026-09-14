@@ -21,6 +21,20 @@
 
       <!-- <app-theme-dropdown /> -->
 
+      <div class="topbar-item">
+        <button class="topbar-link" type="button" aria-label="Abrir ayuda de atajos de teclado" title="Abrir ayuda de atajos de teclado (Alt+I)" (click)="shortcutTable.mostarInfoShortcut()">
+          <ng-icon name="lucideKeyboard" class="fs-xxl" />
+        </button>
+      </div>
+
+      <div class="topbar-item">
+        <button class="topbar-link" type="button" aria-label="Abrir paleta de comandos" title="Abrir paleta de comandos (Alt+K)" (click)="commandPalette.open()">
+          <ng-icon name="lucideCommand" class="fs-xxl" />
+        </button>
+      </div>
+
+      <span class="topbar-divider" aria-hidden="true"></span>
+
       <app-notification-dropdown />
 
       <app-theme-toggler class="d-none d-sm-flex" />
@@ -41,3 +55,5 @@
 <!-- Drawer para mostrar el detalle del evento -->
 <app-user-notes [visible]="showUserNotes" [targetId]="notaSeleccionadaId" (closed)="cerrarUserNotes()">
 </app-user-notes>
+<app-command-palette />
+<app-shortcut-table />

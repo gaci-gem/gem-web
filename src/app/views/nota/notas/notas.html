@@ -8,7 +8,7 @@
 
   <div class="notas-lista">
     @for (nota of notas; track $index) {
-    <div class="nota-item" [attr.id]="'nota-item-' + nota.id">
+     <div class="nota-item" [attr.id]="'nota-item-' + nota.id">
       <div class="nota-contenido">
         <div class="d-flex align-items-center gap-2 mb-2">
           <h3 class="nota-titulo mb-0" (click)="abrirNota(nota)">{{ nota.titulo }}</h3>
@@ -29,12 +29,20 @@
           <ng-icon name="lucidePencil" />
         </button>
         @if (!esCompartida(nota)) {
-        <button class="btn-accion" title="Eliminar" (click)="eliminarNota(nota)">
-          <ng-icon name="lucideTrash2" />
-        </button>
+         <button class="btn-accion" title="Eliminar" (click)="eliminarNota(nota)" [disabled]="eliminandoNotaId !== null" [attr.aria-busy]="eliminandoNotaId === nota.id">
+           <ng-icon name="lucideTrash2" />
+         </button>
+         @if (eliminandoNotaId === nota.id) { <span class="small text-muted" role="status">Eliminando...</span> }
+         @if (errorEliminacionId === nota.id) { <span class="small text-danger" role="alert">No se pudo eliminar.</span> }
         }
       </div>
-    </div>
-    }
-  </div>
+     </div>
+     }
+     @empty {
+       <div class="text-center py-4">
+         <div>No hay notas cargadas todavía.</div>
+         <button type="button" class="btn btn-primary btn-sm mt-2" (click)="nuevaNota()">Nueva nota</button>
+       </div>
+     }
+   </div>
 </div>

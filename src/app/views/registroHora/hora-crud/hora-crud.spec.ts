@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { HoraCrud } from './hora-crud';
 import { EventoService } from '@core/services/evento';
 import { RegistroHoraService } from '@core/services/registro-hora';
@@ -200,5 +200,42 @@ describe('HoraCrud', () => {
     component.horasFormArray.updateValueAndValidity();
 
     expect(component.horasFormArray.errors?.['overlap']).toBeTrue();
+  });
+
+  it('focuses the new interval event button after adding an interval', async () => {
+    mobileSignal.set(true);
+    fixture.detectChanges();
+    (component as any).buildForm();
+    fixture.detectChanges();
+
+    component.addHora();
+    fixture.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(document.activeElement?.id).toBe('hora-evento-search-0');
+  });
+
+  it('returns focus to the event selector opener after selection or cancellation', async () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    const onClose = new Subject<any>();
+    const selectorRef = { onClose } as any;
+    const open = jasmine.createSpy('open').and.returnValue(selectorRef);
+    (component as any).dialogService = { open };
+    (component as any).buildForm();
+    component.addHora();
+    const hora = component.horasFormArray.at(0);
+
+    component.modalSelEvento(hora, {
+      preventDefault: jasmine.createSpy('preventDefault'),
+      stopPropagation: jasmine.createSpy('stopPropagation'),
+      currentTarget: opener,
+    } as any);
+    expect(open).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ closeOnEscape: false }));
+    onClose.next(null);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
   });
 });

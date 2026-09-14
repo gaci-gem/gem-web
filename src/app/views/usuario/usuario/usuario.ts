@@ -22,7 +22,8 @@ import { TabIntegraciones } from './components/tab-integraciones';
 import { AvatarEditableComponent } from '@app/components/avatar-editable';
 import { ModalSeleccionarAvatarComponent } from './components/modal-seleccionar-avatar/modal-seleccionar-avatar';
 import { UsuarioAdicionalClave } from '@/app/constants/adicionales_usuario';
-import { AVATAR_POR_DEFECTO, getAvatarPath } from '@/app/constants/avatares-disponibles';
+import { AVATAR_POR_DEFECTO, getAvatarImage, getAvatarStrategy } from '@/app/constants/avatares-disponibles';
+import { AvatarStrategy } from '@/app/constants/avatares-disponibles';
 import { AvatarSyncService } from '@core/services/avatar-sync.service';
 import { getDiscordUserUrl } from '@/app/constants/social-urls';
 
@@ -124,6 +125,13 @@ export class Usuario implements OnInit {
         this.rolesUsuario = usuario.roles ? usuario.roles.map((rol:any) => rol.rolCodigo) : [];
         this.esPropioPerfil = this.userStorageService.getUsuario()?.id === usuario.id;
 
+        if (this.esPropioPerfil) {
+            this.avatarSyncService.notificarCambioAvatar(
+                getAvatarStrategy(this.getNombreFotoPerfil()),
+                usuario,
+            );
+        }
+
         this.cdr.detectChanges();
     }
 
@@ -146,21 +154,19 @@ export class Usuario implements OnInit {
     }
 
     getFotoPerfil(): string {
-        if (!this.usuario?.adicionales) return getAvatarPath(AVATAR_POR_DEFECTO);
-        const adicionalFoto = this.usuario.adicionales.find(
+        if (!this.usuario) return getAvatarImage(AVATAR_POR_DEFECTO, {});
+        const adicionalFoto = this.usuario.adicionales?.find(
             adicional => adicional.clave === UsuarioAdicionalClave.FOTO_PERFIL
         );
-        return adicionalFoto 
-            ? getAvatarPath(adicionalFoto.valor)
-            : getAvatarPath(AVATAR_POR_DEFECTO);
+        return getAvatarImage(adicionalFoto?.valor, this.usuario);
     }
 
     getNombreFotoPerfil(): string {
         if (!this.usuario?.adicionales) return AVATAR_POR_DEFECTO;
-        const adicionalFoto = this.usuario.adicionales.find(
+        const adicionalFoto = this.usuario.adicionales?.find(
             adicional => adicional.clave === UsuarioAdicionalClave.FOTO_PERFIL
         );
-        return adicionalFoto ? adicionalFoto.valor : AVATAR_POR_DEFECTO;
+        return getAvatarStrategy(adicionalFoto?.valor);
     }
 
     abrirModalAvatar(): void {
@@ -169,11 +175,11 @@ export class Usuario implements OnInit {
         }
     }
 
-    cambiarFotoPerfil(nombreImagen: string): void {
-        this.usuarioService.actualizarAdicional(this.usuario.id!, UsuarioAdicionalClave.FOTO_PERFIL, nombreImagen).subscribe({
+    cambiarFotoPerfil(strategy: AvatarStrategy): void {
+        this.usuarioService.actualizarAdicional(this.usuario.id!, UsuarioAdicionalClave.FOTO_PERFIL, strategy).subscribe({
             next: () => {
                 this.showSuccess('Foto actualizada', 'La foto de perfil se actualizó correctamente');
-                this.avatarSyncService.notificarCambioAvatar(nombreImagen);
+                this.avatarSyncService.notificarCambioAvatar(strategy, this.usuario);
                 this.cargarUsuario(this.usuario.id!);
             },
             error: (err) => this.showError('Error', 'No se pudo actualizar la foto')
