@@ -59,6 +59,11 @@ export class DrawerTicket {
 
   canRead(): boolean { return this.permissions.can(buildPermiso(PermisoClave.TICKET, PermisoAccion.LEER)); }
 
+  provenanceLabel(comment: { source?: string; displayName?: string | null }): string {
+    const source = ({ GEM_CLIENTES: 'GEM Clientes', GEM_WEB: 'GEM Web', EMAIL: 'Email', SYSTEM: 'System' } as Record<string, string>)[comment.source ?? 'SYSTEM'] ?? 'Unknown source';
+    return comment.displayName ? `${comment.displayName} · ${source}` : source;
+  }
+
   private loadTicket(): void {
     if (!this.visible || !this.ticketId) return;
     const key = `${this.visible}:${this.ticketId}`;

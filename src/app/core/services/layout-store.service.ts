@@ -33,6 +33,9 @@ export class LayoutStoreService {
 
   private html = document.documentElement
 
+  private themeSwitchFrame: number | null = null
+  private appliedTheme: 'light' | 'dark' | null = null
+
   private layoutStateSubject = new BehaviorSubject<LayoutState>(this.state())
   readonly layoutState$ = this.layoutStateSubject.asObservable()
 
@@ -91,10 +94,7 @@ export class LayoutStoreService {
   }
 
   setTheme(theme: LayoutState['theme'], persist = true): void {
-    const resolvedTheme = theme === 'system' ? this.getSystemTheme() : theme;
-
-    this.setHtmlAttribute('data-bs-theme', resolvedTheme);
-    this.applyPrimeNgTheme(resolvedTheme); // <-- sincroniza con PrimeNG
+    this.applyTheme(theme)
 
     if (persist) {
       this.state.update((s) => ({ ...s, theme }))
@@ -103,13 +103,38 @@ export class LayoutStoreService {
     this.layoutStateSubject.next({ ...this.state(), theme })
   }
 
-  private applyPrimeNgTheme(theme: 'light' | 'dark' | 'system') {
-    const element = document.querySelector('html');
-
+  private applyPrimeNgTheme(theme: 'light' | 'dark') {
     if (theme === 'dark') {
-      element!.classList.add('my-app-dark');
-    }else{
-      element!.classList.remove('my-app-dark');
+      this.html.classList.add('my-app-dark')
+    } else {
+      this.html.classList.remove('my-app-dark')
+    }
+  }
+
+  private applyTheme(theme: LayoutState['theme']): void {
+    const resolvedTheme = theme === 'system' ? this.getSystemTheme() : theme
+    const primeNgThemeIsApplied =
+      (resolvedTheme === 'dark') ===
+      this.html.classList.contains('my-app-dark')
+
+    if (
+      this.appliedTheme === resolvedTheme &&
+      this.html.getAttribute('data-bs-theme') === resolvedTheme &&
+      primeNgThemeIsApplied
+    ) {
+      return
+    }
+
+    this.html.classList.add('theme-switching')
+    this.setHtmlAttribute('data-bs-theme', resolvedTheme)
+    this.applyPrimeNgTheme(resolvedTheme)
+    this.appliedTheme = resolvedTheme
+
+    if (this.themeSwitchFrame === null) {
+      this.themeSwitchFrame = requestAnimationFrame(() => {
+        this.html.classList.remove('theme-switching')
+        this.themeSwitchFrame = null
+      })
     }
   }
 
@@ -224,11 +249,7 @@ export class LayoutStoreService {
     this.setHtmlAttribute('data-skin', 'spotify')
 
     
-    this.setHtmlAttribute(
-      'data-bs-theme',
-      current.theme === 'system' ? this.getSystemTheme() : current.theme
-    )
-    this.applyPrimeNgTheme(current.theme)
+    this.applyTheme(current.theme)
     this.setHtmlAttribute('data-layout-position', current.position)
     this.setHtmlAttribute('data-topbar-color', current.topbar.color)
     if (current.monochrome) {

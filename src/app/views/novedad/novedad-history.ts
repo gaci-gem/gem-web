@@ -8,6 +8,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -41,6 +42,7 @@ import { finalize } from 'rxjs';
     UiCard,
     NgIcon,
     TableModule,
+    InputTextModule,
     SelectModule,
     DatePickerModule,
     ConfirmDialogModule,

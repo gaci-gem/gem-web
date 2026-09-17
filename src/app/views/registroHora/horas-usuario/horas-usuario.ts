@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { TrabajarCon, UiCard } from '@app/components/index';
+import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
 import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
 import { Categoria, Hora, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraService } from '@core/services/registro-hora';
@@ -11,12 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
-import { ShortcutDirective } from '@core/directive/shortcut';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { NgIcon } from '@ng-icons/core';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage';
 import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { finalize } from 'rxjs';
@@ -26,12 +27,13 @@ import { ViewportService } from '@core/services/viewport.service';
   selector: 'app-horas-usuario',
   imports: [
     UiCard,
+    ControlTrabajarCon,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,
     ToastModule,
-    ShortcutDirective,
     DatePipe,
     DatePickerModule,
     ButtonModule,

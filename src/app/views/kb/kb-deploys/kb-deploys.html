@@ -106,9 +106,9 @@
     </div>
   }
 
-  <!-- Botón Nuevo (solo visible cuando NO está editando) -->
+  <!-- Toolbar -->
   @if (!editando) {
-    <div class="mb-3">
+    <div class="d-flex justify-content-end mb-2">
       <button class="btn btn-primary btn-sm" (click)="nuevo()">
         <i class="pi pi-plus me-1"></i>
         Nuevo Deploy
@@ -117,7 +117,7 @@
   }
 
   <!-- Filtros -->
-  <p-panel header="Filtros" [toggleable]="true" [collapsed]="true" styleClass="mb-3">
+  <p-panel header="Filtros" [toggleable]="true" [collapsed]="true" styleClass="mb-1">
     <div class="row g-3 align-items-end">
       <div class="col-md-3">
         <label class="form-label fw-bold">Ambiente</label>

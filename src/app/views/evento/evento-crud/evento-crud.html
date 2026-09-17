@@ -195,9 +195,9 @@
             }
           </div>
 
-          <div class="col-md-6">
+          <div class="col-12 col-md-3">
             @if (can(PermisoAccion.TPO_FACTURABLE)) {
-            <label for="facEventoCerr" class="form-label">Tipo de facturacion</label>
+            <label for="facEventoCerr" class="form-label">Tipo de facturación</label>
             <div class="mb-2">
               <input id="facEventoCerr" type="checkbox" formControlName="facEventoCerr" class="btn-check" />
               <label class="btn btn-outline-primary" for="facEventoCerr" style="min-width: 160px;">
@@ -209,6 +209,11 @@
               </label>
             </div>
             }
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label for="fechaEntrega" class="form-label">Fecha de entrega acordada</label>
+            <input id="fechaEntrega" type="date" formControlName="fechaEntrega" class="form-control" />
           </div>
 
 

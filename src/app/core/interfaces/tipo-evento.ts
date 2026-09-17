@@ -16,6 +16,8 @@ export interface TipoEventoEtapa {
   etapaId: number;
   etapaSecuencia: number;
   rollbackSec?: number;
+  marcaInicio?: boolean;
+  marcaFin?: boolean;
 }
 
 export interface TipoEventoTimeline {
@@ -30,6 +32,8 @@ export interface TipoEventoTimelineEtapa {
   secuencia: number;
   deAutoriza: boolean;
   deArchivo: boolean;
+  marcaInicio?: boolean;
+  marcaFin?: boolean;
   rolPreferido: string;
   rollback?: {
     secuencia: number;

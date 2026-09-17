@@ -21,6 +21,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SelectModule } from 'primeng/select';
 import { Table, TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { HoraCrud } from '../hora-crud/hora-crud';
@@ -30,6 +31,7 @@ import { HoraCrud } from '../hora-crud/hora-crud';
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     ToolbarModule,
     ConfirmDialogModule,
     ToastModule,

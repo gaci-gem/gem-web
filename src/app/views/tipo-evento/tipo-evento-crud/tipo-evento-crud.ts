@@ -77,7 +77,9 @@ export class TipoEventoCrud extends CrudFormModal<TipoEvento> implements OnInit 
       ),
       rollbackSec: new FormControl<number | null>(
         etapa?.rollbackSec != null ? Number(etapa.rollbackSec) : null
-      )
+      ),
+      marcaInicio: new FormControl(etapa?.marcaInicio ?? false),
+      marcaFin: new FormControl(etapa?.marcaFin ?? false)
     });
   }
 
@@ -156,7 +158,9 @@ export class TipoEventoCrud extends CrudFormModal<TipoEvento> implements OnInit 
       this.etapasFormArray.push(this.createEtapaForm({
         etapaId: etapa.etapaId != null ? Number(etapa.etapaId) : undefined,
         etapaSecuencia: etapa.etapaSecuencia != null ? Number(etapa.etapaSecuencia) : undefined,
-        rollbackSec: etapa.rollbackSec != null ? Number(etapa.rollbackSec) : undefined
+        rollbackSec: etapa.rollbackSec != null ? Number(etapa.rollbackSec) : undefined,
+        marcaInicio: !!etapa.marcaInicio,
+        marcaFin: !!etapa.marcaFin
       }));
     });
   }
@@ -165,7 +169,9 @@ export class TipoEventoCrud extends CrudFormModal<TipoEvento> implements OnInit 
     const etapas = this.etapasFormArray.value.map((e: any) => ({
       etapaId: e.etapaId != null ? Number(e.etapaId) : null,
       etapaSecuencia: Number(e.etapaSecuencia),
-      rollbackSec: (e.rollbackSec != null && e.rollbackSec !== '') ? Number(e.rollbackSec) : null
+      rollbackSec: (e.rollbackSec != null && e.rollbackSec !== '') ? Number(e.rollbackSec) : null,
+      marcaInicio: !!e.marcaInicio,
+      marcaFin: !!e.marcaFin,
     }));
     // Si hay etapa final seleccionada, agregarla como secuencia 99
     console.log(this.form.get('etapaFinal')?.value)

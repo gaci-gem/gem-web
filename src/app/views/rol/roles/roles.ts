@@ -12,6 +12,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { NgIcon } from '@ng-icons/core';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { UiCard } from '@app/components/ui-card';
 import { BadgeClickComponent } from '@app/components/badge-click';
 import { ShortcutDirective } from '@core/directive/shortcut';
@@ -30,6 +31,7 @@ import { getColor } from '@/app/utils/color-utils';
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,

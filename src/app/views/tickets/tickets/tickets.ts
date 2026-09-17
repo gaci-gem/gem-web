@@ -1,10 +1,11 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -20,10 +21,13 @@ import { PermisoClave } from '@core/interfaces/rol';
 import { PermisoAccion } from '@/app/types/permisos';
 import { buildPermiso } from '@/app/utils/permiso-utils';
 import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation/keyboard-list-navigation';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
+import { FiltroPreset, FiltroState } from '@core/interfaces/filtro-preset';
+import { FiltroPresetService } from '@core/services/filtro-preset';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, InputTextModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
   styles: ['.ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; }'],
@@ -36,14 +40,79 @@ export class Tickets implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly drawers = inject(DrawerService);
   private readonly permissions = inject(PermisosService);
+  private readonly presetService = inject(FiltroPresetService);
   private ref: DynamicDialogRef | null = null;
 
+  readonly pantalla = 'tickets';
+  readonly presets = signal<FiltroPreset[]>([]);
+  selectedPresetId = '';
   tickets: Ticket[] = [];
   search = '';
   estado: TicketState | '' = '';
   readonly states = TICKET_STATES.map((value) => ({ label: value.replaceAll('_', ' '), value }));
 
-  ngOnInit(): void { this.loadItems(); }
+  ngOnInit(): void {
+    this.loadPresets();
+    this.loadItems();
+  }
+
+  private loadPresets(): void {
+    this.presetService.list(this.pantalla).subscribe({
+      next: (presets) => this.presets.set(presets),
+      error: () => this.showError({ error: { message: 'No se pudieron cargar los presets.' } }),
+    });
+  }
+
+  private captureFilterState(): FiltroState {
+    return { search: this.search, estado: this.estado };
+  }
+
+  applyPreset(id: string): void {
+    const preset = this.presets().find((item) => item.id === id);
+    if (!preset) return;
+    const filtros = preset.filtros;
+    this.search = typeof filtros['search'] === 'string' ? filtros['search'] : '';
+    this.estado = typeof filtros['estado'] === 'string' ? filtros['estado'] as TicketState | '' : '';
+    this.selectedPresetId = id;
+    this.loadItems();
+  }
+
+  savePreset(event: { id: string; name: string }): void {
+    const request = event.id
+      ? this.presetService.update(this.pantalla, event.id, event.name, this.captureFilterState())
+      : this.presetService.create(this.pantalla, event.name, this.captureFilterState());
+    request.subscribe({
+      next: (preset) => {
+        this.selectedPresetId = preset.id;
+        this.loadPresets();
+      },
+      error: (error) => this.showError(error),
+    });
+  }
+
+  removePreset(id: string): void {
+    this.presetService.remove(this.pantalla, id).subscribe({
+      next: () => {
+        this.selectedPresetId = '';
+        this.loadPresets();
+      },
+      error: (error) => this.showError(error),
+    });
+  }
+
+  setPresetDefault(id: string): void {
+    this.presetService.setDefault(this.pantalla, id).subscribe({
+      next: () => this.loadPresets(),
+      error: (error) => this.showError(error),
+    });
+  }
+
+  clearFilters(): void {
+    this.search = '';
+    this.estado = '';
+    this.selectedPresetId = '';
+    this.loadItems();
+  }
 
   loadItems(): void {
     this.loading.show();

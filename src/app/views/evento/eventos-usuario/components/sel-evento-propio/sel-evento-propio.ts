@@ -6,6 +6,7 @@ import {
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { SelectBase } from '@app/components/select-base/select-base';
 import { EventoService } from '@core/services/evento';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
@@ -24,6 +25,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
   imports: [
     LoadingSpinnerComponent,
     TableModule,
+    InputTextModule,
     BadgeClickComponent,
     NgIcon,
     TooltipModule,

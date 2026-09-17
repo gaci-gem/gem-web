@@ -9,6 +9,7 @@ import { TipoEventoCrud } from '../tipo-evento-crud/tipo-evento-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -31,6 +32,7 @@ import { BadgeClickComponent } from "@app/components/badge-click";
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,

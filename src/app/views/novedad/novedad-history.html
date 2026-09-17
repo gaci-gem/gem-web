@@ -8,34 +8,9 @@
       <app-ui-card title="Historial de Novedades">
         <div card-body>
 
-          <p-toolbar>
+          <p-toolbar styleClass="mb-2 gap-2">
             <ng-template pTemplate="left">
-              <app-filtro-radio-group
-                [options]="estadoFiltroOptions"
-                [checkedValue]="filterEstado"
-                (filtroCambio)="filterEstado = $event; applyFilters()"
-                [notLabel]="true"
-              />
-              <p-select
-                [options]="tipoOptions"
-                [(ngModel)]="filterTipo"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Tipo"
-                styleClass="me-2"
-                style="width: 160px;"
-              />
-              <p-datepicker
-                [(ngModel)]="filterFecha"
-                selectionMode="range"
-                [iconDisplay]="'input'"
-                [showIcon]="true"
-                [showButtonBar]="true"
-                inputId="filter-date"
-                placeholder="Desde - Hasta"
-                style="margin-left: 10px;"
-                (onClearClick)="onClearFecha()"
-              />
+              <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
             </ng-template>
             <ng-template pTemplate="right">
               <button class="btn btn-primary" (click)="nuevaNovedad()">
@@ -44,6 +19,12 @@
               </button>
             </ng-template>
           </p-toolbar>
+          <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+            <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+            <app-filtro-radio-group [options]="estadoFiltroOptions" [checkedValue]="filterEstado" (filtroCambio)="filterEstado = $event; applyFilters()" [notLabel]="true" />
+            <p-select [options]="tipoOptions" [(ngModel)]="filterTipo" optionLabel="label" optionValue="value" placeholder="Tipo" styleClass="me-2" style="width: 160px;" />
+            <p-datepicker [(ngModel)]="filterFecha" selectionMode="range" [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filter-date" placeholder="Desde - Hasta" (onClearClick)="onClearFecha()" />
+          </div>
 
           <p-table
             #dt
@@ -62,15 +43,6 @@
             [showCurrentPageReport]="true"
             size="small"
           >
-            <ng-template pTemplate="caption">
-                <div class="flex align-items-center justify-content-between w-100 gap-2" style="display: flex" >
-                    <span class="p-input-icon-left">
-                    <i class="pi pi-search"></i>
-                    <input pInputText style=" padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; margin-left: 10px; " class="p-component p-element p-inputtext" type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
-                     </span>
-                    <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
-                </div>
-            </ng-template>
             <ng-template pTemplate="header">
               <tr>
                 <th style="min-width: 100px;">Tipo</th>

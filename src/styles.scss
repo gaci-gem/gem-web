@@ -5,38 +5,114 @@
 
 @use "./assets/scss/app.scss";
 
+// Prevent the theme colors from animating while the theme attributes change.
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching::before,
+html.theme-switching::after,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 // Crepe Editor styles
 @import "@milkdown/crepe/theme/common/style.css";
 // @import "@milkdown/crepe/theme/frame.css";
 
-// var(--ins-card-bg)
-:root {
-  /* Asegura que exista --ins-card-bg; usa --ins-secondary-bg si no está definida por el tema */
-  --ins-card-bg: var(--ins-card-bg, var(--ins-secondary-bg));
-  --p-toolbar-background: var(--ins-card-bg);
-  --p-datatable-header-background: var(--ins-card-bg);
-  --p-paginator-background: var(--ins-card-bg);
-
-  --p-datatable-header-cell-background: var(--ins-card-bg);
-  --p-datatable-row-background: var(--ins-card-bg);
-
-  --p-inputtext-background: var(--ins-secondary-bg);
-  --p-inputtext-hover-background: var(--ins-secondary-bg);
-  --p-inputtext-focus-background: var(--ins-secondary-bg);
-  --p-inputtext-filled-background: var(--ins-secondary-bg);
-  --p-inputtext-filled-hover-background: var(--ins-secondary-bg);
-  --p-inputtext-filled-focus-background: var(--ins-secondary-bg);
+// Keep PrimeNG surfaces aligned with the GACI shell without affecting other skins.
+html.my-app-dark {
+  --ins-card-bg: var(--ins-secondary-bg, var(--ins-body-bg));
 }
 
-.p-datepicker {
-  .p-inputtext {
+html.my-app-dark {
+  // Inputs use the page surface instead of PrimeNG's darker default surface.
+  --p-form-field-background: var(--ins-body-bg);
+  --p-form-field-hover-background: var(--ins-body-bg);
+  --p-form-field-focus-background: var(--ins-body-bg);
+  --p-inputtext-background: var(--ins-body-bg);
+  --p-inputtext-hover-background: var(--ins-body-bg);
+  --p-inputtext-focus-background: var(--ins-body-bg);
+  --p-inputtext-filled-background: var(--ins-body-bg);
+
+  input.p-inputtext,
+  .p-inputtext,
+  .p-datepicker-input,
+  .p-select,
+  .p-multiselect {
+    background: var(--ins-body-bg) !important;
+  }
+
+  // Tables and their surrounding controls use the card surface.
+  --p-datatable-header-background: var(--ins-card-bg);
+  --p-datatable-header-cell-background: var(--ins-card-bg);
+  --p-datatable-row-background: var(--ins-card-bg);
+  --p-datatable-footer-background: var(--ins-card-bg);
+  --p-toolbar-background: var(--ins-card-bg);
+  --p-paginator-background: var(--ins-card-bg);
+
+  .p-toolbar,
+  .p-paginator,
+  .p-datatable,
+  .p-datatable-table-container,
+  .p-datatable-table,
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr,
+  .p-datatable-tbody > tr > td,
+  .p-datatable-tfoot > tr > td {
+    background: var(--ins-card-bg) !important;
+  }
+
+  .p-datepicker .p-inputtext {
     width: 100%;
-    background: var(--ins-secondary-bg) !important;
   }
 }
 
-.p-inputtext.p-variant-filled {
-  background: var(--ins-secondary-bg) !important;
+// Keep the create button rounded when it is part of, or is the only control in,
+// the work-with dropdown group.
+app-control-trabajar-con .btn-group > .btn:first-of-type {
+  border-top-left-radius: var(--ins-border-radius) !important;
+  border-bottom-left-radius: var(--ins-border-radius) !important;
+}
+
+app-control-trabajar-con .btn-group > .btn:only-of-type {
+  border-radius: var(--ins-border-radius) !important;
+}
+
+// Keep global search consistent across primary list filter rows.
+.app-filter-row {
+  .p-input-icon-left {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 220px;
+    flex: 0 0 220px;
+  }
+
+  .p-input-icon-left > i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .p-input-icon-left input.p-inputtext {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 38px;
+    padding-left: 2.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .app-filter-row {
+    .p-input-icon-left {
+      width: 100%;
+      flex-basis: 100%;
+    }
+  }
 }
 
 // PrimeNG dialog internals for the command palette preview.

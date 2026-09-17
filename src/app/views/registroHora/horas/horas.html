@@ -5,11 +5,9 @@
         <div class="col-12 mt-3">
             <app-ui-card title="Registros de Horas">
                 <div card-body>
-                    <p-toolbar styleClass="mb-4 gap-2">
+                    <p-toolbar styleClass="mb-2 gap-2">
                         <ng-template pTemplate="left">
-                            <p-datepicker id="filtroFechas" [(ngModel)]="dateRangeFilter" selectionMode="range"
-                                [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filtroFechas"
-                                (ngModelChange)="onFechaChange()" (onClearClick)="onClearFecha()"></p-datepicker>
+                            <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
 
                             <!-- <p-select [options]="tiposTrabajo" optionLabel="descripcion" optionValue="codigo"
                                 placeholder="Filtrar por categoría" [(ngModel)]="categoriaFiltro"
@@ -36,24 +34,15 @@
                                 (importar)="importarExcel($event)"></app-control-trabajar-con>
                         </ng-template>
                     </p-toolbar>
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                        <p-datepicker id="filtroFechas" [(ngModel)]="dateRangeFilter" selectionMode="range" [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filtroFechas" (ngModelChange)="onFechaChange()" (onClearClick)="onClearFecha()"></p-datepicker>
+                    </div>
                     <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="10" [paginator]="true"
                         [globalFilterFields]="['id', 'nombre', 'apellido', 'usuario', 'totalMes']"
                         [tableStyle]="{ 'min-width': '75rem' }" dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                         [showCurrentPageReport]="true" size="small">
-                        <ng-template pTemplate="caption">
-                            <div class="flex align-items-center justify-content-between" style="display: flex;">
-                                <span class="p-input-icon-left ml-2">
-                                    <i class="pi pi-search"></i>
-                                    <input pInputText
-                                        style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;"
-                                        class="p-component p-element p-inputtext" type="text"
-                                        (input)="dt.filterGlobal(getEventValue($event), 'contains')"
-                                        placeholder="Buscar..." />
-                                 </span>
-                            <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
-                            </div>
-                        </ng-template>
                         <ng-template pTemplate="header">
                             <tr>
                                 <th style="width: 4rem">

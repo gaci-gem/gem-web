@@ -44,6 +44,21 @@
   gap: 1rem 1.5rem;
 }
 
+.evento-header__date-row,
+.evento-header__user-row {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 1rem 1.5rem;
+}
+
+.evento-header__date-row {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.evento-header__user-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .info-cell {
   display: flex;
   flex-direction: column;
@@ -111,10 +126,19 @@
   .evento-header__info-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .evento-header__date-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
   .evento-header__info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .evento-header__date-row,
+  .evento-header__user-row {
     grid-template-columns: 1fr;
   }
 }

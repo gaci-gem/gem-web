@@ -13,6 +13,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { NgIcon } from '@ng-icons/core';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { UiCard } from '@app/components/ui-card';
 import { BadgeClickComponent } from "@app/components/badge-click";
 import { CommonModule, DatePipe } from '@angular/common';
@@ -46,6 +47,7 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,

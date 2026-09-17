@@ -11,6 +11,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Table, TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ProyectoCrud } from '../proyecto-crud/proyecto-crud';
@@ -31,6 +32,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,

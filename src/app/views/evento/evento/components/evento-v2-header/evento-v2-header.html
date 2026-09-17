@@ -147,6 +147,7 @@
       </div>
     </div>
 
+    <div class="evento-header__date-row">
     <!-- Fecha Inicio + Fecha Fin (solo lectura) -->
     <div class="info-cell">
       <span class="info-label">INICIO / FIN</span>
@@ -174,9 +175,9 @@
       }
     </div>
 
-    <!-- Fecha Entrega (editable) -->
+    <!-- Fecha Entrega Acordada (editable) -->
     <div class="info-cell">
-      <span class="info-label">FECHA ENTREGA</span>
+      <span class="info-label">FECHA ENTREGA ACORDADA</span>
       @if (evento.cerrado) {
         <p class="info-value">{{ evento.fechaEntrega | date: 'dd/MM/yy' }}</p>
       } @else {
@@ -191,6 +192,33 @@
       }
     </div>
 
+    <!-- Fecha de entrega real (editable) -->
+    <div class="info-cell">
+      <span class="info-label">FECHA ENTREGA REAL</span>
+      @if (evento.cerrado) {
+        <p class="info-value">{{ evento.fechaEntregaReal | date: 'dd/MM/yy' }}</p>
+      } @else {
+        <input
+          type="date"
+          class="form-control form-control-sm info-date-input"
+          [disabled]="fechaGuardando !== null"
+          [attr.aria-busy]="fechaGuardando === 'fechaEntregaReal'"
+          [ngModel]="formatDateForInput(evento.fechaEntregaReal)"
+          (ngModelChange)="onFechaChange($event, 'fechaEntregaReal')"
+        />
+      }
+    </div>
+
+    <!-- Fecha de cierre (solo lectura) -->
+    @if (evento.fechaCierre) {
+      <div class="info-cell">
+        <span class="info-label">FECHA CIERRE</span>
+        <p class="info-value">{{ evento.fechaCierre | date: 'dd/MM/yy' }}</p>
+      </div>
+    }
+    </div>
+
+    <div class="evento-header__user-row">
     <!-- Asignado a -->
     @if (evento.usuarioActual) {
       <div class="info-cell">
@@ -203,6 +231,7 @@
           {{ evento.usuarioActual.usuario }}
         </app-badge-click>
       </div>
+
     }
 
     <!-- Creado por -->
@@ -221,6 +250,8 @@
         }
       </div>
     }
+
+    </div>
 
   </div>
 </section>

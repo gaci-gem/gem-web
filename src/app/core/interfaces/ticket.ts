@@ -33,6 +33,12 @@ export interface TicketComment {
   text: string;
   createdAt: string;
   updatedAt: string;
+  source?: 'GEM_WEB' | 'GEM_CLIENTES' | 'EMAIL' | 'SYSTEM';
+  actorType?: 'USER' | 'CLIENT' | 'EMAIL' | 'SYSTEM';
+  actorId?: string | null;
+  userId?: string | null;
+  credentialId?: string | null;
+  displayName?: string | null;
   attachments?: TicketAttachment[];
 }
 

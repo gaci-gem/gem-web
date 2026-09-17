@@ -10,6 +10,7 @@ import { KbDeploys } from '../kb-deploys/kb-deploys';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -32,6 +33,7 @@ import { CatalogoFiltroItemConfig, CatalogoFiltroState } from '@core/interfaces/
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,

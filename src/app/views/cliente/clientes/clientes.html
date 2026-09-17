@@ -5,14 +5,9 @@
         <div class="col-12 mt-3">
             <app-ui-card title="Clientes">
                 <div card-body>
-                    <p-toolbar styleClass="mb-4 gap-2">
+                    <p-toolbar styleClass="mb-2 gap-2">
                         <ng-template pTemplate="left">
-                            <app-filtro-radio-group
-                                [options]="FiltroActivoOptions"
-                                [checkedValue]="filtroActivo"
-                                (filtroCambio)="filtroCambio($event)"
-                                [notLabel]="true"
-                            ></app-filtro-radio-group>
+                            <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
                         <ng-template pTemplate="right">
                             @if (can(PermisoAccion.CREAR)) {
@@ -25,6 +20,10 @@
                             }
                         </ng-template>
                     </p-toolbar>
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                        <app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group>
+                    </div>
                     <p-table
                         #dt
                         [value]="clientes"
@@ -38,15 +37,6 @@
                         [showCurrentPageReport]="true"
                         size="small"
                     >
-                        <ng-template pTemplate="caption">
-                            <div class="flex align-items-center justify-content-between" style="display: flex;">
-                                <span class="p-input-icon-left">
-                                    <i class="pi pi-search"></i>
-                                    <input pInputText style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;" class="p-component p-element p-inputtext"  type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." />
-                                </span>
-                                 <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
-                            </div>
-                        </ng-template>
                         <ng-template pTemplate="header">
                             <tr>
                                 <!-- <th style="width: 4rem">

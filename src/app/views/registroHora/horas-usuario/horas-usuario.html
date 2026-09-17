@@ -6,16 +6,12 @@
             <app-ui-card title="Registros de Horas Usuario">
                 <div card-body>
                     <div #initialFocusTarget tabindex="-1" role="region" aria-label="Acciones de registros de horas">
-                    <p-toolbar styleClass="mb-4 gap-2">
+                    <p-toolbar styleClass="mb-2 gap-2">
                         <ng-template pTemplate="left">
                         </ng-template>
                         <ng-template pTemplate="right">
-                            @if (true) {
-                            <button class="btn btn-ghost-success btn-lg" (click)="mostrarModalCrud(null, 'A')"
-                                [appShortcut]="SHORTCUTS.NUEVO"
-                                (appShortcutTrigger)="mostrarModalCrud(null, 'A')"><ng-icon
-                                    name="lucideCirclePlus" /></button>
-                            }
+                            <app-control-trabajar-con [mostrarDesplegable]="false"
+                                (nuevo)="mostrarModalCrud(null, 'A')"></app-control-trabajar-con>
                         </ng-template>
                     </p-toolbar>
                     </div>
@@ -80,30 +76,16 @@
                         <p class="mobile-empty-state">No se encontraron registros de hora.</p>
                         }
                     </section>
-                    } @else {
-                    <p-table #dt [value]="registrosHorasFiltradas" [rows]="10" [paginator]="true"
+                     } @else {
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                        <div class="flex align-items-center gap-1"><label for="filtroFechas" class="me-1">Fecha:</label><p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month" dateFormat="mm/yy" [readonlyInput]="true" (onClose)="consultarRegistros(dateFilter)"></p-datepicker></div>
+                    </div>
+                     <p-table #dt [value]="registrosHorasFiltradas" [rows]="10" [paginator]="true"
                         [globalFilterFields]="['id', 'fecha', 'usuario.usuario', 'horasTotales']"
                         [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                         [showCurrentPageReport]="true" size="small" [scrollable]="true">
-                        <ng-template pTemplate="caption">
-                            <div class="flex align-items-center justify-content-between" style="display: flex;">
-                                <span class="p-input-icon-left">
-                                    <i class="pi pi-search"></i>
-                                    <input pInputText
-                                        style="padding-top: 0.4rem !important;padding-bottom: 0.4rem !important;margin-left: 10px;"
-                                        class="p-component p-element p-inputtext" type="text"
-                                        (input)="dt.filterGlobal(getEventValue($event), 'contains')"
-                                        placeholder="Buscar..." />
-                                </span>
-                                <div class="flex align-items-center gap-1" style="margin:auto 10px">
-                                    <label for="filtroFechas" style="margin-right: 5px;">Fecha: </label>
-                                    <p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month"
-                                        dateFormat="mm/yy" [readonlyInput]="true"
-                                        (onClose)="consultarRegistros(dateFilter)"></p-datepicker>
-                                </div>
-                            </div>
-                        </ng-template>
                         <ng-template pTemplate="header">
                             <tr>
                                 <th style="width: 4rem">

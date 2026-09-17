@@ -229,6 +229,8 @@ export interface Evento {
   fechaFinEst?: string;
   fechaFinReal?: string;
   fechaEntrega?: string;
+  fechaEntregaReal?: string;
+  fechaCierre?: string;
 
   createdAt?: string;
   updatedAt?: string;
@@ -420,6 +422,8 @@ export const eventoFromEventoCompleto = (evento: EventoCompleto): Evento => {
     fechaFinEst: evento.fechaFinEst,
     fechaFinReal: evento.fechaFinReal,
     fechaEntrega: evento.fechaEntrega,
+    fechaEntregaReal: evento.fechaEntregaReal,
+    fechaCierre: evento.fechaCierre,
     // createdAt: evento.createdAt,
     // updatedAt: evento.updatedAt,
     // deletedAt: evento.deletedAt,

@@ -8,6 +8,7 @@ import { ReporteCrud } from '../reporte-crud/reporte-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -21,12 +22,14 @@ import { BadgeClickComponent } from '@app/components/badge-click';
 import { DrawerService } from '@core/services/drawer.service';
 import { StatusBadgeComponent } from '@app/components/status-badge';
 import { PermisoAccion } from '@/app/types/permisos';
+import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 
 @Component({
   selector: 'app-reportes',
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     NgIcon,
     ToolbarModule,
     ConfirmDialogModule,
@@ -35,6 +38,7 @@ import { PermisoAccion } from '@/app/types/permisos';
     CommonModule,
     BadgeClickComponent,
     StatusBadgeComponent,
+    FiltroPresetsComponent,
   ],
   providers: [
     DialogService,

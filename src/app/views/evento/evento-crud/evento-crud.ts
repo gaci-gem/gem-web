@@ -473,6 +473,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
       cerrado: new FormControl(false),
       etapaActual: new FormControl(1),
       estimacion: new FormControl(0),
+      fechaEntrega: new FormControl(''),
       prioridadUsu: new FormControl(1),
       facEventoCerr: new FormControl(false),
       cliente: new FormControl(null, [Validators.required, EventoCrud.objectValidator()]),
@@ -561,6 +562,7 @@ export class EventoCrud extends CrudFormModal<Evento> {
       producto: productoObj,
       usuarioAltaId: data.usuarioAltaId,
       estimacion: data.estimacion,
+      fechaEntrega: data.fechaEntrega ? data.fechaEntrega.slice(0, 10) : '',
       modulo: moduloObj,
       prioridadUsu: data.prioridadUsu,
       comentario: data.comentario ?? ''
@@ -638,6 +640,11 @@ export class EventoCrud extends CrudFormModal<Evento> {
     const estimacion = this.get('estimacion')?.value;
     if (!this.config.data?.submitExternally || (estimacion !== '' && estimacion !== null && estimacion !== undefined && estimacion !== 0)) {
       formData.append('estimacion', estimacion);
+    }
+
+    const fechaEntrega = this.get('fechaEntrega')?.value;
+    if (fechaEntrega) {
+      formData.append('fechaEntrega', fechaEntrega);
     }
 
 

@@ -3,6 +3,7 @@ import { LoadingSpinnerComponent } from '@app/components/index';
 import { SelectBase } from '@app/components/select-base/select-base';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { CommonModule } from '@angular/common';
@@ -20,6 +21,7 @@ import { DynamicDialogConfig } from 'primeng/dynamicdialog';
     imports: [
         LoadingSpinnerComponent,
         TableModule,
+        InputTextModule,
         NgIcon,
         BooleanLabelPipe,
         CommonModule,

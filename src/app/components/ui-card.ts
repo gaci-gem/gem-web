@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core'
+import { Component, Input, Output, EventEmitter, HostBinding, OnChanges, SimpleChanges } from '@angular/core'
 import { NgIcon } from '@ng-icons/core'
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap'
 import { HelpTooltip } from '@app/components/help-tooltip';
@@ -85,6 +85,9 @@ import { HelpTooltip } from '@app/components/help-tooltip';
   `,
 })
 export class UiCard implements OnChanges {
+  // The card title is visual content, not a native tooltip for the host element.
+  @HostBinding('attr.title') hostTitle: null = null
+
   @Input() withTitle: boolean = true;
   @Input() titleIcon?: string
   @Input() titleIconPosition: 'left' | 'right' = 'left'

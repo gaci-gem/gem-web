@@ -6,6 +6,7 @@ import { UsuarioService } from '@core/services/usuario';
 import { NgIcon } from '@ng-icons/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Table, TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { UsuarioCrud } from '../usuario-crud/usuario-crud';
 import { modalConfig } from '@/app/types/modals';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
@@ -33,6 +34,7 @@ import { PermisoAccion } from '@/app/types/permisos';
   imports: [
     UiCard,
     TableModule,
+    InputTextModule,
     DatePipe,
     NgIcon,
     ToolbarModule,

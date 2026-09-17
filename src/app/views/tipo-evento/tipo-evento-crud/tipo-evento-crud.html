@@ -77,26 +77,29 @@
 
     @if (!(get('propio')?.value)) {
       <!-- Sección de etapas -->
-      <div class="col-12 border p-2 rounded">
-        <h5>Etapas</h5>
+      <div class="col-12 stages-section">
+        <div class="stages-section-heading">
+          <div>
+            <h5>Etapas</h5>
+            <p>Definí la secuencia y los hitos automáticos de cada etapa.</p>
+          </div>
+        </div>
         <div formArrayName="etapas">
-          <div class="row">
-            <div class="col-md-4">
-              <label>Etapa</label>
-            </div>
-            <div class="col-md-3">
-              <label>Secuencia</label>
-            </div>
-            <div class="col-md-3">
-              <label>Rollback (opcional)</label>
-            </div>
+          <div class="stage-grid stage-grid-header" aria-hidden="true">
+            <span>Etapa</span>
+            <span>Secuencia</span>
+            <span>
+              Hitos automáticos
+              <span class="milestone-help" title="Inicio registra cuándo comienza el trabajo. Fin registra cuándo termina el trabajo." aria-label="Inicio registra cuándo comienza el trabajo. Fin registra cuándo termina el trabajo.">?</span>
+            </span>
+            <span>Rollback</span>
+            <span>Acción</span>
           </div>
           @for (etapa of etapasFormArray.controls; track etapa) {
-            <div [formGroupName]="$index" class="row g-3 mb-2 ">
-
-              <div class="col-md-4">
-                <!-- <label>Etapa</label> -->
-                <select class="form-control" formControlName="etapaId">
+            <div [formGroupName]="$index" class="stage-grid stage-row">
+              <div class="stage-field">
+                <label for="etapa-{{$index}}">Etapa</label>
+                <select id="etapa-{{$index}}" class="form-control" formControlName="etapaId">
                   <option [ngValue]="null">-- Seleccionar --</option>
                   @for (e of etapasCatalogo; track e.id) {
                     <!-- ngValue preserva el tipo (number si e.id es number) -->
@@ -105,14 +108,26 @@
                 </select>
               </div>
 
-              <div class="col-md-3">
-                <!-- <label>Secuencia</label> -->
-                <input type="number" class="form-control" formControlName="etapaSecuencia" readonly />
+              <div class="stage-field stage-sequence">
+                <label for="secuencia-{{$index}}">Secuencia</label>
+                <input id="secuencia-{{$index}}" type="number" class="form-control" formControlName="etapaSecuencia" readonly />
               </div>
 
-              <div class="col-md-3">
-                <!-- <label>Rollback (opcional)</label> -->
-                <select class="form-control" formControlName="rollbackSec">
+              <fieldset class="stage-field stage-milestones">
+                <legend>Hitos automáticos</legend>
+                <label class="milestone-option">
+                  <input type="checkbox" class="form-check-input" formControlName="marcaInicio" />
+                  Inicio
+                </label>
+                <label class="milestone-option">
+                  <input type="checkbox" class="form-check-input" formControlName="marcaFin" />
+                  Fin
+                </label>
+              </fieldset>
+
+              <div class="stage-field">
+                <label for="rollback-{{$index}}">Rollback</label>
+                <select id="rollback-{{$index}}" class="form-control" formControlName="rollbackSec">
                   <option [ngValue]="null">-- Ninguno --</option>
                   @for (seq of getRollbackOptions(etapa.get('etapaSecuencia')?.value); track seq) {
                     <option [ngValue]="seq">Secuencia {{ seq }}</option>
@@ -123,17 +138,16 @@
                 </select>
               </div>
 
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-danger w-100" (click)="removeEtapaByControl(etapa)">Eliminar</button>
+              <div class="stage-action">
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEtapaByControl(etapa)" title="Eliminar etapa" aria-label="Eliminar etapa">Eliminar</button>
               </div>
-
             </div>
           }
         </div>
-        <button type="button" class="btn btn-success mt-2" (click)="addEtapa()">Agregar etapa</button>
+        <button type="button" class="btn btn-success btn-sm add-stage-button" (click)="addEtapa()">Agregar etapa</button>
         
         <!-- Selector de etapa final (solo etapas de archivo) -->
-        <div class="mt-3">
+        <div class="final-stage-panel">
           <label for="etapaFinal" class="form-label">Etapa al finalizar</label>
           <select id="etapaFinal" class="form-control" formControlName="etapaFinal">
             <option [ngValue]="null">-- Seleccionar etapa final --</option>
@@ -144,15 +158,15 @@
         </div>
       </div>
     } @else {
-      <div class="mt-3">
+      <div class="col-12 final-stage-panel standalone-final-stage">
         <label for="etapaFinal" class="form-label">Etapa a almacenar</label>
-        <select id="etapaFinal" class="form-control" formControlName="etapaFinal">
+          <select id="etapaFinal" class="form-control" formControlName="etapaFinal">
           <option [ngValue]="null">-- Seleccionar etapa a almacenar --</option>
           @for (eAr of etapasArchivo; track eAr.id) {
             <option [ngValue]="eAr.id">{{ eAr.nombre }}</option>
           }
-        </select>
-      </div>
+          </select>
+       </div>
     }
     
 
