@@ -78,10 +78,10 @@
                     </section>
                      } @else {
                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
-                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                         <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..." /></span>
                         <div class="flex align-items-center gap-1"><label for="filtroFechas" class="me-1">Fecha:</label><p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month" dateFormat="mm/yy" [readonlyInput]="true" (onClose)="consultarRegistros(dateFilter)"></p-datepicker></div>
                     </div>
-                     <p-table #dt [value]="registrosHorasFiltradas" [rows]="10" [paginator]="true"
+                       <p-table #dt [value]="registrosHorasFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)"
                         [globalFilterFields]="['id', 'fecha', 'usuario.usuario', 'horasTotales']"
                         [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
@@ -179,8 +179,7 @@
 
 
                 <ng-template pTemplate="summary">
-                    <div class="flex align-items-center justify-content-between">En total hay {{ registrosHoras ?
-                        registrosHoras.length : 0 }} Registros de Hora.</div>
+                     <div class="flex align-items-center justify-content-between">En total hay {{ totalRecords }} Registros de Hora.</div>
                 </ng-template>
                 </p-table>
                 }

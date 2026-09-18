@@ -22,11 +22,14 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span></div>
                     <p-table
                         #dt
                         [value]="parametros"
+                        [lazy]="true"
+                        [totalRecords]="totalParametros"
                         [rows]="10"
+                        [rowsPerPageOptions]="[5, 10, 15, 25, 50]"
                         [paginator]="true"
                         [globalFilterFields]="['clave', 'valor', 'tipo', 'ambito', 'descripcion']"
                         [tableStyle]="{ 'min-width': '75rem', 'table-layout': 'fixed' }"
@@ -34,6 +37,9 @@
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                         [showCurrentPageReport]="true"
+                        (onFilter)="onTableFilter($event)"
+                        (onPage)="onTablePage($event)"
+                        (onSort)="onTableSort($event)"
                         size="small"
                     >
                         <ng-template pTemplate="header">
@@ -69,7 +75,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
-                            <div class="flex align-items-center justify-content-between">En total hay {{ parametros ? parametros.length : 0 }} parámetros.</div>
+                            <div class="flex align-items-center justify-content-between">En total hay {{ totalParametros }} parámetros.</div>
                         </ng-template>
                     </p-table>
 

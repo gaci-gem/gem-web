@@ -1,15 +1,15 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Producto } from '@core/interfaces/producto';
-import { ProductoService } from '@core/services/producto';
+import { ProductoPage, ProductoService } from '@core/services/producto';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -58,6 +58,11 @@ export class Productos extends TrabajarCon<Producto> {
   ref!: DynamicDialogRef | null;
 
   productos!:Producto[];
+  totalProductos = 0;
+  globalFilter = '';
+  sortField: 'id' | 'sigla' | 'nombre' | 'entornoCodigo' | 'activo' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -68,19 +73,25 @@ export class Productos extends TrabajarCon<Producto> {
     this.permisoClave = PermisoClave.PRODUCTO;
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
-    this.productoService.getAll(this.filtroActivo).pipe(
+    this.productoService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), sigla: this.getColumnFilter('sigla'), nombre: this.getColumnFilter('nombre'), entornoCodigo: this.getColumnFilter('entornoCodigo'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.productos = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.productos = this.productos.filter((producto) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return producto.activo === aux;
-          });
-        }
+        const page = res as ProductoPage;
+        this.productos = page.data;
+        this.totalProductos = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los productos.')

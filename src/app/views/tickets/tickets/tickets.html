@@ -13,10 +13,10 @@
             </ng-template>
           </p-toolbar>
           <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
-            <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="loadItems()" placeholder="Buscar..." /></span>
-            <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="loadItems()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
+             <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Buscar..." /></span>
+             <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
           </div>
-           <p-table #dt [value]="tickets" [rows]="10" [paginator]="true" [rowHover]="true" dataKey="id"
+           <p-table #dt [value]="tickets" [lazy]="true" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" [paginator]="true" [rowHover]="true" dataKey="id"
              appKeyboardListNavigation [keyboardListItems]="tickets" (keyboardRowActivate)="open($event)"
             [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']"
             size="small" [scrollable]="true">
@@ -60,7 +60,7 @@
              </tr>
              </ng-template>
              <ng-template pTemplate="summary">
-               <div class="flex align-items-center justify-content-between">En total hay {{ tickets.length }} Tickets.</div>
+                <div class="flex align-items-center justify-content-between">En total hay {{ total }} Tickets.</div>
              </ng-template>
            </p-table>
         </div>

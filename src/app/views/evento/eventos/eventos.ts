@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, inject, OnInit
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
-import { EventoService } from '@core/services/evento';
+import { EventoCompletoPage, EventoService } from '@core/services/evento';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { EventoCrud } from '../evento-crud/evento-crud';
@@ -92,6 +92,8 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
 
   filtroFecha: Date[] | null = null;
   globalFilter = '';
+  totalEventos = 0;
+  private readonly pageSize = 10;
 
   override ngOnInit(): void {
     const restored = this.restoreFilterSession() as EventoFilterState | null;
@@ -144,6 +146,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
 
   onFechaChange(): void {
     this.filtroFecha = this.normalizeDateRange(this.filtroFecha);
+    this.resetPaginator();
     if (this.filtroFecha) {
       this.loadItems();
     }
@@ -152,13 +155,28 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
 
   onClearFecha(): void {
     this.filtroFecha = null;
+    this.resetPaginator();
     this.saveState();
     this.loadItems();
   }
 
-  onTableFilter(_event: TableFilterEvent): void { this.saveState(); }
+  onGlobalFilter(value: string): void {
+    this.globalFilter = value;
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
+
+  onTableFilter(_event: TableFilterEvent): void {
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
   onTableSort(_event: any): void { this.saveState(); }
-  onTablePage(_event: TablePageEvent): void { this.saveState(); }
+  onTablePage(event: TablePageEvent): void {
+    this.saveState();
+    this.loadItems(event.first, event.rows);
+  }
 
   protected override restoreFilterState(state: FiltroState): void {
     const eventState = state as EventoFilterState;
@@ -201,7 +219,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     return dates.every((date): date is Date => date instanceof Date && !Number.isNaN(date.getTime())) ? dates : null;
   }
 
-  protected loadItems(): void {
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? this.pageSize): void {
     this.loadingService.show();
     
     let params: any = {};
@@ -210,12 +228,33 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
       params.desde = this.formatearFecha(this.filtroFecha[0]);
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
+    params.globalSearch = this.globalFilter.trim();
+    const fieldMap: Record<string, string> = {
+      eventoSearch: 'eventoSearch',
+      titulo: 'titulo',
+      'etapaActualData.nombre': 'etapa',
+      'cliente.nombre': 'cliente',
+      'producto.nombre': 'producto',
+      'modulo.nombre': 'modulo',
+      'usuarioActual.usuario': 'usuario',
+    };
+    Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
+      const filter = Array.isArray(metadata) ? metadata[0] : metadata;
+      const target = fieldMap[field];
+      if (target && typeof filter?.value === 'string' && filter.value.trim()) {
+        params[target] = filter.value.trim();
+      }
+    });
+    params.page = Math.floor(first / rows) + 1;
+    params.limit = rows;
 
     this.eventoService.getAllComplete(this.filtroActivo, params).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-          this.eventos = res.map(e => ({
+        const page = res as EventoCompletoPage;
+        this.totalEventos = page.total;
+        this.eventos = page.data.map(e => ({
             ...e,
           evento: formatEventoNumero(e.tipo.codigo, e.numero),
           fechaInicio: (e as any).fechaInicio ? parseIsoAsLocal((e as any).fechaInicio) : null,
@@ -231,12 +270,20 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
 
   override filtroCambio(event: any): void {
     super.filtroCambio(event);
+    this.resetPaginator();
+    this.loadItems();
     this.saveState();
   }
 
   override clear(table: Table): void {
     super.clear(table);
     this.globalFilter = '';
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  private resetPaginator(): void {
+    if (this.table) this.table.first = 0;
   }
 
   isFiltered(table: Table): boolean {

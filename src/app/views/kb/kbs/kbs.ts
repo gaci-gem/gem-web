@@ -1,15 +1,15 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { kb } from '@core/interfaces/kb';
-import { KbService } from '@core/services/kb';
+import { KbPage, KbService } from '@core/services/kb';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { KbCrud } from '../kb-crud/kb-crud';
 import { KbDeploys } from '../kb-deploys/kb-deploys';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -62,6 +62,12 @@ export class Kbs extends TrabajarCon<kb> {
   refDeploys!: DynamicDialogRef | null;
 
   kbs: kb[] = [];
+  totalKbs = 0;
+  globalFilter = '';
+  catalogos: CatalogoFiltroState = {};
+  sortField: 'id' | 'nombre' | 'plataforma' | 'tecnologia' | 'tipo' | 'estado' | 'uso_actual' | 'migrada' | 'activo' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
   // Configuración de filtros de catálogo
   filtrosConfig: CatalogoFiltroItemConfig[] = [
@@ -118,22 +124,24 @@ export class Kbs extends TrabajarCon<kb> {
     this.permisoClave = PermisoClave.KB;
   }
 
-  protected loadItems(): void {
-    this.cargarKbs();
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+    this.cargarKbs(this.catalogos, first, rows);
   }
 
   /**
    * Carga las KBs con los filtros actuales
    */
-  private cargarKbs(catalogos?: CatalogoFiltroState): void {
+  private cargarKbs(catalogos: CatalogoFiltroState = this.catalogos, first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
     const activo = this.filtroActivo === FiltroActivo.ALL ? undefined : this.filtroActivo === FiltroActivo.TRUE;
     
-    this.kbService.findAll({ activo, catalogos }).pipe(
+    this.kbService.findAll({ activo, search: this.globalFilter.trim(), catalogos, page: Math.floor(first / rows) + 1, limit: rows, sortBy: this.sortField, sortOrder: this.sortDirection?.toUpperCase() as 'ASC' | 'DESC' }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.kbs = res;
+        const page = res as KbPage;
+        this.kbs = page.data;
+        this.totalKbs = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar las KBs.')
@@ -144,15 +152,32 @@ export class Kbs extends TrabajarCon<kb> {
    * Aplica los filtros de catálogo seleccionados
    */
   aplicarFiltros(filtros: CatalogoFiltroState): void {
-    this.cargarKbs(filtros);
+    this.catalogos = filtros;
+    this.resetPaginator();
+    this.cargarKbs();
   }
 
   /**
    * Limpia todos los filtros
    */
   limpiarFiltros(): void {
+    this.catalogos = {};
+    this.resetPaginator();
     this.cargarKbs();
   }
+
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void {
+    this.sortField = event.sortField as typeof this.sortField;
+    this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined;
+    this.resetPaginator();
+    this.loadItems();
+  }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; this.catalogos = {}; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
 
   alta(kb: kb): void {
     if (!this.beginAction()) return;

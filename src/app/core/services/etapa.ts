@@ -1,9 +1,12 @@
 import { environment } from '@/environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Etapa_requisito, Etapa as EtapaInterface } from '@core/interfaces/etapa';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
+
+export interface EtapaPage { data: EtapaInterface[]; total: number; page: number; limit: number; totalPages: number; }
+export interface EtapaListParams { globalSearch?: string; nombre?: string; rolPreferido?: string; categoriaSugeridaCodigo?: string; page?: number; limit?: number; sortField?: 'id' | 'nombre' | 'rolPreferido' | 'categoriaSugeridaCodigo' | 'activo'; sortDirection?: 'asc' | 'desc'; }
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +15,12 @@ export class EtapaService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
 
-  getAll(activo: FiltroActivo = FiltroActivo.TRUE): Observable<EtapaInterface[]> {
-    return this.http.get<EtapaInterface[]>(`${this.URL_COMPLETA}/etapa?activo=${activo}`);
+  getAll(): Observable<EtapaInterface[]>;
+  getAll(activo: FiltroActivo, params: EtapaListParams): Observable<EtapaPage>;
+  getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: EtapaListParams): Observable<EtapaInterface[] | EtapaPage> {
+    let httpParams = new HttpParams().set('activo', activo);
+    Object.entries(params ?? {}).forEach(([key, value]) => { if (value !== undefined && value !== '') httpParams = httpParams.set(key, String(value)); });
+    return this.http.get<EtapaInterface[] | EtapaPage>(`${this.URL_COMPLETA}/etapa`, { params: httpParams });
   }
 
   getById(id: string): Observable<EtapaInterface> {

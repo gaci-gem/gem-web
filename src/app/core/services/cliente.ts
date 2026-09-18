@@ -1,9 +1,27 @@
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { environment } from '@/environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Cliente } from '@core/interfaces/cliente';
 import { Observable } from 'rxjs';
+
+export interface ClientePage {
+  data: Cliente[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ClienteListParams {
+  globalSearch?: string;
+  sigla?: string;
+  nombre?: string;
+  page?: number;
+  limit?: number;
+  sortField?: 'id' | 'sigla' | 'nombre' | 'activo';
+  sortDirection?: 'asc' | 'desc';
+}
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +30,14 @@ export class ClienteService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
 
-  getAll(activo: FiltroActivo = FiltroActivo.TRUE): Observable<Cliente[]> {
-    return this.http.get<Cliente[]>(`${this.URL_COMPLETA}/cliente?activo=${activo}`);
+  getAll(activo?: FiltroActivo): Observable<Cliente[]>;
+  getAll(activo: FiltroActivo, params: ClienteListParams): Observable<ClientePage>;
+  getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: ClienteListParams): Observable<Cliente[] | ClientePage> {
+    let httpParams = new HttpParams().set('activo', activo);
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') httpParams = httpParams.set(key, String(value));
+    });
+    return this.http.get<Cliente[] | ClientePage>(`${this.URL_COMPLETA}/cliente`, { params: httpParams });
   }
 
   getById(id: number): Observable<Cliente> {

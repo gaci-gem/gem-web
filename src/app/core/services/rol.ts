@@ -1,9 +1,12 @@
 import { environment } from '@/environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Rol as RolInterface } from '@core/interfaces/rol';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
+
+export interface RolPage { data: RolInterface[]; total: number; page: number; limit: number; totalPages: number; }
+export interface RolListParams { globalSearch?: string; codigo?: string; descripcion?: string; page?: number; limit?: number; sortField?: 'codigo' | 'descripcion' | 'color' | 'activo'; sortDirection?: 'asc' | 'desc'; }
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +15,12 @@ export class RolService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
 
-  getAll(activo: FiltroActivo = FiltroActivo.TRUE): Observable<RolInterface[]> {
-    return this.http.get<RolInterface[]>(`${this.URL_COMPLETA}/rol?activo=${activo}`);
+  getAll(): Observable<RolInterface[]>;
+  getAll(activo: FiltroActivo, params: RolListParams): Observable<RolPage>;
+  getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: RolListParams): Observable<RolInterface[] | RolPage> {
+    let httpParams = new HttpParams().set('activo', activo);
+    Object.entries(params ?? {}).forEach(([key, value]) => { if (value !== undefined && value !== '') httpParams = httpParams.set(key, String(value)); });
+    return this.http.get<RolInterface[] | RolPage>(`${this.URL_COMPLETA}/rol`, { params: httpParams });
   }
 
   getByCodigo(rolCodigo: string): Observable<RolInterface> {

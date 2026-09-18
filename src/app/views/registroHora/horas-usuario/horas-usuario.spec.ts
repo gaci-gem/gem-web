@@ -19,7 +19,7 @@ describe('HorasUsuario', () => {
       ['getCategorias', 'getByUsuario'],
     );
     registroHoraService.getCategorias.and.returnValue(of([]));
-    registroHoraService.getByUsuario.and.returnValue(of([]));
+    registroHoraService.getByUsuario.and.returnValue(of({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }));
 
     TestBed.configureTestingModule({
       imports: [HorasUsuario],
@@ -45,14 +45,38 @@ describe('HorasUsuario', () => {
     component.onPeriodoMobileChange(selectedMonth);
 
     expect(component.dateFilter).toBe(selectedMonth);
-    expect(registroHoraService.getByUsuario).toHaveBeenCalledWith('u-1', 7, 2026);
+    expect(registroHoraService.getByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({ mes: 7, anio: 2026, page: 1, limit: 10 }));
+    expect(component.totalRecords).toBe(0);
+  });
+
+  it('should reset the paginator when the period changes', () => {
+    const registroHoraService = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getCategorias', 'getByUsuario']);
+    registroHoraService.getCategorias.and.returnValue(of([]));
+    registroHoraService.getByUsuario.and.returnValue(of({ data: [], pagination: { page: 1, limit: 10, total: 24, totalPages: 3 } }));
+    TestBed.configureTestingModule({
+      imports: [HorasUsuario],
+      providers: [
+        { provide: RegistroHoraService, useValue: registroHoraService },
+        { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
+        { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
+        { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
+        { provide: ViewportService, useValue: { isMobile: signal(true) } },
+        DialogService, MessageService, ConfirmationService, provideZonelessChangeDetection(),
+      ],
+    });
+    const component = TestBed.createComponent(HorasUsuario).componentInstance;
+    component.first = 20;
+    component.onPeriodoMobileChange(new Date(2026, 6, 1));
+    expect(component.first).toBe(0);
+    expect(component.totalRecords).toBe(24);
   });
 
   it('should focus the toolbar region instead of a filter input on entry', async () => {
     TestBed.configureTestingModule({
       imports: [HorasUsuario],
       providers: [
-        { provide: RegistroHoraService, useValue: { getCategorias: () => of([]), getByUsuario: () => of([]) } },
+        { provide: RegistroHoraService, useValue: { getCategorias: () => of([]), getByUsuario: () => of({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }) } },
         { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
         { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
         { provide: PermisosService, useValue: { can: () => true } },
@@ -78,7 +102,7 @@ describe('HorasUsuario', () => {
     TestBed.configureTestingModule({
       imports: [HorasUsuario],
       providers: [
-        { provide: RegistroHoraService, useValue: { getCategorias: () => of([]), getByUsuario: () => of([]) } },
+        { provide: RegistroHoraService, useValue: { getCategorias: () => of([]), getByUsuario: () => of({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }) } },
         { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
         { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
         { provide: PermisosService, useValue: { can: () => true } },

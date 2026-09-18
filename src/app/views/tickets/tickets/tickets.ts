@@ -1,10 +1,10 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { MessageService } from 'primeng/api';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -42,11 +42,15 @@ export class Tickets implements OnInit {
   private readonly permissions = inject(PermisosService);
   private readonly presetService = inject(FiltroPresetService);
   private ref: DynamicDialogRef | null = null;
+  @ViewChild('dt') table?: Table;
 
   readonly pantalla = 'tickets';
   readonly presets = signal<FiltroPreset[]>([]);
   selectedPresetId = '';
-  tickets: Ticket[] = [];
+   tickets: Ticket[] = [];
+   total = 0;
+   page = 1;
+   limit = 10;
   search = '';
   estado: TicketState | '' = '';
   readonly states = TICKET_STATES.map((value) => ({ label: value.replaceAll('_', ' '), value }));
@@ -74,6 +78,8 @@ export class Tickets implements OnInit {
     this.search = typeof filtros['search'] === 'string' ? filtros['search'] : '';
     this.estado = typeof filtros['estado'] === 'string' ? filtros['estado'] as TicketState | '' : '';
     this.selectedPresetId = id;
+    this.page = 1;
+    if (this.table) this.table.first = 0;
     this.loadItems();
   }
 
@@ -111,15 +117,29 @@ export class Tickets implements OnInit {
     this.search = '';
     this.estado = '';
     this.selectedPresetId = '';
+    this.page = 1;
+    if (this.table) this.table.first = 0;
+    this.loadItems();
+  }
+
+  onFilterChange(): void {
+    this.page = 1;
+    if (this.table) this.table.first = 0;
     this.loadItems();
   }
 
   loadItems(): void {
     this.loading.show();
-    this.service.list({ search: this.search, estado: this.estado || undefined }).pipe(finalize(() => this.loading.hide())).subscribe({
-      next: (tickets) => { this.tickets = tickets; this.cdr.detectChanges(); },
+    this.service.list({ search: this.search, estado: this.estado || undefined, page: this.page, limit: this.limit }).pipe(finalize(() => this.loading.hide())).subscribe({
+      next: (result) => { this.tickets = result.data; this.total = result.total; this.cdr.detectChanges(); },
       error: (error) => this.showError(error),
     });
+  }
+
+  onPageChange(event: { first?: number; rows?: number }): void {
+    this.limit = event.rows ?? this.limit;
+    this.page = Math.floor((event.first ?? 0) / this.limit) + 1;
+    this.loadItems();
   }
 
   canRead(): boolean { return this.permissions.can(buildPermiso(PermisoClave.TICKET, PermisoAccion.LEER)); }

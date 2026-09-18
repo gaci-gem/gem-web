@@ -22,6 +22,14 @@ export interface Ticket {
   updatedAt: string;
 }
 
+export interface TicketPage {
+  data: Ticket[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface TicketDetail extends Ticket {
   comments: TicketComment[];
   events: TicketEvent[];

@@ -1,13 +1,13 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { getReporteEstadoDescripcion, Reporte, ReporteEstadoDescripcion } from '@core/interfaces/reporte';
-import { ReporteService } from '@core/services/reporte';
+import { ReportePage, ReporteService } from '@core/services/reporte';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ReporteCrud } from '../reporte-crud/reporte-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -65,7 +65,12 @@ export class Reportes extends TrabajarCon<Reporte> {
   private drawerService = inject(DrawerService);
   getReporteEstadoDescripcion = getReporteEstadoDescripcion;
 
-  reportes!:Reporte[];
+  reportes: Reporte[] = [];
+  totalReportes = 0;
+  globalFilter = '';
+  sortField: 'id' | 'tipo' | 'solicitadoEn' | 'generadoEn' | 'estado' | 'errorDescripcion' | 'usuario' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -76,17 +81,50 @@ export class Reportes extends TrabajarCon<Reporte> {
     this.permisoClave = PermisoClave.REPORTE;
   }
 
-  protected loadItems(): void {
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
-    this.reporteService.getAll(this.filtroActivo).pipe(
+    this.reporteService.getAll(this.filtroActivo, {
+      globalSearch: this.globalFilter.trim(),
+      tipo: this.getColumnFilter('tipo'),
+      parametros: this.getColumnFilter('parametros'),
+      usuario: this.getColumnFilter('usuario'),
+      solicitadoEn: this.getColumnFilter('solicitadoEn'),
+      generadoEn: this.getColumnFilter('generadoEn'),
+      estado: this.getColumnFilter('estado'),
+      errorDescripcion: this.getColumnFilter('errorDescripcion'),
+      page: Math.floor(first / rows) + 1,
+      limit: rows,
+      sortField: this.sortField,
+      sortDirection: this.sortDirection,
+    }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.reportes = res;
+        const page = res as ReportePage;
+        this.reportes = page.data;
+        this.totalReportes = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los reportes.')
     });
+  }
+
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void {
+    this.sortField = event.sortField as typeof this.sortField;
+    this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined;
+    this.resetPaginator();
+    this.loadItems();
+  }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined {
+    const value = this.table?.filters?.[field];
+    const filter = Array.isArray(value) ? value[0] : value;
+    return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined;
   }
 
   alta(reporte: Reporte): void {

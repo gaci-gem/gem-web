@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Proyecto } from '@core/interfaces/proyecto';
-import { ProyectoService } from '@core/services/proyecto';
+import { ProyectoPage, ProyectoService } from '@core/services/proyecto';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -57,6 +57,11 @@ export class Proyectos extends TrabajarCon<Proyecto> {
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
   proyectos!: Proyecto[];
+  totalProyectos = 0;
+  globalFilter = '';
+  sortField: 'id' | 'sigla' | 'nombre' | 'activo' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
   private pendingSearchId: number | null = null;
 
   constructor() {
@@ -74,19 +79,25 @@ export class Proyectos extends TrabajarCon<Proyecto> {
     });
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: any): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: any): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
-    this.proyectoService.getAll(this.filtroActivo).pipe(
+    this.proyectoService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), sigla: this.getColumnFilter('sigla'), nombre: this.getColumnFilter('nombre'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.proyectos = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.proyectos = this.proyectos.filter((proyecto) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return proyecto.activo === aux;
-          });
-        }
+        const page = res as ProyectoPage;
+        this.proyectos = page.data;
+        this.totalProyectos = page.total;
         this.cdr.detectChanges();
         this.openPendingSearchResult();
       },

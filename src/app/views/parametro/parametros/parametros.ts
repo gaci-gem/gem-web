@@ -1,14 +1,14 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Parametro } from '@core/interfaces/parametro';
-import { ParametroService } from '@core/services/parametros';
+import { ParametroPage, ParametroService } from '@core/services/parametros';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ParametroCrud } from '../parametro-crud/parametro-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -60,6 +60,11 @@ export class Parametros extends TrabajarCon<Parametro> {
   ref!: DynamicDialogRef | null;
 
   parametros!: Parametro[];
+  totalParametros = 0;
+  globalFilter = '';
+  sortField: 'clave' | 'valor' | 'tipo' | 'ambito' | 'descripcion' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
   constructor() {
     super(
@@ -71,13 +76,24 @@ export class Parametros extends TrabajarCon<Parametro> {
     this.viewAction = (parametro) => this.mostrarModalCrud(parametro, 'V');
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
-    this.parametroService.getAll().pipe(
+    this.parametroService.getAll({ globalSearch: this.globalFilter.trim(), clave: this.getColumnFilter('clave'), valor: this.getColumnFilter('valor'), tipo: this.getColumnFilter('tipo'), ambito: this.getColumnFilter('ambito'), descripcion: this.getColumnFilter('descripcion'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.parametros = res;
+        const page = res as ParametroPage;
+        this.parametros = page.data;
+        this.totalParametros = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los parámetros.')
