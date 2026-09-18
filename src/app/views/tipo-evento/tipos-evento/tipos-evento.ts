@@ -1,14 +1,14 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { TipoEvento } from '@core/interfaces/tipo-evento';
-import { TipoEventoService } from '@core/services/tipo-evento';
+import { TipoEventoPage, TipoEventoService } from '@core/services/tipo-evento';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TipoEventoCrud } from '../tipo-evento-crud/tipo-evento-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -59,6 +59,11 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
   refPrioridadRegla!: DynamicDialogRef | null;
 
   tiposEvento!:TipoEvento[];
+  totalTiposEvento = 0;
+  globalFilter = '';
+  sortField: 'codigo' | 'descripcion' | 'activo' | 'propio' | 'facturable' | 'color' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -69,13 +74,24 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
     this.permisoClave = PermisoClave.TIPO_EVENTO;
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
+  override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
     this.loadingService.show();
-    this.tipoEventoService.getAll().pipe(
+    this.tipoEventoService.getAll({ globalSearch: this.globalFilter.trim(), codigo: this.getColumnFilter('codigo'), descripcion: this.getColumnFilter('descripcion'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.tiposEvento = res;
+        const page = res as TipoEventoPage;
+        this.tiposEvento = page.data;
+        this.totalTiposEvento = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los tipos de evento.')

@@ -49,4 +49,23 @@ describe('RegistroHoraService', () => {
     expect(req.request.url).not.toContain('categoriaCodigo');
     req.flush({ registros: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } });
   });
+
+  it('getAll() should expose page data and serialize pagination filters', () => {
+    service.getAll({ page: 3, limit: 25, fechaDesde: '2026-05-01', fechaHasta: '2026-05-31', categoriaCodigo: 'QA', usuarioId: 'u-1', orderBy: 'fecha', orderDir: 'asc' }).subscribe(response => {
+      expect(response.data).toEqual([]);
+      expect(response.pagination.total).toBe(52);
+    });
+
+    const req = httpMock.expectOne(`${environment.BASE_URL}/registro-hora?page=3&limit=25&fechaDesde=2026-05-01&fechaHasta=2026-05-31&categoriaCodigo=QA&usuarioId=u-1&orderBy=fecha&orderDir=asc`);
+    req.flush({ registros: [], pagination: { page: 3, limit: 25, total: 52, totalPages: 3 } });
+  });
+
+  it('getByUsuario() should expose page metadata', () => {
+    service.getByUsuario('u-1', { mes: 5, anio: 2026, page: 2, limit: 10 }).subscribe(response => {
+      expect(response.pagination).toEqual({ page: 2, limit: 10, total: 11, totalPages: 2 });
+    });
+
+    const req = httpMock.expectOne(`${environment.BASE_URL}/registro-hora/usuario/u-1?mes=5&anio=2026&page=2&limit=10`);
+    req.flush({ registros: [], pagination: { page: 2, limit: 10, total: 11, totalPages: 2 } });
+  });
 });

@@ -1,14 +1,14 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { Entorno } from '@core/interfaces/entorno';
-import { EntornoService } from '@core/services/entorno';
+import { EntornoPage, EntornoService } from '@core/services/entorno';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { EntornosCrud } from '../entornos-crud/entornos-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -56,6 +56,11 @@ export class Entornos extends TrabajarCon<Entorno> {
   ref!: DynamicDialogRef | null;
 
   entornos!:Entorno[];
+  totalEntornos = 0;
+  globalFilter = '';
+  sortField: 'codigo' | 'nombre' | 'activo' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
   override actionInProgress = false;
 
  constructor() {
@@ -67,19 +72,23 @@ export class Entornos extends TrabajarCon<Entorno> {
     this.permisoClave = PermisoClave.ENTORNO;
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
-    this.entornoService.getAll(this.filtroActivo).pipe(
+    this.entornoService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), codigo: this.getColumnFilter('codigo'), nombre: this.getColumnFilter('nombre'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.entornos = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.entornos = this.entornos.filter((entorno) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return entorno.activo === aux;
-          });
-        }
+        const page = res as EntornoPage;
+        this.entornos = page.data;
+        this.totalEntornos = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los entornos.')

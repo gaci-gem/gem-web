@@ -1,15 +1,15 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Modulo } from '@core/interfaces/modulo';
-import { ModuloService } from '@core/services/modulo';
+import { ModuloPage, ModuloService } from '@core/services/modulo';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -56,6 +56,8 @@ export class Modulos extends TrabajarCon<Modulo> {
   ref!: DynamicDialogRef | null;
 
   modulos!:Modulo[];
+  totalModulos = 0; globalFilter = ''; sortField: 'codigo' | 'nombre' | 'padreCodigo' | 'activo' | undefined; sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -66,19 +68,21 @@ export class Modulos extends TrabajarCon<Modulo> {
     this.permisoClave = PermisoClave.MODULO;
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
-    this.moduloService.getAll(this.filtroActivo).pipe(
+    this.moduloService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), codigo: this.getColumnFilter('codigo'), nombre: this.getColumnFilter('nombre'), padreCodigo: this.getColumnFilter('padreCodigo'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.modulos = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.modulos = this.modulos.filter((modulo) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return modulo.activo === aux;
-          });
-        }
+        const page = res as ModuloPage; this.modulos = page.data; this.totalModulos = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los modulos.')

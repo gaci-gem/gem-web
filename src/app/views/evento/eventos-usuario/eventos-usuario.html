@@ -34,7 +34,7 @@
                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
                         <span class="p-input-icon-left">
                             <i class="pi pi-search"></i>
-                            <input pInputText type="text" [(ngModel)]="globalFilter" (input)="dt.filterGlobal(getEventValue($event), 'contains'); saveState()" placeholder="Buscar..." />
+                            <input pInputText type="text" [(ngModel)]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." />
                         </span>
                         <p-datepicker
                             [(ngModel)]="filtroFecha"
@@ -55,7 +55,10 @@
                         [keyboardListItems]="eventos"
                         [keyboardListSelectable]="true"
                         (keyboardRowActivate)="abrirEventoDrawer($event)"
-                        [value]="eventos"
+                         [value]="eventos"
+                         [lazy]="true"
+                         [totalRecords]="totalEventos"
+                         [rowsPerPageOptions]="[5, 10, 15, 25, 50]"
                         [(selection)]="selectedEventos"
                         [(contextMenuSelection)]="selectedEvento"
                         [contextMenu]="cm"
@@ -71,67 +74,66 @@
                         [scrollable]="true"
                         size="small"
                         [scrollable]="true" [resizableColumns]="true"
-                        sortField="prioridadFin" [sortOrder]="-1"
-                        selectionMode="multiple"
+                         selectionMode="multiple"
                          [metaKeySelection]="true"
-                         (onFilter)="onTableFilter()"
-                         (onSort)="onTableSort()"
-                         (onPage)="onTablePage()"
+                         (onFilter)="onTableFilter($event)"
+                         (onSort)="onTableSort($event)"
+                         (onPage)="onTablePage($event)"
                     >
                         <ng-template pTemplate="header">
                             <tr style="min-height: 55px;">
                                 <th style="width: 4rem" pFrozenColumn>
                                     <!-- <p-tableHeaderCheckbox></p-tableHeaderCheckbox> -->
                                 </th>
-                                <th pSortableColumn="id" hidden>Id</th>
-                                <th pSortableColumn="tipo.codigo" hidden>Tipo</th>
-                                <th pSortableColumn="numero" hidden>Numero</th>
-                                 <th pSortableColumn="evento" style="min-width: 110px;" pFrozenColumn>
+                                 <th hidden>Id</th>
+                                 <th hidden>Tipo</th>
+                                 <th hidden>Numero</th>
+                                  <th style="min-width: 110px;" pFrozenColumn>
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Evento
                                          <p-columnFilter type="text" field="evento" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                <th pSortableColumn="titulo">
+                                 <th>
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Titulo
                                         <p-columnFilter type="text" field="titulo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>  
                                     </div>
                                 </th>
-                                <th pSortableColumn="etapaActualData.nombre" filterField="etapaActualData.nombre">
+                                 <th filterField="etapaActualData.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Etapa
                                         <p-columnFilter type="text" field="etapaActualData.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div></th>
-                                <th pSortableColumn="cliente.nombre" filterField="cliente.nombre">
+                                 <th filterField="cliente.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Cliente
                                         <p-columnFilter type="text" field="cliente.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                <th pSortableColumn="producto.nombre" filterField="producto.nombre">
+                                 <th filterField="producto.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Producto
                                         <p-columnFilter type="text" field="producto.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                <th pSortableColumn="modulo.nombre" filterField="modulo.nombre">
+                                 <th filterField="modulo.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Modulo
                                         <p-columnFilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                <th pSortableColumn="prioridadFin">Prioridad  <p-sortIcon field="prioridadFin"></p-sortIcon></th>
-                                <th pSortableColumn="usuarioActual.usuario" style="min-width: 115px;" filterField="usuarioActual.usuario" hidden>
+                                 <th>Prioridad</th>
+                                 <th style="min-width: 115px;" filterField="usuarioActual.usuario" hidden>
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Usuario
                                         <p-columnFilter type="text" field="usuarioActual.usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                <th pSortableColumn="createdAt">Alta</th>
-                                <th pSortableColumn="fechaInicio">Inicio</th>
-                                <th pSortableColumn="fechaFin">Fin</th>
-                                <th pSortableColumn="usuarioAlta.usuario" hidden>Usuario Alta</th>
+                                 <th>Alta</th>
+                                 <th>Inicio</th>
+                                 <th>Fin</th>
+                                 <th hidden>Usuario Alta</th>
                                 <th></th>
                             </tr>
                         </ng-template>

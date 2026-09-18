@@ -1,9 +1,12 @@
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { environment } from '@/environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Producto } from '@core/interfaces/producto';
 import { Observable } from 'rxjs';
+
+export interface ProductoPage { data: Producto[]; total: number; page: number; limit: number; totalPages: number; }
+export interface ProductoListParams { globalSearch?: string; sigla?: string; nombre?: string; entornoCodigo?: string; page?: number; limit?: number; sortField?: 'id' | 'sigla' | 'nombre' | 'entornoCodigo' | 'activo'; sortDirection?: 'asc' | 'desc'; }
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +15,13 @@ export class ProductoService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
 
-  getAll(activo: FiltroActivo = FiltroActivo.TRUE): Observable<Producto[]> {
-    return this.http.get<Producto[]>(`${this.URL_COMPLETA}/producto?activo=${activo}`);
+  getAll(): Observable<Producto[]>;
+  getAll(activo: FiltroActivo): Observable<Producto[]>;
+  getAll(activo: FiltroActivo, params: ProductoListParams): Observable<ProductoPage>;
+  getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: ProductoListParams): Observable<Producto[] | ProductoPage> {
+    let httpParams = new HttpParams().set('activo', activo);
+    Object.entries(params ?? {}).forEach(([key, value]) => { if (value !== undefined && value !== '') httpParams = httpParams.set(key, String(value)); });
+    return this.http.get<Producto[] | ProductoPage>(`${this.URL_COMPLETA}/producto`, { params: httpParams });
   }
 
   getById(id: number): Observable<Producto> {

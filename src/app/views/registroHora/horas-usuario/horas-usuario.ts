@@ -3,7 +3,7 @@ import { TrabajarCon, UiCard } from '@app/components/index';
 import { ControlTrabajarCon } from '@app/components/trabajar-con/components/control-trabajar-con';
 import { TipoTrabajo, TIPOS_TRABAJO } from '@/app/constants/tipo-trabajo';
 import { Categoria, Hora, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
-import { RegistroHoraService } from '@core/services/registro-hora';
+import { RegistroHoraQuery, RegistroHoraService } from '@core/services/registro-hora';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HoraCrud } from '../hora-crud/hora-crud';
@@ -74,6 +74,10 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
   registrosHoras!: RegistroHora[];
   registrosHorasFiltradas!: RegistroHora[];
+  totalRecords = 0;
+  first = 0;
+  rows = 10;
+  usuarioFiltro = '';
   private expandedRegistroKeys = new Set<string>();
 
   dateFilter = new Date();
@@ -160,11 +164,18 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
   consultarRegistros(fechaFiltro:any){
     this.loadingService.show();
-    this.registroHoraService.getByUsuario(this.usuarioActivo?.id!,fechaFiltro.getMonth() + 1, fechaFiltro.getFullYear()).pipe(
+    const query: RegistroHoraQuery = {
+      mes: fechaFiltro.getMonth() + 1,
+      anio: fechaFiltro.getFullYear(),
+      page: Math.floor(this.first / this.rows) + 1,
+      limit: this.rows,
+      usuario: this.usuarioFiltro || undefined,
+    };
+    this.registroHoraService.getByUsuario(this.usuarioActivo?.id!, query).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.registrosHoras = res.map((r: any) => ({
+        this.registrosHoras = res.data.map((r: any) => ({
           ...r,
           fecha: parseIsoAsLocal(r.fecha),
           horas: r.horas?.map((h: any) => ({
@@ -178,6 +189,7 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
           }))
         })) as any;
         this.registrosHorasFiltradas = this.registrosHoras;
+        this.totalRecords = res.pagination.total;
         this.cdr.detectChanges();
         this.aplicarFiltroFecha(fechaFiltro);
       },
@@ -199,7 +211,24 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
 
   onPeriodoMobileChange(fecha: Date): void {
     this.dateFilter = fecha;
+    this.resetPaginator();
     this.consultarRegistros(fecha);
+  }
+
+  onPageChange(event: { first?: number; rows?: number }): void {
+    this.first = event.first ?? 0;
+    this.rows = event.rows ?? this.rows;
+    this.consultarRegistros(this.dateFilter);
+  }
+
+  onGlobalFilter(event: Event): void {
+    this.usuarioFiltro = (event.target as HTMLInputElement).value;
+    this.resetPaginator();
+    this.consultarRegistros(this.dateFilter);
+  }
+
+  private resetPaginator(): void {
+    this.first = 0;
   }
 
   cantidadIntervalos(registro: RegistroHora): number {

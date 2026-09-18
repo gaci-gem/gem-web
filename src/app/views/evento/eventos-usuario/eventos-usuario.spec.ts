@@ -11,6 +11,7 @@ import {
 import { LoadingService } from '@core/services/loading.service';
 import { PermisosService } from '@core/services/permisos';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
+import { EventoAccionesService } from '@core/services/evento-acciones';
 import { DrawerService } from '@core/services/drawer.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -90,7 +91,9 @@ describe('EventosUsuario - SSE Refresh', () => {
     eventoServiceSpy = jasmine.createSpyObj<EventoService>('EventoService', [
       'getAllCompleteByUsuario',
     ]);
-    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of([]));
+    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of({
+      data: [], total: 0, page: 1, limit: 10, totalPages: 0,
+    } as any));
 
     filtroPresetServiceSpy = jasmine.createSpyObj<FiltroPresetService>(
       'FiltroPresetService',
@@ -129,6 +132,11 @@ describe('EventosUsuario - SSE Refresh', () => {
       get: () => of(null),
     });
 
+    const eventoAccionesServiceSpy = jasmine.createSpyObj<EventoAccionesService>(
+      'EventoAccionesService', ['obtenerEventoEnTrabajo'],
+    );
+    eventoAccionesServiceSpy.obtenerEventoEnTrabajo.and.returnValue(of(null as any));
+
     drawerServiceSpy = jasmine.createSpyObj<DrawerService>(
       'DrawerService',
       [
@@ -165,6 +173,7 @@ describe('EventosUsuario - SSE Refresh', () => {
         { provide: LoadingService, useValue: loadingServiceSpy },
         { provide: PermisosService, useValue: permisosServiceSpy },
         { provide: EventoTrabajoService, useValue: eventoTrabajoServiceSpy },
+        { provide: EventoAccionesService, useValue: eventoAccionesServiceSpy },
         { provide: DrawerService, useValue: drawerServiceSpy },
         { provide: MessageService, useValue: messageServiceMock },
         { provide: ConfirmationService, useValue: confirmationServiceMock },
@@ -295,7 +304,9 @@ describe('EventosUsuario - SSE Refresh', () => {
       tipo: { codigo: 'TST', color: '#000', propio: false },
     } as any;
     component.presets.set([preset]);
-    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of([evento]));
+    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of({
+      data: [evento], total: 1, page: 1, limit: 10, totalPages: 1,
+    } as any));
 
     (component as any).applyPreset(preset.id);
     fixture.detectChanges();
@@ -354,5 +365,34 @@ describe('EventosUsuario - SSE Refresh', () => {
       globalFilter: '',
     }));
     expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledTimes(1);
+  });
+
+  it('12. table filters reset the paginator and reload the server page', async () => {
+    await initComponent();
+    eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
+    component.table = { first: 20, rows: 10, filters: { titulo: [{ value: 'incident', matchMode: 'contains' }] } } as any;
+
+    component.onTableFilter({ filters: component.table.filters } as any);
+
+    expect(component.table.first).toBe(0);
+    expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({
+      page: 1,
+      limit: 10,
+      titulo: 'incident',
+    }));
+  });
+
+  it('13. paginator changes request the selected server page and preserve totals', async () => {
+    await initComponent();
+    eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
+    eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of({
+      data: [], total: 27, page: 3, limit: 10, totalPages: 3,
+    } as any));
+    component.table = { first: 0, rows: 10, filters: {} } as any;
+
+    component.onTablePage({ first: 20, rows: 10 } as any);
+
+    expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({ page: 3, limit: 10 }));
+    expect(component.totalEventos).toBe(27);
   });
 });

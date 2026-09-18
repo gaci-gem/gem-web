@@ -8,177 +8,66 @@
                     <p-toolbar styleClass="mb-2 gap-2">
                         <ng-template pTemplate="left">
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
-
-                            <!-- <p-select [options]="tiposTrabajo" optionLabel="descripcion" optionValue="codigo"
-                                placeholder="Filtrar por categoría" [(ngModel)]="categoriaFiltro"
-                                (onChange)="filtrarPorCategoria($event.value)" [style]="{ 'min-width': '180px', 'margin-left': '10px' }"
-                                [showClear]="true">
-                                <ng-template let-item pTemplate="selectedItem">
-                                    <span *ngIf="item">
-                                        <span class="categoria-dot" [style.background]="item.color"></span>
-                                        {{ item.descripcion }}
-                                    </span>
-                                    <span *ngIf="!item">Todas las categorías</span>
-                                </ng-template>
-                                <ng-template let-item pTemplate="item">
-                                    <span class="categoria-dot" [style.background]="item.color"></span>
-                                    <span>{{ item.descripcion }}</span>
-                                </ng-template>
-                            </p-select> -->
-                        
                         </ng-template>
                         <ng-template pTemplate="right">
-
-                            <app-control-trabajar-con [mostrarNuevo]="false" (plantilla)="getPlantilla()"
-                                (exportarExcel)="exportarExcel()"
-                                (importar)="importarExcel($event)"></app-control-trabajar-con>
+                            <app-control-trabajar-con [mostrarNuevo]="false" (plantilla)="getPlantilla()" (exportarExcel)="exportarExcel()" (importar)="importarExcel($event)"></app-control-trabajar-con>
                         </ng-template>
                     </p-toolbar>
                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
-                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..." /></span>
                         <p-datepicker id="filtroFechas" [(ngModel)]="dateRangeFilter" selectionMode="range" [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filtroFechas" (ngModelChange)="onFechaChange()" (onClearClick)="onClearFecha()"></p-datepicker>
+                        <p-select [options]="tiposTrabajo" optionLabel="descripcion" optionValue="codigo" placeholder="Filtrar por categoría" [(ngModel)]="categoriaFiltro" (onChange)="filtrarPorCategoria($event.value)" [showClear]="true"></p-select>
                     </div>
-                    <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="10" [paginator]="true"
-                        [globalFilterFields]="['id', 'nombre', 'apellido', 'usuario', 'totalMes']"
-                        [tableStyle]="{ 'min-width': '75rem' }" dataKey="id"
-                        currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
-                        [showCurrentPageReport]="true" size="small">
+                    <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="id" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th style="width: 4rem">
-
-                                </th>
-                                <th pSortableColumn="id" hidden>Id <p-sortIcon field="id"></p-sortIcon></th>
-                                <th pSortableColumn="nombre">Nombre <p-sortIcon
-                                        field="nombre"></p-sortIcon><p-columnFilter type="text" field="nombre"
-                                        display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
-                                </th>
-                                <th pSortableColumn="apellido" hidden>Apellido <p-sortIcon
-                                        field="apellido"></p-sortIcon></th>
-                                <th pSortableColumn="usuario">Usuario <p-sortIcon
-                                        field="usuario"></p-sortIcon><p-columnFilter type="text" field="usuario"
-                                        display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
-                                </th>
-                                <th pSortableColumn="totalMes">Total Mes <p-sortIcon field="totalMes"></p-sortIcon></th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-registroGeneral let-expanded="expanded">
-                            <tr>
-                                <td style="width: 10px">
-                                    <p-button type="button" pRipple [pRowToggler]="registroGeneral" [text]="true"
-                                        severity="secondary" [rounded]="true"
-                                        [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
-                                </td>
-                                <td hidden>{{ registroGeneral.id }}</td>
-                                <td>{{ registroGeneral.nombre }} {{ registroGeneral.apellido }}</td>
-                                <td hidden>{{ registroGeneral.apellido }}</td>
-                                <td>{{ registroGeneral.usuario }}</td>
-                                <!-- <td>{{ registroGeneral.totalMes | number:'.0-2'}} hs.</td> -->
-                                <td>{{ registroGeneral.totalMesFormateado }} hs.</td>
-                            </tr>
-                        </ng-template>
-                        <ng-template #expandedrow let-registrosHora>
-                            <tr>
-                                <td colspan="4">
-                                    <div class="">
-                                        <p-table [value]="registrosHora.registrosHora" dataKey="id">
-
-                                            <ng-template pTemplate="header">
-                            <tr>
-                                <th style="width: 4rem">
-
-                                </th>
-                                <th pSortableColumn="id" hidden>Id <p-sortIcon field="id"></p-sortIcon></th>
-                                <th pSortableColumn="nombre">Fecha <p-sortIcon field="nombre"></p-sortIcon></th>
-                                <th pSortableColumn="horasTotales">Total Dia <p-sortIcon
-                                        field="horasTotales"></p-sortIcon></th>
+                                <th style="width: 4rem"></th>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Total Día</th>
+                                <th>Acciones</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-registro let-expanded="expanded">
                             <tr>
-                                <td style="width: 10px">
-                                    <p-button type="button" pRipple [pRowToggler]="registro" [text]="true"
-                                        severity="secondary" [rounded]="true"
-                                        [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
-                                </td>
-                                <td hidden>{{ registro.id }}</td>
-                                <!-- <td>{{ getFechaLocal(registro.fecha) | date:'dd MMMM yy'}}</td> -->
-                                <td>{{ getFechaLocal(registro.fecha) | date:'fullDate'}}</td>
-                                <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
+                                <td><p-button type="button" pRipple [pRowToggler]="registro" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" /></td>
+                                <td>{{ registro.fecha | date:'fullDate' }}</td>
+                                <td>{{ registro.usuario?.usuario || (registro.usuario?.nombre + ' ' + registro.usuario?.apellido) }}</td>
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>
+                                <td></td>
                             </tr>
                         </ng-template>
-                        <ng-template #expandedrow let-horas>
+                        <ng-template pTemplate="rowexpansion" let-registro>
                             <tr>
-                                <td colspan="7">
-                                    <div class="">
-                                        <p-table [value]="horas.horas" dataKey="id">
-                                            <ng-template pTemplate="header">
-                            <tr>
-                                <th pSortableColumn="id" hidden>Id </th>
-                                <th pSortableColumn="inicio" pFrozenColumn>Inicio </th>
-                                <th pSortableColumn="final" pFrozenColumn>Final </th>
-                                <th pSortableColumn="evento">Evento </th>
-                                <!-- <th pSortableColumn="total">Total </th> -->
-                                <th pSortableColumn="detalle">Detalle</th>
-                                <th>Categoría</th>
-                                <th pSortableColumn="diferencia">Diferencia</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-hora>
-                            <tr>
-                                <td hidden>{{ hora.id }}</td>
-                                <td pFrozenColumn>{{ hora.inicio | date:'HH:mm'}}</td>
-                                <td pFrozenColumn>{{ hora.fin | date:'HH:mm'}}</td>
-                                <td>{{ hora.evento.tipoCodigo }}-{{hora.evento.numero}} | {{hora.evento.titulo}}</td>
-                                <!-- <td>{{ hora.total | totalComoNumero}}</td> -->
-                                <td>{{ hora.detalle }}</td>
-                                <td>
-                                    <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge">
-                                        <span class="categoria-dot" [style.background]="cat.color"></span>
-                                        {{ cat.descripcion }}
-                                    </span>
-                                    <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
+                                <td colspan="5">
+                                    <p-table [value]="registro.horas" dataKey="id" size="small">
+                                        <ng-template pTemplate="header">
+                                            <tr><th>Inicio</th><th>Final</th><th>Evento</th><th>Detalle</th><th>Categoría</th><th>Diferencia</th></tr>
+                                        </ng-template>
+                                        <ng-template pTemplate="body" let-hora>
+                                            <tr>
+                                                <td>{{ hora.inicio | date:'HH:mm' }}</td>
+                                                <td>{{ hora.fin | date:'HH:mm' }}</td>
+                                                <td>{{ hora.evento?.tipoCodigo }}-{{ hora.evento?.numero }} | {{ hora.evento?.titulo }}</td>
+                                                <td>{{ hora.detalle }}</td>
+                                                <td>
+                                                    <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span>
+                                                    <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
+                                                </td>
+                                                <td>{{ hora.diferenciaFormateada }} hs.</td>
+                                            </tr>
+                                        </ng-template>
+                                    </p-table>
                                 </td>
-                                <!-- <td>{{ hora.diferencia | number:'.0-2' }} hs.</td> -->
-                                <td>{{ hora.diferenciaFormateada }} hs.</td>
                             </tr>
                         </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr><td colspan="5" class="text-center py-4">No se encontraron registros de hora.</td></tr>
+                        </ng-template>
+                        <ng-template pTemplate="summary"><div>En total hay {{ totalRecords }} Registros de Hora.</div></ng-template>
                     </p-table>
                 </div>
-                </td>
-                </tr>
-                </ng-template>
-
-                 <ng-template pTemplate="emptymessage">
-                     <tr>
-                         <td colspan="5" class="text-center py-4">
-                             @if (isFiltered(dt)) {
-                                 <div>No se encontraron registros de hora con los filtros actuales.</div>
-                                 <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="clear(dt)">Limpiar filtros</button>
-                             } @else {
-                                 <div>No hay registros de hora cargados todavía.</div>
-                             }
-                         </td>
-                     </tr>
-                 </ng-template>
-                </p-table>
+            </app-ui-card>
         </div>
-        </td>
-        </tr>
-        </ng-template>
-
-
-        <ng-template pTemplate="summary">
-            <div class="flex align-items-center justify-content-between">En total hay {{
-                registrosHorasGeneralesFiltradas ? registrosHorasGeneralesFiltradas.length : 0 }} Registros de Hora.
-            </div>
-        </ng-template>
-        </p-table>
-
     </div>
-    </app-ui-card>
-
-</div>
-</div>
 </div>

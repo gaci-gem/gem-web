@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, ViewChild } from '@angular/core';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { PermisoClave, Rol } from '@core/interfaces/rol';
-import { RolService } from '@core/services/rol';
+import { RolPage, RolService } from '@core/services/rol';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { RolCrud } from '../rol-crud/rol-crud';
@@ -11,7 +11,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { NgIcon } from '@ng-icons/core';
-import { TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { UiCard } from '@app/components/ui-card';
 import { BadgeClickComponent } from '@app/components/badge-click';
@@ -57,6 +57,8 @@ export class Roles extends TrabajarCon<Rol> {
 
   roles!:Rol[];
   primaryColor: string = getColor('primary');
+  totalRoles = 0; globalFilter = ''; sortField: 'codigo' | 'descripcion' | 'color' | 'activo' | undefined; sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -67,19 +69,21 @@ export class Roles extends TrabajarCon<Rol> {
     this.permisoClave = PermisoClave.ROL;
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
+  onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
+  onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
+  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
+  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
+
+  protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
-    this.rolService.getAll(this.filtroActivo).pipe(
+    this.rolService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), codigo: this.getColumnFilter('codigo'), descripcion: this.getColumnFilter('descripcion'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.roles = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.roles = this.roles.filter((rol) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return rol.activo === aux;
-          });
-        }
+        const page = res as RolPage; this.roles = page.data; this.totalRoles = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los roles.')

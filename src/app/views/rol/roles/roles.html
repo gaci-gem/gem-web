@@ -20,11 +20,14 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
                     <p-table
                         #dt
                         [value]="roles"
+                        [lazy]="true"
+                        [totalRecords]="totalRoles"
                         [rows]="10"
+                        [rowsPerPageOptions]="[5, 10, 15, 25, 50]"
                         [paginator]="true"
                         [globalFilterFields]="['codigo', 'descripcion', 'activo']"
                         [tableStyle]="{ 'min-width': '75rem' }"
@@ -32,6 +35,9 @@
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                         [showCurrentPageReport]="true"
+                        (onFilter)="onTableFilter($event)"
+                        (onPage)="onTablePage($event)"
+                        (onSort)="onTableSort($event)"
                         size="small"
                     >
                         <ng-template pTemplate="header">
@@ -71,7 +77,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
-                            <div class="flex align-items-center justify-content-between">En total hay {{ roles ? roles.length : 0 }} Roles.</div>
+                            <div class="flex align-items-center justify-content-between">En total hay {{ totalRoles }} Roles.</div>
                         </ng-template>
                     </p-table>
 

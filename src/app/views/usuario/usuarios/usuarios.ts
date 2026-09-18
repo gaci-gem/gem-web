@@ -1,8 +1,8 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { UiCard } from '@app/components/ui-card';
 import { Usuario } from '@core/interfaces/usuario';
-import { UsuarioService } from '@core/services/usuario';
+import { UsuarioPage, UsuarioService } from '@core/services/usuario';
 import { NgIcon } from '@ng-icons/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Table, TableModule } from 'primeng/table';
@@ -19,6 +19,7 @@ import { SHORTCUTS } from 'src/app/constants/shortcut';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
 import { finalize } from 'rxjs';
+import { TableFilterEvent, TablePageEvent } from 'primeng/table';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { FiltroRadioGroupComponent } from '@app/components/filtro-check';
 import { DrawerService } from '@core/services/drawer.service';
@@ -28,6 +29,8 @@ import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { RolService } from '@core/services/rol';
 import { PermisoAccion } from '@/app/types/permisos';
+
+type TableSortEvent = { sortField?: string | null; sortOrder?: number | null };
 
 @Component({
   selector: 'app-usuarios',
@@ -66,6 +69,11 @@ export class Usuarios extends TrabajarCon<Usuario> {
   roles: any[] = [];
   rolSeleccionado: string | null = null;
   override actionInProgress = false;
+  totalUsuarios = 0;
+  globalFilter = '';
+  sortField: 'id' | 'nombre' | 'apellido' | 'email' | 'usuario' | 'createdAt' | 'ultimo_login' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
  constructor() {
     super(
@@ -88,6 +96,29 @@ export class Usuarios extends TrabajarCon<Usuario> {
   }
 
   filtrarPorRol(): void {
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  onGlobalFilter(value: string): void {
+    this.globalFilter = value;
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  onTableFilter(_event: TableFilterEvent): void {
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  onTablePage(event: TablePageEvent): void {
+    this.loadItems(event.first, event.rows);
+  }
+
+  onTableSort(event: TableSortEvent): void {
+    this.sortField = event.sortField as typeof this.sortField;
+    this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined;
+    this.resetPaginator();
     this.loadItems();
   }
 
@@ -107,28 +138,47 @@ export class Usuarios extends TrabajarCon<Usuario> {
     super.clear(table);
   }
 
-  protected loadItems(): void {
+  override filtroCambio(event: any): void {
+    this.filtroActivo = event;
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  private resetPaginator(): void {
+    if (this.table) this.table.first = 0;
+  }
+
+  protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
-    
-    const request$ = this.rolSeleccionado 
-      ? this.usuarioService.getByRol(this.rolSeleccionado)
-      : this.usuarioService.getAll(this.filtroActivo);
+    const request$ = this.usuarioService.getAll(this.filtroActivo, {
+      globalSearch: this.globalFilter.trim(),
+      rol: this.rolSeleccionado ?? undefined,
+      nombre: this.getColumnFilter('nombre'),
+      apellido: this.getColumnFilter('apellido'),
+      usuario: this.getColumnFilter('usuario'),
+      page: Math.floor(first / rows) + 1,
+      limit: rows,
+      sortField: this.sortField,
+      sortDirection: this.sortDirection,
+    });
 
     request$.pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.usuarios = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.usuarios = this.usuarios.filter((usuario) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return usuario.activo === aux;
-          });
-        }
+        const page = res as UsuarioPage;
+        this.usuarios = page.data;
+        this.totalUsuarios = page.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los usuarios.')
     });
+  }
+
+  private getColumnFilter(field: string): string | undefined {
+    const value = this.table?.filters?.[field];
+    const filter = Array.isArray(value) ? value[0] : value;
+    return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined;
   }
 
   alta(usuario: Usuario): void {

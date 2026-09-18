@@ -35,6 +35,7 @@ import { DrawerService } from '@core/services/drawer.service';
 import { EventoAccionesService } from '@core/services/evento-acciones';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
 import { EventoService } from '@core/services/evento';
+import { EventoCompletoPage } from '@core/services/evento';
 import { SseService } from '@core/services/sse.service';
 import {
   UserStorageService,
@@ -47,7 +48,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Table, TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -105,6 +106,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   eventos: EventoCompleto[] = [];
   selectedEventos: EventoCompleto[] = [];
+  totalEventos = 0;
+  private readonly pageSize = 10;
 
   filtroFecha: Date[] | null = null;
   globalFilter = '';
@@ -266,6 +269,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   onFechaChange(): void {
     this.filtroFecha = this.normalizeDateRange(this.filtroFecha);
+    this.resetPaginator();
     if (
       this.filtroFecha &&
       this.filtroFecha.length === 2 &&
@@ -279,13 +283,30 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   onClearFecha(): void {
     this.filtroFecha = null;
+    this.resetPaginator();
     this.saveState();
     this.loadItems();
   }
 
-  onTableFilter(): void { this.saveState(); }
-  onTableSort(): void { this.saveState(); }
-  onTablePage(): void { this.saveState(); }
+  onGlobalFilter(value: string): void {
+    this.globalFilter = value;
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
+
+  onTableFilter(_event: TableFilterEvent): void {
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
+
+  onTableSort(_event: any): void { this.saveState(); }
+
+  onTablePage(event: TablePageEvent): void {
+    this.saveState();
+    this.loadItems(event.first, event.rows);
+  }
 
   protected override restoreFilterState(state: FiltroState): void {
     const eventState = state as EventoFilterState;
@@ -332,7 +353,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     return dates.every((date): date is Date => date instanceof Date && !Number.isNaN(date.getTime())) ? dates : null;
   }
 
-  protected loadItems(): void {
+  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? this.pageSize): void {
     this.loadingService.show();
 
     let params: any = {};
@@ -341,6 +362,25 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       params.desde = this.formatearFecha(this.filtroFecha[0]);
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
+    params.globalSearch = this.globalFilter.trim();
+    const fieldMap: Record<string, string> = {
+      evento: 'eventoSearch',
+      titulo: 'titulo',
+      'etapaActualData.nombre': 'etapa',
+      'cliente.nombre': 'cliente',
+      'producto.nombre': 'producto',
+      'modulo.nombre': 'modulo',
+      'usuarioActual.usuario': 'usuario',
+    };
+    Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
+      const filter = Array.isArray(metadata) ? metadata[0] : metadata;
+      const target = fieldMap[field];
+      if (target && typeof filter?.value === 'string' && filter.value.trim()) {
+        params[target] = filter.value.trim();
+      }
+    });
+    params.page = Math.floor(first / rows) + 1;
+    params.limit = rows;
 
     this.eventoService
       .getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params)
@@ -351,7 +391,10 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       )
       .subscribe({
         next: (res) => {
-          const eventos = res.map((e) => ({
+          const page = Array.isArray(res)
+            ? { data: res, total: res.length }
+            : res as EventoCompletoPage;
+          const eventos = page.data.map((e) => ({
             ...e,
             evento: formatEventoNumero(e.tipo.codigo, e.numero),
             fechaInicio: (e as any).fechaInicio
@@ -370,6 +413,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
           this.zone.run(() => {
             this.eventos = eventos;
+            this.totalEventos = page.total;
             this.cdr.markForCheck();
           });
         },
@@ -377,6 +421,10 @@ export class EventosUsuario extends TrabajarCon<Evento> {
           this.showError('Error al cargar los eventos.');
         },
       });
+  }
+
+  private resetPaginator(): void {
+    if (this.table) this.table.first = 0;
   }
 
   /** Programa un refresco de la grilla con throttle de 2s para evitar múltiples llamadas */

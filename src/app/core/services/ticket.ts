@@ -6,6 +6,7 @@ import {
   TicketComment,
   Ticket,
   TicketDetail,
+  TicketPage,
   TicketState,
 } from '@core/interfaces/ticket';
 
@@ -14,12 +15,14 @@ export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets`;
 
-  list(filters: { search?: string; estado?: TicketState; clientId?: number }): Observable<Ticket[]> {
+  list(filters: { search?: string; estado?: TicketState; clientId?: number; page?: number; limit?: number }): Observable<TicketPage> {
     let params = new HttpParams();
     if (filters.search) params = params.set('search', filters.search);
     if (filters.estado) params = params.set('estado', filters.estado);
     if (filters.clientId) params = params.set('clienteId', filters.clientId);
-    return this.http.get<Ticket[]>(this.baseUrl, { params });
+    if (filters.page) params = params.set('page', filters.page);
+    if (filters.limit) params = params.set('limit', filters.limit);
+    return this.http.get<TicketPage>(this.baseUrl, { params });
   }
 
   detail(id: number): Observable<TicketDetail> {

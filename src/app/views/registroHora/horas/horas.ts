@@ -10,8 +10,8 @@ import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
-import { Categoria, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
-import { RegistroHoraService } from '@core/services/registro-hora';
+import { Categoria, RegistroHora } from '@core/interfaces/registro-hora';
+import { RegistroHoraQuery, RegistroHoraService } from '@core/services/registro-hora';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -61,12 +61,16 @@ export class Horas extends TrabajarCon<RegistroHora> {
 
   categoriasMap: Map<string, Categoria> = new Map();
 
-  registrosHorasGenerales!: UsuarioHorasGenerales[];
-  registrosHorasGeneralesFiltradas!: UsuarioHorasGenerales[];
+  registrosHorasGenerales: RegistroHora[] = [];
+  registrosHorasGeneralesFiltradas: RegistroHora[] = [];
+  totalRecords = 0;
+  first = 0;
+  rows = 10;
 
   dateRangeFilter: Date[] | undefined;
 
   categoriaFiltro: string | null = null;
+  usuarioFiltro = '';
   readonly tiposTrabajo = TIPOS_TRABAJO;
 
   constructor() {
@@ -174,6 +178,7 @@ export class Horas extends TrabajarCon<RegistroHora> {
   }
 
   onFechaChange(): void {
+    this.resetPaginator();
     if (this.dateRangeFilter && this.dateRangeFilter.length === 2 && this.dateRangeFilter[0] && this.dateRangeFilter[1]) {
       this.consultarRegistros(this.dateRangeFilter[0], this.dateRangeFilter[1]);
     }
@@ -205,54 +210,54 @@ export class Horas extends TrabajarCon<RegistroHora> {
 
   filtrarPorCategoria(codigo: string | null): void {
     this.categoriaFiltro = codigo;
-    if (!codigo) {
-      this.registrosHorasGeneralesFiltradas = this.registrosHorasGenerales;
-      return;
-    }
-    this.registrosHorasGeneralesFiltradas = this.registrosHorasGenerales
-      .map(usuario => ({
-        ...usuario,
-        registrosHora: usuario.registrosHora
-          .map(reg => ({
-            ...reg,
-            horas: reg.horas?.filter(h => h.categoriaCodigo === codigo) || []
-          }))
-          .filter(reg => reg.horas && reg.horas.length > 0)
-      }))
-      .filter(usuario => usuario.registrosHora.length > 0);
-    this.cdr.detectChanges();
+    this.resetPaginator();
+    this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
   }
 
-  consultarRegistros(desde: Date, hasta: Date) {
+  onPageChange(event: { first?: number; rows?: number }): void {
+    this.first = event.first ?? 0;
+    this.rows = event.rows ?? this.rows;
+    this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
+  }
+
+  onGlobalFilter(event: Event): void {
+    this.usuarioFiltro = (event.target as HTMLInputElement).value;
+    this.resetPaginator();
+    this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
+  }
+
+  private resetPaginator(): void {
+    this.first = 0;
+  }
+
+  consultarRegistros(desde?: Date, hasta?: Date) {
+    if (!desde || !hasta) return;
     this.loadingService.show();
-    this.registroHoraService.getHorasGenerales(desde, hasta).pipe(
+    const query: RegistroHoraQuery = {
+      page: Math.floor(this.first / this.rows) + 1,
+      limit: this.rows,
+      fechaDesde: desde.toISOString().slice(0, 10),
+      fechaHasta: hasta.toISOString().slice(0, 10),
+      categoriaCodigo: this.categoriaFiltro || undefined,
+      usuario: this.usuarioFiltro || undefined,
+    };
+    this.registroHoraService.getAll(query).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        // console.log(res)
-        const registros = (res || []).map((usuario: any) => {
-          const registrosHora = Array.isArray(usuario.registrosHora)
-            ? usuario.registrosHora.map((reg: any) => {
-                const fecha = reg?.fecha ? parseIsoAsLocal(reg.fecha) : undefined;
-                const horas = Array.isArray(reg.horas)
-                  ? reg.horas.map((h: any) => ({
-                      ...h,
-                      inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
-                      fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
-                      categoriaCodigo: h?.categoriaCodigo || null
-                    }))
-                  : reg.horas;
-                return { ...reg, fecha, horas };
-              })
-            : usuario.registrosHora;
-          return { ...usuario, registrosHora };
-        });
-
-        const filtrados = registros.filter((usuario: any) =>
-          Array.isArray(usuario.registrosHora) && usuario.registrosHora.length > 0
-        );
-        this.registrosHorasGenerales = filtrados;
-        this.registrosHorasGeneralesFiltradas = filtrados;
+        const registros = res.data.map((reg: any) => ({
+          ...reg,
+          fecha: parseIsoAsLocal(reg.fecha),
+          horas: reg.horas?.map((h: any) => ({
+            ...h,
+            inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
+            fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
+            categoriaCodigo: h?.categoriaCodigo || null,
+          })),
+        }));
+        this.registrosHorasGenerales = registros;
+        this.registrosHorasGeneralesFiltradas = registros;
+        this.totalRecords = res.pagination.total;
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los registros de Hora.')

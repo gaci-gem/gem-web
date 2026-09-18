@@ -52,4 +52,18 @@ describe('Tickets', () => {
     expect(service.createEvent).not.toHaveBeenCalledWith(7, closeResult);
     expect(component.loadItems).toHaveBeenCalled();
   });
+
+  it('resets the visible paginator offset when filters return to the first page', () => {
+    const component = Object.create(Tickets.prototype) as any;
+    component.table = { first: 20 };
+    component.search = 'access';
+    component.estado = '';
+    component.loadItems = jasmine.createSpy('loadItems');
+
+    component.onFilterChange();
+
+    expect(component.page).toBe(1);
+    expect(component.table.first).toBe(0);
+    expect(component.loadItems).toHaveBeenCalled();
+  });
 });

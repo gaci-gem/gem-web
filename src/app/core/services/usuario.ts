@@ -1,9 +1,30 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Adicional, Preferencia, UsuarioCompleto, Usuario as UsuarioInterface } from '@core/interfaces/usuario';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
+
+export interface UsuarioPage {
+  data: UsuarioInterface[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface UsuarioListParams {
+  globalSearch?: string;
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  usuario?: string;
+  rol?: string;
+  page?: number;
+  limit?: number;
+  sortField?: 'id' | 'nombre' | 'apellido' | 'email' | 'usuario' | 'createdAt' | 'ultimo_login';
+  sortDirection?: 'asc' | 'desc';
+}
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +33,14 @@ export class UsuarioService {
   private http = inject(HttpClient);
   URL_COMPLETA = environment.BASE_URL;
   
-  getAll(activo: FiltroActivo = FiltroActivo.TRUE) : Observable<UsuarioInterface[]>{
-    return this.http.get<UsuarioInterface[]>(`${this.URL_COMPLETA}/usuario?activo=${activo}`);
+  getAll(activo?: FiltroActivo): Observable<UsuarioInterface[]>;
+  getAll(activo: FiltroActivo, params: UsuarioListParams): Observable<UsuarioPage>;
+  getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: UsuarioListParams): Observable<UsuarioInterface[] | UsuarioPage> {
+    let httpParams = new HttpParams().set('activo', activo);
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') httpParams = httpParams.set(key, String(value));
+    });
+    return this.http.get<UsuarioInterface[] | UsuarioPage>(`${this.URL_COMPLETA}/usuario`, { params: httpParams });
   }
 
   getByID(usuarioId:string) : Observable<UsuarioInterface>{

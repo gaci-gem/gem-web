@@ -1,17 +1,17 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Cliente } from '@core/interfaces/cliente';
-import { ClienteService } from '@core/services/cliente';
+import { ClientePage, ClienteService } from '@core/services/cliente';
 import { LoadingService } from '@core/services/loading.service';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Table, TableModule } from 'primeng/table';
+import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -28,6 +28,8 @@ import { ControlTrabajarCon } from '@app/components/trabajar-con/components/cont
 import { getTimestamp } from '@/app/utils/time-utils';
 import { PermisoAccion } from '@/app/types/permisos';
 import { ClienteCredencial } from '../credencial/cliente-credencial';
+
+type TableSortEvent = { sortField?: string | null; sortOrder?: number | null };
 
 @Component({
   selector: 'app-clientes',
@@ -62,6 +64,11 @@ export class Clientes extends TrabajarCon<Cliente> {
   clientes!: Cliente[];
   override actionInProgress = false;
   private pendingSearchId: number | null = null;
+  totalClientes = 0;
+  globalFilter = '';
+  sortField: 'id' | 'sigla' | 'nombre' | 'activo' | undefined;
+  sortDirection: 'asc' | 'desc' | undefined;
+  @ViewChild('dt') table?: Table;
 
   constructor() {
     super(
@@ -78,19 +85,55 @@ export class Clientes extends TrabajarCon<Cliente> {
     });
   }
 
-  protected loadItems(): void {
+  onGlobalFilter(value: string): void {
+    this.globalFilter = value;
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  onTableFilter(_event: TableFilterEvent): void {
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  onTablePage(event: TablePageEvent): void {
+    this.loadItems(event.first, event.rows);
+  }
+
+  onTableSort(event: TableSortEvent): void {
+    this.sortField = event.sortField as typeof this.sortField;
+    this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined;
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  override filtroCambio(event: any): void {
+    this.filtroActivo = event;
+    this.resetPaginator();
+    this.loadItems();
+  }
+
+  private resetPaginator(): void {
+    if (this.table) this.table.first = 0;
+  }
+
+  protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
-    this.clienteService.getAll(this.filtroActivo).pipe(
+    this.clienteService.getAll(this.filtroActivo, {
+      globalSearch: this.globalFilter.trim(),
+      sigla: this.getColumnFilter('sigla'),
+      nombre: this.getColumnFilter('nombre'),
+      page: Math.floor(first / rows) + 1,
+      limit: rows,
+      sortField: this.sortField,
+      sortDirection: this.sortDirection,
+    }).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
       next: (res) => {
-        this.clientes = res;
-        if (this.filtroActivo !== FiltroActivo.ALL){
-          this.clientes = this.clientes.filter((cliente) => {
-            let aux = this.filtroActivo === FiltroActivo.TRUE;
-            return cliente.activo === aux;
-          });
-        }
+        const page = res as ClientePage;
+        this.clientes = page.data;
+        this.totalClientes = page.total;
         this.cdr.detectChanges();
         this.openPendingSearchResult();
       },
@@ -100,12 +143,26 @@ export class Clientes extends TrabajarCon<Cliente> {
     });
   }
 
+  private getColumnFilter(field: string): string | undefined {
+    const value = this.table?.filters?.[field];
+    const filter = Array.isArray(value) ? value[0] : value;
+    return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined;
+  }
+
   private openPendingSearchResult(): void {
-    if (this.pendingSearchId === null || !this.clientes?.length) return;
-    const cliente = this.clientes.find(item => item.id === this.pendingSearchId);
-    if (!cliente) return;
+    if (this.pendingSearchId === null) return;
+    const cliente = this.clientes?.find(item => item.id === this.pendingSearchId);
+    if (cliente) {
+      this.pendingSearchId = null;
+      this.mostrarModalCrud(cliente, 'M');
+      return;
+    }
+    const id = this.pendingSearchId;
     this.pendingSearchId = null;
-    this.mostrarModalCrud(cliente, 'M');
+    this.clienteService.getById(id).subscribe({
+      next: item => this.mostrarModalCrud(item, 'M'),
+      error: () => this.showError('Error al cargar el cliente.')
+    });
   }
 
   isFiltered(table: Table): boolean {

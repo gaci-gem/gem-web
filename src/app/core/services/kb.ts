@@ -6,6 +6,8 @@ import { kb, deploy } from "@/app/core/interfaces/kb";
 import { CatalogoSearchOptions } from "@core/interfaces/catalogo-filter";
 import { combineCatalogoParams, CATALOGO_FILTROS_CONFIG } from "@/app/utils/catalogo-filter-utils";
 
+export interface KbPage { data: kb[]; total: number; page: number; limit: number; totalPages: number; }
+
 @Injectable({
   providedIn: 'root'
 })
@@ -62,7 +64,9 @@ export class KbService {
    * }).subscribe(kbs => {...});
    * ```
    */
-  findAll(options: CatalogoSearchOptions = {}): Observable<kb[]> {
+  findAll(options: CatalogoSearchOptions & ({ page: number } | { limit: number })): Observable<KbPage>;
+  findAll(options?: CatalogoSearchOptions): Observable<kb[]>;
+  findAll(options: CatalogoSearchOptions = {}): Observable<kb[] | KbPage> {
     const { activo, search, catalogos, page, limit, sortBy, sortOrder } = options;
     
     // Preparar parámetros base
@@ -91,7 +95,7 @@ export class KbService {
       ? combineCatalogoParams(baseParams, catalogos, CATALOGO_FILTROS_CONFIG['KB'], 'simple')
       : new HttpParams({ fromObject: baseParams as any });
 
-    return this.http.get<kb[]>(`${this.baseUrl}`, { params });
+    return this.http.get<kb[] | KbPage>(`${this.baseUrl}`, { params });
   }
 
   /**

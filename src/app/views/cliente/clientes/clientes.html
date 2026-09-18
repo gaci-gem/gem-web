@@ -21,20 +21,26 @@
                         </ng-template>
                     </p-toolbar>
                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
-                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
+                        <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span>
                         <app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group>
                     </div>
                     <p-table
                         #dt
                         [value]="clientes"
+                        [lazy]="true"
+                        [totalRecords]="totalClientes"
                         [rows]="10"
+                        [rowsPerPageOptions]="[5, 10, 15, 25, 50]"
                         [paginator]="true"
-                        [globalFilterFields]="['id', 'sigla', 'nombre', 'activo']"
+                        [globalFilterFields]="['sigla', 'nombre']"
                         [tableStyle]="{ 'min-width': '75rem' }"
                         [rowHover]="true"
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                         [showCurrentPageReport]="true"
+                        (onFilter)="onTableFilter($event)"
+                        (onPage)="onTablePage($event)"
+                        (onSort)="onTableSort($event)"
                         size="small"
                     >
                         <ng-template pTemplate="header">
@@ -46,7 +52,7 @@
                                 <th pSortableColumn="sigla">Sigla <p-sortIcon field="sigla"></p-sortIcon><p-columnFilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                 <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" ></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
                                  <th>Proyectos</th>
-                                 <th pSortableColumn="credentialCount">Credenciales <p-sortIcon field="credentialCount"></p-sortIcon></th>
+                                 <th>Credenciales</th>
                                  <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
                                 <th></th>
                             </tr>
@@ -103,7 +109,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
-                            <div class="flex align-items-center justify-content-between">En total hay {{ clientes ? clientes.length : 0 }} Clientes.</div>
+                            <div class="flex align-items-center justify-content-between">En total hay {{ totalClientes }} Clientes.</div>
                         </ng-template>
                     </p-table>
 

@@ -20,7 +20,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
 
                     <!-- Filtros de Catálogo -->
                     <p-panel header="Filtros" [toggleable]="true" [collapsed]="true" styleClass="mb-3">
@@ -35,14 +35,19 @@
                     <p-table
                         #dt
                         [value]="kbs"
-                        [rows]="10"
+                         [lazy]="true"
+                         [totalRecords]="totalKbs"
+                         [rows]="10"
+                         [rowsPerPageOptions]="[5, 10, 15, 25, 50]"
                         [paginator]="true"
                         [globalFilterFields]="['id', 'nombre', 'plataforma', 'tecnologia', 'tipo', 'estado', 'uso_actual']"
                         [tableStyle]="{ 'min-width': '75rem' }"
                         [rowHover]="true"
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
-                        [showCurrentPageReport]="true"
+                         [showCurrentPageReport]="true"
+                         (onPage)="onTablePage($event)"
+                         (onSort)="onTableSort($event)"
                         size="small"
                     >
                         <ng-template pTemplate="header">

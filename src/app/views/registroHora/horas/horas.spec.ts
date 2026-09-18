@@ -5,6 +5,7 @@ import { Horas } from './horas';
 import { RegistroHoraService } from '@core/services/registro-hora';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { FiltroPresetService } from '@core/services/filtro-preset';
 
 describe('Horas', () => {
   let registroHoraServiceSpy: jasmine.SpyObj<RegistroHoraService>;
@@ -31,8 +32,9 @@ describe('Horas', () => {
   }];
 
   beforeEach(async () => {
-    registroHoraServiceSpy = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getHorasGenerales', 'exportExcel']);
-    registroHoraServiceSpy.getHorasGenerales.and.returnValue(of(mockResponse as any));
+    registroHoraServiceSpy = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getAll', 'getCategorias', 'exportExcel']);
+    registroHoraServiceSpy.getAll.and.returnValue(of({ data: mockResponse[0].registrosHora, pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }) as any);
+    registroHoraServiceSpy.getCategorias.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [Horas],
@@ -41,6 +43,7 @@ describe('Horas', () => {
         DialogService,
         MessageService,
         ConfirmationService,
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
         provideZonelessChangeDetection(),
       ],
     }).compileComponents();
@@ -54,7 +57,7 @@ describe('Horas', () => {
     component.consultarRegistros(new Date('2026-05-01'), new Date('2026-05-31'));
 
     expect(component.registrosHorasGenerales.length).toBe(1);
-    const hora = component.registrosHorasGenerales[0].registrosHora[0].horas?.[0];
+    const hora = component.registrosHorasGenerales[0].horas?.[0];
     expect(hora?.categoriaCodigo).toBe('DEV');
     expect(hora?.categoria?.descripcion).toBe('Desarrollo');
     expect(hora?.categoria?.color).toBe('#2196F3');
