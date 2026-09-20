@@ -161,6 +161,13 @@ export interface EventoUsuario {
   apellido: string;
   usuario: string;
   color: string;
+  adicionales?: EventoUsuarioAdicional[];
+}
+
+export interface EventoUsuarioAdicional {
+  id: number;
+  clave: string;
+  valor: string;
 }
 
 /** Contador de relaciones para EventoCompleto */

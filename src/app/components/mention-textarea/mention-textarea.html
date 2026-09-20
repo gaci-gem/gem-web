@@ -19,7 +19,9 @@
           role="option"
           (mousedown)="selectOption(opt)"
         >
-          @if (opt.color) {
+          @if (opt.avatarImage) {
+            <img class="mention-avatar" [src]="opt.avatarImage" [alt]="opt.label" />
+          } @else if (opt.color) {
             <span class="mention-avatar" [style.background]="opt.color">
               {{ getInitials(opt.value) }}
             </span>

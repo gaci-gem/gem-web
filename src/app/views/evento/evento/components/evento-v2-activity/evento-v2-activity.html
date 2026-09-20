@@ -96,9 +96,11 @@
               class="d-flex gap-2 align-items-start comment-item"
               [class.pb-3]="!last"
             >
-              <span class="avatar-circle">{{
-                getInitials(item.usuario?.usuario)
-              }}</span>
+              <img
+                class="avatar-circle"
+                [src]="getCommentAvatar(item.usuario)"
+                [alt]="item.usuario?.usuario || 'Usuario'"
+              />
 
               <div class="flex-grow-1 border rounded p-2 bg-body-tertiary">
                 <p class="mb-1 small text-body-secondary">

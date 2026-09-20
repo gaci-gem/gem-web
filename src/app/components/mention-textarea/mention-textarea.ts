@@ -11,6 +11,8 @@ export interface MentionOption {
   sublabel?: string;
   /** Color para el avatar */
   color?: string;
+  /** Generated profile avatar image */
+  avatarImage?: string;
 }
 
 @Component({

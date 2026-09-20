@@ -10,7 +10,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { ItemActividadComponent } from '../item-actividad/item-actividad';
-import { VidaEvento } from '@core/interfaces/evento';
+import { EventoUsuario, VidaEvento } from '@core/interfaces/evento';
 import { ACCIONES } from '@/app/constants/actividad_acciones';
 import { ComentarioTextoComponent } from '../comentario-texto/comentario-texto';
 import { DrawerService } from '@core/services/drawer.service';
@@ -21,6 +21,12 @@ import {
   MentionTextareaComponent,
 } from '@app/components/mention-textarea/mention-textarea';
 import { finalize } from 'rxjs';
+import {
+  AVATAR_POR_DEFECTO,
+  AvatarUser,
+  getAvatarImage,
+  getAvatarStrategy,
+} from '@/app/constants/avatares-disponibles';
 
 @Component({
   selector: 'app-evento-v2-activity',
@@ -68,9 +74,15 @@ export class EventoV2ActivityComponent implements OnInit {
   actividadesMostradas: VidaEvento[] = [];
   hayMasDeSieteActividades = false;
 
-  getInitials(usuario?: string): string {
-    if (!usuario) return 'US';
-    return usuario.slice(0, 2).toUpperCase();
+  getCommentAvatar(usuario?: EventoUsuario): string {
+    const strategy = usuario?.adicionales?.find(
+      (adicional) => adicional.clave === 'fotoPerfil',
+    )?.valor;
+
+    return getAvatarImage(
+      getAvatarStrategy(strategy ?? AVATAR_POR_DEFECTO),
+      (usuario ?? {}) as AvatarUser,
+    );
   }
 
   ngOnInit(): void {
@@ -83,13 +95,31 @@ export class EventoV2ActivityComponent implements OnInit {
       )
       .subscribe({
         next: (usuarios) => {
-          this.usuarioOptions = usuarios.map((u) => ({
-            id: u.id ?? u.usuario,
-            label: `${u.nombre} ${u.apellido}`,
-            value: u.usuario,
-            sublabel: u.usuario,
-            color: u.color,
-          }));
+          this.usuarioOptions = usuarios.map((u) => {
+            const strategy = u.adicionales?.find(
+              (adicional) => adicional.clave === 'fotoPerfil',
+            )?.valor;
+            const avatarUser: AvatarUser = {
+              id: u.id,
+              nombre: u.nombre,
+              apellido: u.apellido,
+              email: u.email,
+              usuario: u.usuario,
+              color: u.color,
+            };
+
+            return {
+              id: u.id ?? u.usuario,
+              label: `${u.nombre} ${u.apellido}`,
+              value: u.usuario,
+              sublabel: u.usuario,
+              color: u.color,
+              avatarImage: getAvatarImage(
+                getAvatarStrategy(strategy ?? AVATAR_POR_DEFECTO),
+                avatarUser,
+              ),
+            };
+          });
         },
       });
   }

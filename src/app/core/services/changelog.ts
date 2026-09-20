@@ -16,6 +16,35 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-09-20',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Trabaja con listas grandes de eventos de forma más ágil gracias a la búsqueda, los filtros y la paginación.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'improvement',
+        text: 'Navega y ejecuta acciones con atajos de teclado, navegación por filas y una paleta de comandos más clara.',
+      },
+      {
+        type: 'improvement',
+        text: 'Mejoramos la claridad visual y la carga de la información para que encuentres lo importante más fácilmente.',
+      },
+      {
+        type: 'feature',
+        text: 'Los perfiles y los comentarios de eventos muestran avatares de forma consistente, también al usar @menciones.',
+        link: '/usuario/perfil',
+      },
+      {
+        type: 'improvement',
+        text: 'La gestión de tickets ofrece una experiencia más clara para consultar y actualizar solicitudes.',
+        link: '/gem-clientes/tickets',
+      },
+    ],
+  },
+  {
     version: '0.3.3',
     date: '2026-08-31',
     changes: [
