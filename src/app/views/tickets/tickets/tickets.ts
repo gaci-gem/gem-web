@@ -11,7 +11,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { UiCard } from '@app/components/ui-card';
 import { LoadingService } from '@core/services/loading.service';
-import { TicketService } from '@core/services/ticket';
+import { TicketService, TicketSortField } from '@core/services/ticket';
 import { TICKET_STATES, Ticket, TicketState } from '@core/interfaces/ticket';
 import { DrawerService } from '@core/services/drawer.service';
 import { TicketActionDialog } from '../ticket/ticket-action-dialog';
@@ -50,7 +50,9 @@ export class Tickets implements OnInit {
    tickets: Ticket[] = [];
    total = 0;
    page = 1;
-   limit = 10;
+  limit = 10;
+  sortField: TicketSortField = 'createdAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
   search = '';
   estado: TicketState | '' = '';
   readonly states = TICKET_STATES.map((value) => ({ label: value.replaceAll('_', ' '), value }));
@@ -139,6 +141,15 @@ export class Tickets implements OnInit {
   onPageChange(event: { first?: number; rows?: number }): void {
     this.limit = event.rows ?? this.limit;
     this.page = Math.floor((event.first ?? 0) / this.limit) + 1;
+    this.loadItems();
+  }
+
+  onSort(event: { field?: string; order?: number }): void {
+    if (!['subject', 'clientName', 'status', 'createdAt'].includes(event.field as string)) return;
+    this.sortField = event.field as TicketSortField;
+    this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    this.page = 1;
+    if (this.table) this.table.first = 0;
     this.loadItems();
   }
 

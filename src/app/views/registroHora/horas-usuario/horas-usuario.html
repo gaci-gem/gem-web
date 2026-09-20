@@ -81,7 +81,7 @@
                          <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..." /></span>
                         <div class="flex align-items-center gap-1"><label for="filtroFechas" class="me-1">Fecha:</label><p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month" dateFormat="mm/yy" [readonlyInput]="true" (onClose)="consultarRegistros(dateFilter)"></p-datepicker></div>
                     </div>
-                       <p-table #dt [value]="registrosHorasFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)"
+                        <p-table #dt [value]="registrosHorasFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)"
                         [globalFilterFields]="['id', 'fecha', 'usuario.usuario', 'horasTotales']"
                         [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
@@ -95,12 +95,11 @@
                                 <th pSortableColumn="fecha">Fecha <p-sortIcon field="fecha"></p-sortIcon><p-columnFilter
                                         type="text" field="fecha" display="menu" matchMode="contains"
                                         style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="usuario.usuario">Usuario <p-sortIcon
-                                        field="usuario.usuario"></p-sortIcon><p-columnFilter type="text"
+                                <th pSortableColumn="createdAt">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
+                                <th>Usuario <p-columnFilter type="text"
                                         field="usuario.usuario" display="menu" matchMode="contains"
                                         style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="horasTotales">Total Dia <p-sortIcon
-                                        field="horasTotales"></p-sortIcon></th>
+                                <th>Total Dia</th>
                                 <th></th>
                             </tr>
                         </ng-template>
@@ -114,6 +113,7 @@
                                 <td hidden>{{ registro.id }}</td>
                                 <!-- <td>{{ registro.fecha | date:'EEEE, dd MMMM yy'}}</td> -->
                                 <td>{{ registro.fecha | date:'fullDate'}}</td>
+                                <td>{{ registro.createdAt | date:'short' }}</td>
                                 <td>{{ registro.usuario.usuario }}</td>
                                 <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>

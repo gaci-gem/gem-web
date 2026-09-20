@@ -30,7 +30,8 @@
             #dt
             [value]="novedades"
             [lazy]="true"
-            (onLazyLoad)="onTablePage($event)"
+             (onLazyLoad)="onTablePage($event)"
+             (onSort)="onTableSort($event)"
             [totalRecords]="total"
             [rows]="limit"
             [paginator]="true"
@@ -45,11 +46,11 @@
           >
             <ng-template pTemplate="header">
               <tr>
-                <th style="min-width: 100px;">Tipo</th>
-                <th>Título</th>
+                 <th style="min-width: 100px;" pSortableColumn="tipo">Tipo <p-sortIcon field="tipo"></p-sortIcon></th>
+                 <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
                 <th style="min-width: 120px;">Creado por</th>
-                <th style="min-width: 100px;">Creado</th>
-                <th style="min-width: 100px;">Estado</th>
+                 <th style="min-width: 100px;" pSortableColumn="createdAt">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
+                 <th style="min-width: 100px;" pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
                 <th style="width: 8rem;">Acciones</th>
               </tr>
             </ng-template>

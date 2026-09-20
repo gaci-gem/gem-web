@@ -29,7 +29,7 @@ import { getTimestamp } from '@/app/utils/time-utils';
 import { PermisoAccion } from '@/app/types/permisos';
 import { ClienteCredencial } from '../credencial/cliente-credencial';
 
-type TableSortEvent = { sortField?: string | null; sortOrder?: number | null };
+type TableSortEvent = { field?: string | null; order?: number | null };
 
 @Component({
   selector: 'app-clientes',
@@ -101,8 +101,8 @@ export class Clientes extends TrabajarCon<Cliente> {
   }
 
   onTableSort(event: TableSortEvent): void {
-    this.sortField = event.sortField as typeof this.sortField;
-    this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined;
+    this.sortField = event.field as typeof this.sortField;
+    this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined;
     this.resetPaginator();
     this.loadItems();
   }

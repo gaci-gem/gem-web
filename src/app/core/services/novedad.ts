@@ -27,6 +27,8 @@ export class NovedadService {
         if (query.createdById) { params = params.set('createdById', query.createdById); }
         if (query.page !== undefined) { params = params.set('page', query.page); }
         if (query.limit !== undefined) { params = params.set('limit', query.limit); }
+        if (query.sortField) { params = params.set('sortField', query.sortField); }
+        if (query.sortDirection) { params = params.set('sortDirection', query.sortDirection); }
 
         return this.http.get<PaginatedNovedadResponse>(`${this.URL_COMPLETA}/novedad`, { params });
     }

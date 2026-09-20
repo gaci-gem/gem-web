@@ -28,6 +28,25 @@ describe('EventoService.getAllComplete', () => {
     request.flush({ data: [], total: 11, page: 3, limit: 5, totalPages: 3 });
   });
 
+  it('forwards the validated sort contract for both complete-list endpoints', () => {
+    service.getAllComplete(FiltroActivo.FALSE, {
+      page: 2, limit: 5, sortField: 'fechaFinEst', sortDirection: 'asc',
+    }).subscribe();
+    let request = http.expectOne((req) => req.url === `${environment.BASE_URL}/evento/completo`);
+    expect(request.request.params.get('sortField')).toBe('fechaFinEst');
+    expect(request.request.params.get('sortDirection')).toBe('asc');
+    request.flush({ data: [], total: 0, page: 2, limit: 5, totalPages: 0 });
+
+    service.getAllCompleteByUsuario('user-1', {
+      page: 3, limit: 5, sortField: 'prioridadFin', sortDirection: 'desc',
+    }).subscribe();
+    request = http.expectOne((req) => req.url === `${environment.BASE_URL}/evento/completo/usuario/user-1`);
+    expect(request.request.params.get('sortField')).toBe('prioridadFin');
+    expect(request.request.params.get('sortDirection')).toBe('desc');
+    expect(request.request.params.get('page')).toBe('3');
+    request.flush({ data: [], total: 0, page: 3, limit: 5, totalPages: 0 });
+  });
+
   it('serializes global and visible column filters', () => {
     service.getAllComplete(FiltroActivo.FALSE, {
       globalSearch: 'acme', eventoSearch: 'EVT-001', titulo: 'Incident',

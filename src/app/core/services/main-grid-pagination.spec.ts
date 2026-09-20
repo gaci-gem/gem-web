@@ -58,7 +58,7 @@ describe('main grid list services', () => {
       expect(resetPaginator).toHaveBeenCalledBefore(loadItems);
       resetPaginator.calls.reset();
       loadItems.calls.reset();
-      componentType.prototype.onTableSort.call(component, { sortField: 'nombre', sortOrder: 1 });
+      componentType.prototype.onTableSort.call(component, { field: 'nombre', order: 1 });
       expect(resetPaginator).toHaveBeenCalledBefore(loadItems);
     });
   });

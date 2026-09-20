@@ -28,7 +28,16 @@ export interface EventoCompletoParams {
   propio?: boolean;
   page?: number;
   limit?: number;
+  sortField?: EventoCompletoSortField;
+  sortDirection?: 'asc' | 'desc';
 }
+
+export type EventoCompletoSortField =
+  | 'prioridadFin'
+  | 'createdAt'
+  | 'fechaInicio'
+  | 'fechaFinEst'
+  | 'numero';
 
 @Injectable({
   providedIn: 'root'

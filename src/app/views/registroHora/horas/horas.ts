@@ -66,6 +66,8 @@ export class Horas extends TrabajarCon<RegistroHora> {
   totalRecords = 0;
   first = 0;
   rows = 10;
+  sortField: 'fecha' | 'createdAt' = 'fecha';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   dateRangeFilter: Date[] | undefined;
 
@@ -220,6 +222,14 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
   }
 
+  onSort(event: { field?: string; order?: number }): void {
+    if (event.field !== 'fecha' && event.field !== 'createdAt') return;
+    this.sortField = event.field;
+    this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    this.resetPaginator();
+    this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
+  }
+
   onGlobalFilter(event: Event): void {
     this.usuarioFiltro = (event.target as HTMLInputElement).value;
     this.resetPaginator();
@@ -240,6 +250,8 @@ export class Horas extends TrabajarCon<RegistroHora> {
       fechaHasta: hasta.toISOString().slice(0, 10),
       categoriaCodigo: this.categoriaFiltro || undefined,
       usuario: this.usuarioFiltro || undefined,
+      orderBy: this.sortField,
+      orderDir: this.sortDirection,
     };
     this.registroHoraService.getAll(query).pipe(
       finalize(() => this.loadingService.hide())

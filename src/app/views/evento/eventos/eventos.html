@@ -60,9 +60,10 @@
                  <th hidden>Id</th>
                  <th hidden>Tipo</th>
                  <th hidden>Numero</th>
-                 <th style="min-width: 110px" pFrozenColumn>
+                  <th style="min-width: 110px" pFrozenColumn pSortableColumn="numero">
                     <div class="flex align-items-center" style="justify-content: space-around" >
-                        Evento
+                         Evento
+                         <p-sortIcon field="numero"></p-sortIcon>
                         <p-columnFilter type="text" field="eventoSearch" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnFilter>
                     </div>
                 </th>
@@ -96,16 +97,16 @@
                         <p-columnFilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnFilter>
                     </div>
                 </th>
-                 <th> Prioridad </th>
+                  <th pSortableColumn="prioridadFin"> Prioridad <p-sortIcon field="prioridadFin"></p-sortIcon></th>
                  <th style="min-width: 115px" filterField="usuarioActual.usuario" >
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Usuario
                         <p-columnFilter type="text" field="usuarioActual.usuario" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnFilter>
                     </div>
                 </th>
-                 <th>Alta</th>
-                 <th>Inicio</th>
-                 <th>Fin</th>
+                  <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
+                  <th pSortableColumn="fechaInicio">Inicio <p-sortIcon field="fechaInicio"></p-sortIcon></th>
+                  <th pSortableColumn="fechaFinEst">Fin <p-sortIcon field="fechaFinEst"></p-sortIcon></th>
                  <th hidden> Usuario Alta </th>
                 <th></th>
               </tr>
@@ -149,7 +150,7 @@
                 </td>
                 <td> {{ evento?.createdAt ? (evento.createdAt | date : "short") : "" }} </td>
                 <td> {{ evento?.fechaInicio ? (evento.fechaInicio | date : "shortDate") : "" }} </td>
-                <td> {{ evento?.fechaFin ? (evento.fechaFin | date : "shortDate") : "" }} </td>
+                 <td> {{ (evento?.fechaFinEst || evento?.fechaFinReal) ? ((evento.fechaFinEst || evento.fechaFinReal) | date : "shortDate") : "" }} </td>
                 <td hidden>{{ evento?.usuarioAlta?.usuario }}</td>
                 <td class="d-flex justify-content-end" style="min-height: 55px">
                     @if (!evento.cerrado) {

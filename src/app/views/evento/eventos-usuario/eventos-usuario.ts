@@ -34,7 +34,7 @@ import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { DrawerService } from '@core/services/drawer.service';
 import { EventoAccionesService } from '@core/services/evento-acciones';
 import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
-import { EventoService } from '@core/services/evento';
+import { EventoCompletoSortField, EventoService } from '@core/services/evento';
 import { EventoCompletoPage } from '@core/services/evento';
 import { SseService } from '@core/services/sse.service';
 import {
@@ -108,6 +108,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   selectedEventos: EventoCompleto[] = [];
   totalEventos = 0;
   private readonly pageSize = 10;
+  sortField: EventoCompletoSortField = 'createdAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   filtroFecha: Date[] | null = null;
   globalFilter = '';
@@ -301,7 +303,16 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.loadItems();
   }
 
-  onTableSort(_event: any): void { this.saveState(); }
+  onTableSort(event: { field?: string; order?: number }): void {
+    const sortField = event.field === 'evento' ? 'numero' : event.field;
+    if (['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(sortField as string)) {
+      this.sortField = sortField as EventoCompletoSortField;
+      this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    }
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
 
   onTablePage(event: TablePageEvent): void {
     this.saveState();
@@ -314,6 +325,10 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.filtroFecha = this.normalizeDateRange(eventState.fecha);
     this.globalFilter = eventState.globalFilter ?? '';
     this.searchValue.set(this.globalFilter);
+    if (eventState.sortField && ['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(eventState.sortField)) {
+      this.sortField = eventState.sortField as EventoCompletoSortField;
+      this.sortDirection = eventState.sortOrder === 1 ? 'asc' : 'desc';
+    }
     this.restoreTableState(eventState, this.table);
   }
 
@@ -381,6 +396,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     });
     params.page = Math.floor(first / rows) + 1;
     params.limit = rows;
+    params.sortField = this.sortField;
+    params.sortDirection = this.sortDirection;
 
     this.eventoService
       .getAllCompleteByUsuario(this.usuarioActivo?.id ?? '', params)

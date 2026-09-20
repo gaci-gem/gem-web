@@ -77,6 +77,8 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   totalRecords = 0;
   first = 0;
   rows = 10;
+  sortField: 'fecha' | 'createdAt' = 'fecha';
+  sortDirection: 'asc' | 'desc' = 'desc';
   usuarioFiltro = '';
   private expandedRegistroKeys = new Set<string>();
 
@@ -170,6 +172,8 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
       page: Math.floor(this.first / this.rows) + 1,
       limit: this.rows,
       usuario: this.usuarioFiltro || undefined,
+      orderBy: this.sortField,
+      orderDir: this.sortDirection,
     };
     this.registroHoraService.getByUsuario(this.usuarioActivo?.id!, query).pipe(
       finalize(() => this.loadingService.hide())
@@ -218,6 +222,14 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   onPageChange(event: { first?: number; rows?: number }): void {
     this.first = event.first ?? 0;
     this.rows = event.rows ?? this.rows;
+    this.consultarRegistros(this.dateFilter);
+  }
+
+  onSort(event: { field?: string; order?: number }): void {
+    if (event.field !== 'fecha' && event.field !== 'createdAt') return;
+    this.sortField = event.field;
+    this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    this.resetPaginator();
     this.consultarRegistros(this.dateFilter);
   }
 

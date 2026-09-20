@@ -77,7 +77,7 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
   onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
   onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
   onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
-  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  onTableSort(event: { field?: string; order?: number }): void { this.sortField = event.field as typeof this.sortField; this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
   private resetPaginator(): void { if (this.table) this.table.first = 0; }

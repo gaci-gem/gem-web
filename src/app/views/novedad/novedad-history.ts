@@ -67,6 +67,8 @@ export class NovedadHistory extends TrabajarCon<Novedad> {
   loading = false;
   page = 0;
   limit = 10;
+  sortField: 'createdAt' | 'titulo' | 'tipo' | 'estado' = 'createdAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   // Filters
   filterTipo = '';
@@ -107,6 +109,8 @@ export class NovedadHistory extends TrabajarCon<Novedad> {
     const query: QueryNovedadDto = {
       page: this.page + 1,
       limit: this.limit,
+      sortField: this.sortField,
+      sortDirection: this.sortDirection,
     };
 
     if (this.filterTipo) query.tipo = this.filterTipo as NovedadTipo;
@@ -138,6 +142,14 @@ export class NovedadHistory extends TrabajarCon<Novedad> {
   onTablePage(event: any): void {
     this.page = Math.floor((event.first ?? 0) / (event.rows ?? this.limit));
     this.limit = event.rows ?? this.limit;
+    this.loadItems();
+  }
+
+  onTableSort(event: { field?: string; order?: number }): void {
+    if (!['createdAt', 'titulo', 'tipo', 'estado'].includes(event.field as string)) return;
+    this.sortField = event.field as typeof this.sortField;
+    this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    this.page = 0;
     this.loadItems();
   }
 

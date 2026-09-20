@@ -15,13 +15,15 @@ export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets`;
 
-  list(filters: { search?: string; estado?: TicketState; clientId?: number; page?: number; limit?: number }): Observable<TicketPage> {
+  list(filters: { search?: string; estado?: TicketState; clientId?: number; page?: number; limit?: number; sortField?: TicketSortField; sortDirection?: 'asc' | 'desc' }): Observable<TicketPage> {
     let params = new HttpParams();
     if (filters.search) params = params.set('search', filters.search);
     if (filters.estado) params = params.set('estado', filters.estado);
     if (filters.clientId) params = params.set('clienteId', filters.clientId);
     if (filters.page) params = params.set('page', filters.page);
     if (filters.limit) params = params.set('limit', filters.limit);
+    if (filters.sortField) params = params.set('sortField', filters.sortField);
+    if (filters.sortDirection) params = params.set('sortDirection', filters.sortDirection);
     return this.http.get<TicketPage>(this.baseUrl, { params });
   }
 
@@ -53,3 +55,5 @@ export class TicketService {
     return this.http.post<Ticket>(`${this.baseUrl}/${ticketId}/eventos/${eventId}`, {});
   }
 }
+
+export type TicketSortField = 'subject' | 'clientName' | 'status' | 'createdAt';

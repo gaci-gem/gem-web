@@ -18,11 +18,12 @@
                         <p-datepicker id="filtroFechas" [(ngModel)]="dateRangeFilter" selectionMode="range" [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filtroFechas" (ngModelChange)="onFechaChange()" (onClearClick)="onClearFecha()"></p-datepicker>
                         <p-select [options]="tiposTrabajo" optionLabel="descripcion" optionValue="codigo" placeholder="Filtrar por categoría" [(ngModel)]="categoriaFiltro" (onChange)="filtrarPorCategoria($event.value)" [showClear]="true"></p-select>
                     </div>
-                    <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="id" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
+                    <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="id" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
                         <ng-template pTemplate="header">
                             <tr>
                                 <th style="width: 4rem"></th>
-                                <th>Fecha</th>
+                                <th pSortableColumn="fecha">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
+                                <th pSortableColumn="createdAt">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
                                 <th>Usuario</th>
                                 <th>Total Día</th>
                                 <th>Acciones</th>
@@ -32,6 +33,7 @@
                             <tr>
                                 <td><p-button type="button" pRipple [pRowToggler]="registro" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" /></td>
                                 <td>{{ registro.fecha | date:'fullDate' }}</td>
+                                <td>{{ registro.createdAt | date:'short' }}</td>
                                 <td>{{ registro.usuario?.usuario || (registro.usuario?.nombre + ' ' + registro.usuario?.apellido) }}</td>
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>
                                 <td></td>

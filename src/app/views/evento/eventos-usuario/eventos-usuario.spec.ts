@@ -395,4 +395,5 @@ describe('EventosUsuario - SSE Refresh', () => {
     expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({ page: 3, limit: 10 }));
     expect(component.totalEventos).toBe(27);
   });
+
 });

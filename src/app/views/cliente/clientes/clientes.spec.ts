@@ -18,7 +18,7 @@ describe('Clientes pagination', () => {
     component.table = { first: 20 };
     component.loadItems = jasmine.createSpy('loadItems');
 
-    component.onTableSort({ sortField: 'nombre', sortOrder: 1 });
+    component.onTableSort({ field: 'nombre', order: 1 });
 
     expect(component.table.first).toBe(0);
     expect(component.sortField).toBe('nombre');

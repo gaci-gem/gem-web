@@ -55,6 +55,8 @@ export interface QueryNovedadDto {
   createdById?: string;
   page?: number;
   limit?: number;
+  sortField?: 'createdAt' | 'titulo' | 'tipo' | 'estado';
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface DashboardResponse {

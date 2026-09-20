@@ -16,18 +16,18 @@
              <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Buscar..." /></span>
              <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
           </div>
-           <p-table #dt [value]="tickets" [lazy]="true" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" [paginator]="true" [rowHover]="true" dataKey="id"
+           <p-table #dt [value]="tickets" [lazy]="true" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [paginator]="true" [rowHover]="true" dataKey="id"
              appKeyboardListNavigation [keyboardListItems]="tickets" (keyboardRowActivate)="open($event)"
             [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']"
             size="small" [scrollable]="true">
              <ng-template pTemplate="header">
               <tr>
                 <th pSortableColumn="id">Id</th>
-                <th pSortableColumn="subject">Asunto</th>
-                <th pSortableColumn="clientName">Cliente</th>
-                <th pSortableColumn="status">Estado</th>
+                 <th pSortableColumn="subject">Asunto <p-sortIcon field="subject"></p-sortIcon></th>
+                 <th pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon></th>
+                 <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
                 <th>Referencia externa</th>
-                <th pSortableColumn="createdAt">Alta</th>
+                 <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
                 <th>Acciones</th>
               </tr>
             </ng-template>

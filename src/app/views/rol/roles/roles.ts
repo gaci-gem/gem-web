@@ -72,7 +72,7 @@ export class Roles extends TrabajarCon<Rol> {
   onGlobalFilter(value: string): void { this.globalFilter = value; this.resetPaginator(); this.loadItems(); }
   onTableFilter(_event: TableFilterEvent): void { this.resetPaginator(); this.loadItems(); }
   onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
-  onTableSort(event: any): void { this.sortField = event.sortField as typeof this.sortField; this.sortDirection = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
+  onTableSort(event: { field?: string; order?: number }): void { this.sortField = event.field as typeof this.sortField; this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
   override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
   private resetPaginator(): void { if (this.table) this.table.first = 0; }
   private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }

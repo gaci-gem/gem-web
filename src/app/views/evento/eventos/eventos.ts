@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, inject, OnInit
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
-import { EventoCompletoPage, EventoService } from '@core/services/evento';
+import { EventoCompletoPage, EventoCompletoSortField, EventoService } from '@core/services/evento';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { EventoCrud } from '../evento-crud/evento-crud';
@@ -94,6 +94,8 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
   globalFilter = '';
   totalEventos = 0;
   private readonly pageSize = 10;
+  sortField: EventoCompletoSortField = 'createdAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   override ngOnInit(): void {
     const restored = this.restoreFilterSession() as EventoFilterState | null;
@@ -172,7 +174,16 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     this.saveState();
     this.loadItems();
   }
-  onTableSort(_event: any): void { this.saveState(); }
+  onTableSort(event: { field?: string; order?: number }): void {
+    const sortField = event.field === 'evento' ? 'numero' : event.field;
+    if (['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(sortField as string)) {
+      this.sortField = sortField as EventoCompletoSortField;
+      this.sortDirection = event.order === 1 ? 'asc' : 'desc';
+    }
+    this.resetPaginator();
+    this.saveState();
+    this.loadItems();
+  }
   onTablePage(event: TablePageEvent): void {
     this.saveState();
     this.loadItems(event.first, event.rows);
@@ -183,6 +194,10 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     this.filtroActivo = eventState.filtroActivo as FiltroActivo;
     this.filtroFecha = this.normalizeDateRange(eventState.fecha);
     this.globalFilter = eventState.globalFilter ?? '';
+    if (eventState.sortField && ['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(eventState.sortField)) {
+      this.sortField = eventState.sortField as EventoCompletoSortField;
+      this.sortDirection = eventState.sortOrder === 1 ? 'asc' : 'desc';
+    }
     this.restoreTableState(eventState, this.table);
   }
 
@@ -247,6 +262,8 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     });
     params.page = Math.floor(first / rows) + 1;
     params.limit = rows;
+    params.sortField = this.sortField;
+    params.sortDirection = this.sortDirection;
 
     this.eventoService.getAllComplete(this.filtroActivo, params).pipe(
       finalize(() => this.loadingService.hide())
