@@ -19,7 +19,22 @@ import { ButtonModule } from 'primeng/button';
           <div
             class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom"
           >
-            <span class="fw-semibold">Evento</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-semibold">Evento</span>
+              <!-- @if (eventoId) {
+                <a
+                  [href]="eventoUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Abrir evento en GEM"
+                  title="Abrir evento en GEM"
+                  class="btn btn-sm btn-outline-primary d-inline-flex align-items-center rounded-pill"
+                >
+                  <span class="visually-hidden">Abrir evento en GEM</span>
+                  <i class="pi pi-external-link" aria-hidden="true"></i>
+                </a>
+              } -->
+            </div>
             <button
               pButton
               type="button"
@@ -55,6 +70,10 @@ export class EventoDrawerComponent {
   @Input() visible: boolean = false;
   @Input() eventoId: string | null = null;
   @Output() closed = new EventEmitter<void>();
+
+  get eventoUrl(): string {
+    return `${window.location.origin}/evento/evento/${this.eventoId}`;
+  }
 
   onClose() {
     this.closed.emit();
