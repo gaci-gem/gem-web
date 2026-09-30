@@ -16,6 +16,21 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.1',
+    date: '2026-09-30',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Mejoramos el encabezado de eventos para que la información principal y las acciones sean más claras.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'improvement',
+        text: 'Optimizamos el panel lateral de eventos para facilitar la consulta y la navegación entre sus detalles.',
+      },
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-09-20',
     changes: [

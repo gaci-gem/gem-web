@@ -45,6 +45,10 @@ export class EventoV2HeaderComponent {
     return `${this.evento.tipoCodigo}-${this.evento.numero.toString().padStart(3, '0')}`;
   }
 
+  get eventoUrl(): string {
+    return `${window.location.origin}/evento/evento/${this.evento.id}`;
+  }
+
   get estadoDesc(): string {
     if (!this.evento.estado) return '';
     return getEstadoDescCorto(this.evento.estado).replace('.', '');
