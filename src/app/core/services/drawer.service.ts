@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 export interface DrawerState {
   visible: boolean;
@@ -15,11 +15,17 @@ export class DrawerService {
   private usuarioDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
   private notaDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
   private ticketDrawerSubject = new BehaviorSubject<DrawerState>({ visible: false, id: null });
+  private ticketClosedSubject = new Subject<void>();
 
   eventoDrawer$ = this.eventoDrawerSubject.asObservable();
   usuarioDrawer$ = this.usuarioDrawerSubject.asObservable();
   notaDrawer$ = this.notaDrawerSubject.asObservable();
   ticketDrawer$ = this.ticketDrawerSubject.asObservable();
+  ticketClosed$ = this.ticketClosedSubject.asObservable();
+
+  notifyTicketClosed(): void {
+    this.ticketClosedSubject.next();
+  }
 
   abrirEventoDrawer(eventoId: string, targetId?: string): void {
     this.eventoDrawerSubject.next({ visible: true, id: eventoId, targetId: targetId || null });

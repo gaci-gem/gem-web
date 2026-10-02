@@ -48,13 +48,16 @@ export class TicketActionDialog {
 
   submit(): void {
     if (!this.permissions.can('TIK.GESTIONAR')) return;
-    if (!this.state || (this.state === 'RECHAZADO' && !this.reason.trim())) return;
-    this.saving = true;
     if (this.mode === 'state') {
+      if (!this.state || (this.state === 'RECHAZADO' && !this.reason.trim())) return;
+      this.saving = true;
       this.service.transition(this.ticketId, this.state as TicketState, this.reason).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });
     } else if (this.mode === 'reference') {
+      this.saving = true;
       this.service.updateExternalReference(this.ticketId, this.reference.trim() || null).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });
     } else {
+      if (!this.comment.trim()) return;
+      this.saving = true;
       this.service.comment(this.ticketId, this.comment.trim()).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });
     }
   }

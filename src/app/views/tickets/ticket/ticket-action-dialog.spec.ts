@@ -2,15 +2,19 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TicketService } from '@core/services/ticket';
+import { PermisosService } from '@core/services/permisos';
 import { TicketActionDialog } from './ticket-action-dialog';
 
 describe('TicketActionDialog', () => {
   let service: jasmine.SpyObj<TicketService>;
   let ref: jasmine.SpyObj<DynamicDialogRef>;
+  let permissions: jasmine.SpyObj<PermisosService>;
 
   beforeEach(() => {
     service = jasmine.createSpyObj<TicketService>('TicketService', ['transition', 'updateExternalReference', 'comment']);
     ref = jasmine.createSpyObj<DynamicDialogRef>('DynamicDialogRef', ['close']);
+    permissions = jasmine.createSpyObj<PermisosService>('PermisosService', ['can']);
+    permissions.can.and.returnValue(true);
   });
 
   function create(mode: 'state' | 'reference' | 'comment'): TicketActionDialog {
@@ -19,6 +23,7 @@ describe('TicketActionDialog', () => {
       providers: [
         { provide: TicketService, useValue: service },
         { provide: DynamicDialogRef, useValue: ref },
+        { provide: PermisosService, useValue: permissions },
         { provide: DynamicDialogConfig, useValue: { data: { mode, ticketId: 7, transitions: ['EN_PROCESO'], reference: 'EXT-7' } } },
       ],
     });
@@ -36,12 +41,23 @@ describe('TicketActionDialog', () => {
     expect(ref.close).toHaveBeenCalledOnceWith({ changed: true });
   });
 
+  it('keeps the reference dialog open when updating the external reference fails', () => {
+    service.updateExternalReference.and.returnValue(throwError(() => new Error('failure')));
+    const component = create('reference');
+
+    component.submit();
+
+    expect(component.saving).toBeFalse();
+    expect(ref.close).not.toHaveBeenCalled();
+  });
+
   it('closes once with changed payload after updating the external reference', () => {
     service.updateExternalReference.and.returnValue(of({} as any));
     const component = create('reference');
 
     component.submit();
 
+    expect(service.updateExternalReference).toHaveBeenCalledOnceWith(7, 'EXT-7');
     expect(ref.close).toHaveBeenCalledOnceWith({ changed: true });
   });
 

@@ -49,6 +49,7 @@ export class Tickets implements OnInit {
   private readonly permissions = inject(PermisosService);
   private readonly presetService = inject(FiltroPresetService);
   private ref: DynamicDialogRef | null = null;
+  private readonly drawerClosedSubscription = this.drawers.ticketClosed$.subscribe(() => this.loadItems());
   @ViewChild('dt') table?: Table;
 
   readonly pantalla = 'tickets';
@@ -67,6 +68,10 @@ export class Tickets implements OnInit {
   ngOnInit(): void {
     this.loadPresets();
     this.loadItems();
+  }
+
+  ngOnDestroy(): void {
+    this.drawerClosedSubscription.unsubscribe();
   }
 
   private loadPresets(): void {

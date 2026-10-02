@@ -1,5 +1,5 @@
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { Tickets } from './tickets';
 
 describe('Tickets', () => {
@@ -65,5 +65,18 @@ describe('Tickets', () => {
     expect(component.page).toBe(1);
     expect(component.table.first).toBe(0);
     expect(component.loadItems).toHaveBeenCalled();
+  });
+
+  it('refreshes when the ticket drawer emits its closed event', () => {
+    const closed = new Subject<void>();
+    const component = Object.create(Tickets.prototype) as any;
+    component.drawers = { ticketClosed$: closed.asObservable() };
+    component.loadItems = jasmine.createSpy('loadItems');
+    component.drawerClosedSubscription = component.drawers.ticketClosed$.subscribe(() => component.loadItems());
+
+    closed.next();
+
+    expect(component.loadItems).toHaveBeenCalledOnceWith();
+    component.drawerClosedSubscription.unsubscribe();
   });
 });

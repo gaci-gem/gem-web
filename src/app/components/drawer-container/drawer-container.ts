@@ -28,6 +28,7 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
   usuarioSeleccionadoId: string | null = null;
   showTicketDrawer = false;
   ticketSeleccionadoId: string | null = null;
+  private ticketWasVisible = false;
 
   private destroy$ = new Subject<void>();
 
@@ -54,8 +55,10 @@ export class DrawerContainerComponent implements OnInit, OnDestroy {
     this.drawerService.ticketDrawer$
       .pipe(takeUntil(this.destroy$))
       .subscribe(state => {
+        this.ticketWasVisible = this.showTicketDrawer;
         this.showTicketDrawer = state.visible;
         this.ticketSeleccionadoId = state.id;
+        if (this.ticketWasVisible && !state.visible) this.drawerService.notifyTicketClosed();
         this.crf.detectChanges();
       });
   }
