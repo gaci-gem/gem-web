@@ -16,12 +16,14 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ViewportService } from '@core/services/viewport.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { UserStorageService } from '@core/services/user-storage';
+import { FormsModule } from '@angular/forms';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @Component({
     selector: 'app-evento-select',
     templateUrl: './evento-select.html',
     styleUrl: './evento-select.scss',
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
     imports: [
         LoadingSpinnerComponent,
         TableModule,
@@ -30,6 +32,8 @@ import { UserStorageService } from '@core/services/user-storage';
         TooltipModule,
         NgbTooltipModule,
         InputTextModule,
+        FormsModule,
+        CheckboxModule,
     ]
 })
 export class EventoSelect extends SelectBase<Evento> {
@@ -50,6 +54,8 @@ export class EventoSelect extends SelectBase<Evento> {
     readonly mobilePageSize = 10;
     readonly mobileSearch = signal('');
     readonly mobilePage = signal(0);
+    readonly multiple = !!this.config.data?.multiple;
+    selectedEventIds = new Set<string>();
 
     constructor() {
         super(
@@ -60,9 +66,11 @@ export class EventoSelect extends SelectBase<Evento> {
     }
 
     override ngOnInit(): void {
-        const data = this.config.data.filtroEvento;
-        if (data) {
-            this.filtroEvento = data;
+        const data = this.config.data ?? {};
+        this.selectedEventIds = new Set(data.initialSelectedEventIds ?? data.selectedEventIds ?? []);
+        const filtro = data.filtroEvento;
+        if (filtro) {
+            this.filtroEvento = filtro;
         }
         super.ngOnInit();
     }
@@ -85,10 +93,16 @@ export class EventoSelect extends SelectBase<Evento> {
                 this.cdr.detectChanges();
             })
         ).subscribe({
-            next: (res: EventoCompleto[]) => {
+            next: (res: EventoCompleto[] | { data: EventoCompleto[] }) => {
+                const items = Array.isArray(res) ? res : res.data;
+                const clienteId = this.config.data?.clienteId;
+                const excluded = new Set<string>(this.config.data?.excludedEventIds ?? []);
                 // console.log(res);
                 // this.eventos = res;
-                this.eventos = res.map(evento => ({
+                this.eventos = items.filter(evento =>
+                    (clienteId === undefined || evento.clienteId === clienteId) &&
+                    (this.multiple ? true : !excluded.has(evento.id ?? ''))
+                ).map(evento => ({
                     ...evento,
                     evento: formatEventoNumero(evento.tipo.codigo, evento.numero)
                 }));
@@ -106,9 +120,18 @@ export class EventoSelect extends SelectBase<Evento> {
     }
 
     select(evento:Evento) {
+        if (this.multiple) { this.toggleSelection(evento.id); return; }
         this.eventoSeleccionado = evento;
         this.submit()
     }
+
+    toggleSelection(eventId: string | null | undefined): void {
+        if (!eventId) return;
+        this.selectedEventIds.has(eventId) ? this.selectedEventIds.delete(eventId) : this.selectedEventIds.add(eventId);
+    }
+    isSelected(eventId: string | null | undefined): boolean { return !!eventId && this.selectedEventIds.has(eventId); }
+    confirmMultiple(): void { this.modalSel.close(this.eventos.filter(evento => this.selectedEventIds.has(evento.id ?? ''))); }
+    cancelMultiple(): void { this.modalSel.close(); }
 
     get eventosFiltradosMobile(): EventoCompleto[] {
         const search = this.mobileSearch().trim().toLocaleLowerCase();
@@ -154,7 +177,8 @@ export class EventoSelect extends SelectBase<Evento> {
         return Math.min((this.mobilePage() + 1) * this.mobilePageSize, this.eventosFiltradosMobile.length);
     }
 
-    toModel(): Evento {
+    toModel(): Evento | EventoCompleto[] {
+        if (this.multiple) return this.eventos.filter(evento => this.selectedEventIds.has(evento.id ?? ''));
         let evento:Evento = this.eventoSeleccionado;
         return evento;
     }

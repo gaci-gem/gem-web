@@ -6,6 +6,7 @@
 
 export const environment = {
   BASE_URL: 'https://makima-v2.julitorossian.dev',
+  gemClientesUrl: 'https://gem-clientes.julitorossian.dev',
 
   loginUrl: 'https://gem-web.julitorossian.dev/login',
   apiBaseUrl: 'https://makima-v2.julitorossian.dev',

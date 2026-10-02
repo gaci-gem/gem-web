@@ -16,6 +16,7 @@ describe('EventoSelect', () => {
   let component: EventoSelect;
   let fixture: ComponentFixture<EventoSelect>;
   let eventoService: jasmine.SpyObj<EventoService>;
+  let dialogRef: jasmine.SpyObj<DynamicDialogRef>;
 
   const createEvento = (index: number): EventoCompleto => ({
     evento: `CAS-${String(index).padStart(3, '0')}`,
@@ -48,6 +49,7 @@ describe('EventoSelect', () => {
     fixture = TestBed.createComponent(EventoSelect);
     component = fixture.componentInstance;
     eventoService = TestBed.inject(EventoService) as jasmine.SpyObj<EventoService>;
+    dialogRef = TestBed.inject(DynamicDialogRef) as jasmine.SpyObj<DynamicDialogRef>;
     eventoService.getAllComplete.and.returnValue(of([]));
     eventoService.getAllCompleteByUsuario.and.returnValue(of([]));
     component.eventos = Array.from({ length: 21 }, (_, index) => createEvento(index + 1));
@@ -90,5 +92,28 @@ describe('EventoSelect', () => {
     component.goToMobilePage(99);
     expect(component.eventosMobilePagina).toHaveSize(1);
     expect(component.mobileLastItem).toBe(21);
+  });
+
+  it('preserves single selection by submitting immediately', () => {
+    component.ngOnInit();
+    const submit = spyOn(component, 'submit');
+    const event = { id: 'event-1' } as any;
+
+    component.select(event);
+
+    expect(component.eventoSeleccionado).toBe(event);
+    expect(submit).toHaveBeenCalled();
+  });
+
+  it('toggles and confirms multiple selections', () => {
+    component.selectedEventIds = new Set(['event-1']);
+    component.eventos = [{ id: 'event-1' }, { id: 'event-2' }] as any;
+
+    component.toggleSelection('event-1');
+    component.toggleSelection('event-2');
+    component.confirmMultiple();
+
+    expect(component.selectedEventIds).toEqual(new Set(['event-2']));
+    expect(dialogRef.close).toHaveBeenCalledWith([{ id: 'event-2' }]);
   });
 });

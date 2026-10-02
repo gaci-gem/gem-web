@@ -43,8 +43,17 @@ export class TicketService {
     return this.http.patch<Ticket>(`${this.baseUrl}/${id}/referencia-externa`, { referenciaExterna });
   }
 
-  comment(id: number, texto: string): Observable<TicketComment> {
-    return this.http.post<TicketComment>(`${this.baseUrl}/${id}/comments`, { texto });
+  updateModule(id: number, moduloCodigo: string | null): Observable<Ticket> {
+    return this.http.patch<Ticket>(`${this.baseUrl}/${id}/modulo`, { moduloCodigo });
+  }
+  updateUser(id: number, usuarioId: string | null): Observable<Ticket> { return this.http.patch<Ticket>(`${this.baseUrl}/${id}/usuario`, { usuarioId }); }
+
+  comment(id: number, texto: string, visibility: 'PUBLIC' | 'PRIVATE' = 'PUBLIC'): Observable<TicketComment> {
+    return this.http.post<TicketComment>(`${this.baseUrl}/${id}/comments`, { texto, visibilidad: visibility });
+  }
+
+  emailOriginal(ticketId: number, attachmentId: string): Observable<EmailOriginalView> {
+    return this.http.get<EmailOriginalView>(`${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets/${ticketId}/attachments/${attachmentId}/view`);
   }
 
   createEvent(id: number, formData: FormData): Observable<unknown> {
@@ -54,6 +63,12 @@ export class TicketService {
   associateEvent(ticketId: number, eventId: string): Observable<Ticket> {
     return this.http.post<Ticket>(`${this.baseUrl}/${ticketId}/eventos/${eventId}`, {});
   }
+
+  replaceEvents(ticketId: number, eventoIds: string[]): Observable<Ticket> {
+    return this.http.put<Ticket>(`${this.baseUrl}/${ticketId}/eventos`, { eventoIds });
+  }
 }
+
+export interface EmailOriginalView { headers: Record<string, string>; html: string | null; text: string | null; attachments: Array<{ name: string; downloadUrl?: string; contentId?: string }> }
 
 export type TicketSortField = 'subject' | 'clientName' | 'status' | 'createdAt';

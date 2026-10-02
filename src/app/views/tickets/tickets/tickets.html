@@ -24,10 +24,12 @@
               <tr>
                 <th pSortableColumn="id">Id</th>
                  <th pSortableColumn="subject">Asunto <p-sortIcon field="subject"></p-sortIcon></th>
-                 <th pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon></th>
-                 <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
-                <th>Referencia externa</th>
-                 <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
+                  <th pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon></th>
+                   <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
+                 <th>Referencia externa</th>
+                   <th class="ticket-events-column">Eventos</th>
+                   <th>Usuario asignado</th>
+                   <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
                 <th>Acciones</th>
               </tr>
             </ng-template>
@@ -36,18 +38,44 @@
                 <td>{{ ticket.id }}</td>
                 <td>{{ ticket.subject }}</td>
                 <td>{{ ticket.clientCode }}{{ ticket.clientName ? ' - ' + ticket.clientName : '' }}</td>
-                <td>
+                 <td>
                   <span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ statusLabel(ticket.status) }}</span>
                 </td>
-                <td>{{ ticket.externalReference || '-' }}</td>
-                <td>{{ ticket.createdAt | date:'short' }}</td>
+                 <td>{{ ticket.externalReference || '-' }}</td>
+                  <td class="ticket-events-column">
+                    @if (ticket.events.length) {
+                      <div class="ticket-events-list d-flex align-items-center gap-1">
+                        @for (event of ticket.events.slice(0, 3); track event.id) {
+                          <a class="badge text-decoration-none" [style.background-color]="event.color" [routerLink]="['/evento/evento', event.id]" [attr.aria-label]="'Ver evento ' + event.type + '-' + event.code" (click)="$event.stopPropagation()">
+                            {{ event.type }}-{{ event.code }}
+                          </a>
+                        }
+                        @if (ticket.events.length > 3) {
+                          <span class="badge text-bg-secondary" [title]="'Hay ' + (ticket.events.length - 3) + ' eventos más'">+{{ ticket.events.length - 3 }}</span>
+                        }
+                      </div>
+                   } @else {
+                     <span>-</span>
+                   }
+                  </td>
+                  <td>
+                    @if (ticket.assignedUser) {
+                      <app-badge-click
+                        [backgroundColor]="ticket.assignedUser.color ?? '#3E47F6'"
+                        (click)="openAssignedUser(ticket.assignedUser.id, $event)">
+                        {{ ticket.assignedUser.name }}
+                      </app-badge-click>
+                    } @else {
+                      <span>-</span>
+                    }
+                  </td>
+                  <td>{{ ticket.createdAt | date:'short' }}</td>
                 <td class="text-end d-flex gap-1 justify-content-end">
                   @if (canRead()) {
                     <button type="button" class="btn btn-ghost-primary" title="Ver ticket" aria-label="Ver ticket" (click)="open(ticket)"><ng-icon name="lucideEye" /></button>
                   } @if (canManage()) {
                     <button type="button" class="btn btn-ghost-primary" title="Cambiar estado" aria-label="Cambiar estado" (click)="transition(ticket)"><ng-icon name="lucideArrowRightLeft" /></button>
                     <button type="button" class="btn btn-ghost-primary" title="Actualizar referencia externa" aria-label="Actualizar referencia externa" (click)="updateReference(ticket)"><ng-icon name="lucidePencil" /></button>
-                    <button type="button" class="btn btn-ghost-primary" title="Responder ticket" aria-label="Responder ticket" (click)="reply(ticket)"><ng-icon name="lucideMessageSquare" /></button> 
                   } @if (canCreateEvent()) { 
                     <button type="button" class="btn btn-ghost-primary" title="Crear evento" aria-label="Crear evento asociado al ticket" (click)="createEvent(ticket)"><ng-icon name="lucideCalendarPlus" /></button> 
                   }
@@ -56,7 +84,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td colspan="7" class="text-muted">No hay tickets.</td>
+                  <td colspan="9" class="text-muted">No hay tickets.</td>
              </tr>
              </ng-template>
              <ng-template pTemplate="summary">

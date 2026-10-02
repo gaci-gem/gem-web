@@ -116,7 +116,10 @@ export const PREFERENCIAS_GENERALES: PreferenceItem[] = [
         tipo: 'select',
         opciones: [
             { valor: '/', label: 'Dashboard' },
-            { valor: '/evento/eventos/usuario', label: 'Eventos del usuario' }
+            { valor: '/evento/eventos/usuario', label: 'Eventos del usuario' },
+            { valor: '/hora/horas', label: 'Horas' },
+            { valor: '/gem-clientes/tickets', label: 'Tickets' },
+            { valor: '/evento/eventos', label: 'Eventos generales' }
         ],
         descripcion: getDescripcionUsuarioPref(UsuarioPreferencias.PAGINA_INICIO)
     },

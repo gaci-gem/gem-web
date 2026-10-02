@@ -24,13 +24,20 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { FiltroPreset, FiltroState } from '@core/interfaces/filtro-preset';
 import { FiltroPresetService } from '@core/services/filtro-preset';
+import { RouterLink } from '@angular/router';
+import { BadgeClickComponent } from '@app/components/badge-click';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, InputTextModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, InputTextModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
-  styles: ['.ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; }'],
+  styles: [`
+    .ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; }
+    .ticket-events-column { width: 16rem; min-width: 16rem; max-width: 16rem; }
+    .ticket-events-list { min-width: 0; max-width: 16rem; overflow: hidden; white-space: nowrap; }
+    .ticket-events-list .badge { flex: 0 0 auto; }
+  `],
 })
 export class Tickets implements OnInit {
   private readonly service = inject(TicketService);
@@ -55,7 +62,7 @@ export class Tickets implements OnInit {
   sortDirection: 'asc' | 'desc' = 'desc';
   search = '';
   estado: TicketState | '' = '';
-  readonly states = TICKET_STATES.map((value) => ({ label: value.replaceAll('_', ' '), value }));
+  readonly states = TICKET_STATES.map((value) => ({ label: this.statusLabel(value), value }));
 
   ngOnInit(): void {
     this.loadPresets();
@@ -162,6 +169,11 @@ export class Tickets implements OnInit {
     this.drawers.abrirTicketDrawer(ticket.id);
   }
 
+  openAssignedUser(userId: string, event: Event): void {
+    event.stopPropagation();
+    this.drawers.abrirUsuarioDrawer(userId);
+  }
+
   transition(ticket: Ticket): void {
     if (!this.canManage()) return;
     this.service.allowedTransitions(ticket.id).subscribe({
@@ -174,8 +186,6 @@ export class Tickets implements OnInit {
 
   updateReference(ticket: Ticket): void { if (this.canManage()) this.openAction('reference', ticket); }
 
-  reply(ticket: Ticket): void { if (this.canManage()) this.openAction('comment', ticket); }
-
   createEvent(ticket: Ticket): void {
     if (!this.canCreateEvent()) return;
     this.ref = this.dialog.open(EventoCrud, {
@@ -187,10 +197,19 @@ export class Tickets implements OnInit {
     });
   }
 
-  statusLabel(status: TicketState): string { return status.replaceAll('_', ' '); }
+  statusLabel(status: string): string {
+    return ({
+      INGRESADO: 'Ingresado',
+      EN_REVISION: 'En revisión',
+      EN_DESARROLLO: 'En desarrollo',
+      ESPERANDO_RESPUESTA_CLIENTE: 'Esperando respuesta del cliente',
+      RECHAZADO: 'Rechazado',
+      CERRADO: 'Cerrado',
+    } as Record<string, string>)[status] ?? status.replaceAll('_', ' ');
+  }
 
   statusClass(status: TicketState): string {
-    return { INGRESADO: 'text-bg-secondary', EN_REVISION: 'text-bg-info', EN_DESARROLLO: 'text-bg-primary', RESUELTO: 'text-bg-success', CERRADO: 'text-bg-dark', RECHAZADO: 'text-bg-danger' }[status];
+    return { INGRESADO: 'text-bg-secondary', EN_REVISION: 'text-bg-info', EN_DESARROLLO: 'text-bg-primary', ESPERANDO_RESPUESTA_CLIENTE: 'text-bg-warning', RECHAZADO: 'text-bg-danger', CERRADO: 'text-bg-dark' }[status] || 'text-bg-secondary';
   }
 
   /*
@@ -202,9 +221,9 @@ export class Tickets implements OnInit {
         styleClass: 'changelog-dialog'
       });
   */
-  private openAction(mode: 'state' | 'reference' | 'comment', ticket: Ticket, data: Record<string, unknown> = {}): void {
+  private openAction(mode: 'state' | 'reference', ticket: Ticket, data: Record<string, unknown> = {}): void {
     this.ref = this.dialog.open(TicketActionDialog, {
-      header: mode === 'state' ? 'Actualizar estado' : mode === 'reference' ? 'Referencia externa' : 'Responder ticket',
+      header: mode === 'state' ? 'Actualizar estado' : 'Referencia externa',
       width: 'min(520px, 96vw)',
       modal: true,
       closable: true,

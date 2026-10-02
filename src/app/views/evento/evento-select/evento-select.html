@@ -45,7 +45,7 @@
                                 (click)="select(evento)"
                                 aria-label="Seleccionar evento {{ evento.evento }}"
                             >
-                                Seleccionar
+                                @if (multiple) { <p-checkbox [binary]="true" [ngModel]="isSelected(evento.id)" (onChange)="toggleSelection(evento.id)" [inputId]="'mobile-event-' + evento.id" /> } @else { Seleccionar }
                             </button>
                         </div>
                         <h3>{{ evento.titulo }}</h3>
@@ -126,7 +126,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-evento>
                 <tr style="min-height: 55px;">
-                    <td class="d-flex justify-content-end" style="min-height: 55px;"><button class="btn btn-ghost-warning" (click)="select(evento)" placement="top" ngbTooltip="Seleccionar evento"><ng-icon name="lucideSearchCheck"/></button></td>
+                    <td class="d-flex justify-content-end" style="min-height: 55px;">@if (multiple) { <p-checkbox [binary]="true" [ngModel]="isSelected(evento.id)" (onChange)="toggleSelection(evento.id)" [inputId]="'event-' + evento.id" /> } @else { <button class="btn btn-ghost-warning" (click)="select(evento)" placement="top" ngbTooltip="Seleccionar evento"><ng-icon name="lucideSearchCheck"/></button> }</td>
                     <td hidden>{{ evento.id }}</td><td hidden>{{ evento.tipo.id }}</td><td hidden>{{ evento.numero }}</td>
                     <td><app-badge-click [backgroundColor]="evento.tipo.color" (click)="abrirEventoDrawer(evento)" style="cursor:pointer;">{{ evento.evento }}</app-badge-click></td>
                     <td>{{ evento.titulo }}</td>
@@ -137,5 +137,11 @@
             </ng-template>
             <ng-template pTemplate="summary"><div class="flex align-items-center justify-content-between">En total hay {{ eventos ? eventos.length : 0 }} Eventos.</div></ng-template>
         </p-table>
+    </div>
+}
+@if (multiple) {
+    <div class="d-flex justify-content-end gap-2 mt-3" role="group" aria-label="Selection actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelMultiple()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="confirmMultiple()">Confirmar</button>
     </div>
 }

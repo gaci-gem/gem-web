@@ -1,48 +1,73 @@
 <p-drawer [(visible)]="visible" position="right" [modal]="true" styleClass="ticket-drawer" [style]="{ width: '60vw' }" (onHide)="onClose()">
   <ng-template #headless>
     <div class="d-flex flex-column h-100">
-      <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
-        <span class="fw-semibold">Ticket{{ ticket ? ' #' + ticket.id : '' }}</span>
-        <button pButton type="button" icon="pi pi-times" class="p-button-text p-button-rounded p-button-sm" (click)="onClose()"></button>
+      <div class="ticket-drawer__header d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+         <span class="fw-semibold">Ticket</span>
+          <div class="d-flex align-items-center gap-1">
+            <button pButton type="button" icon="pi pi-times" class="p-button-text p-button-rounded p-button-sm" aria-label="Cerrar detalle" (click)="onClose()"></button>
+         </div>
       </div>
-      <div class="flex-grow-1 overflow-auto p-3">
+      <div class="flex-grow-1 overflow-auto p-3 ticket-drawer__body">
         @if (loading) { <div class="text-muted">Cargando ticket...</div> }
         @if (error) { <div class="alert alert-danger">{{ error }}</div> }
         @if (ticket) {
-          <div class="mb-3">
-            <div class="text-muted">{{ ticket.clientCode }}{{ ticket.clientName ? ' - ' + ticket.clientName : '' }}</div>
-            <h5>{{ ticket.subject }}</h5>
-            <p class="mb-0 text-break">{{ ticket.description }}</p>
-          </div>
-          <div class="row g-3">
-             <div class="col-md-6"><strong>Estado</strong><div><span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ ticket.status.replaceAll('_', ' ') }}</span></div></div>
-            <div class="col-md-6"><strong>Referencia externa</strong><div>{{ ticket.externalReference || '-' }}</div></div>
-            <div class="col-md-6"><strong>Alta</strong><div>{{ ticket.createdAt | date:'short' }}</div></div>
-            <div class="col-md-6"><strong>Actualización</strong><div>{{ ticket.updatedAt | date:'short' }}</div></div>
-          </div>
-           <hr /><div class="d-flex align-items-center justify-content-between gap-2"><h6 class="mb-0">Eventos relacionados</h6>@if (canManage()) { <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEventAssociation()">Asociar evento existente</button> }</div>
-            <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
-            <hr /><h6>Comentarios y comunicación</h6>
-            @for (comment of ticket.comments; track comment.id) { <div class="border rounded p-2 mb-2"><div class="text-break">{{ comment.text }}</div>@for (file of comment.attachments; track file.id) { <a class="d-block small" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> }<small class="text-muted d-block">{{ provenanceLabel(comment) }}</small><small class="text-muted">{{ comment.createdAt | date:'short' }}</small></div> } @empty { <div class="text-muted">Sin comentarios.</div> }
-           <hr /><h6>Adjuntos</h6>
-           @for (file of ticket.attachments; track file.id) { <a class="d-block" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> } @empty { <div class="text-muted">Sin adjuntos.</div> }
-        }
+          <app-ui-card [withTitle]="false" className="mb-3" bodyClass="p-0">
+            <div card-body>
+              <section class="ticket-card--header">
+                <div class="ticket-card__top">
+                  <div class="ticket-card__title-block">
+                <div class="ticket-card__identity">
+                   <div class="ticket-card__title"><span>#{{ ticket.id }}</span><h1 class="ticket-drawer__subject">{{ ticket.subject }}</h1><button type="button" class="btn btn-link p-0 text-body-secondary" aria-label="Copiar link de GEM Clientes" title="Copiar link de GEM Clientes" (click)="copyLink('clientes')" [disabled]="!gemClientesUrl"><ng-icon name="lucideShare2" size="16" /></button><button type="button" class="btn btn-link p-0 text-body-secondary" aria-label="Copiar link de GEM" title="Copiar link de GEM" (click)="copyLink('gem')"><ng-icon name="lucideCopy" size="16" /></button><span class="visually-hidden" aria-live="polite">{{ copiedLink === 'gem' ? 'Link de GEM copiado' : copiedLink === 'clientes' ? 'Link de GEM Clientes copiado' : '' }}</span></div>
+                   <span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ statusLabel(ticket.status) }}</span>
+                </div>
+                  </div>
+                </div>
+                <div class="ticket-drawer__metadata">
+                  <div><span class="ticket-drawer__label">Cliente</span><span>{{ ticket.clientName || ticket.clientCode || '-' }}</span></div>
+                   <div><span class="ticket-drawer__label">Referencia externa</span><span>{{ ticket.externalReference || '-' }}</span></div>
+                   <div><span class="ticket-drawer__label">Usuario asignado</span><div class="ticket-drawer__assignment-row">@if (canManage()) { @if (ticket.assignedUser) { <app-badge-click class="ticket-drawer__assignment-value" [backgroundColor]="ticket.assignedUser.color ?? '#3E47F6'" (click)="openAssignedUser(ticket.assignedUser.id, $event)">{{ ticket.assignedUser.name }}</app-badge-click><button type="button" class="btn btn-link btn-sm p-0 text-danger" aria-label="Desasignar usuario" title="Desasignar usuario" (click)="clearUser($event)"><i class="pi pi-times" aria-hidden="true"></i></button> } @else { <span class="ticket-drawer__assignment-value">-</span><button type="button" class="btn btn-link btn-sm p-0" aria-label="Seleccionar usuario" title="Seleccionar usuario" (click)="openUserSelector($event)"><i class="pi pi-search" aria-hidden="true"></i></button> } } @else { @if (ticket.assignedUser) { <app-badge-click class="ticket-drawer__assignment-value" [backgroundColor]="ticket.assignedUser.color ?? '#3E47F6'" (click)="openAssignedUser(ticket.assignedUser.id, $event)">{{ ticket.assignedUser.name }}</app-badge-click> } @else { <span class="ticket-drawer__assignment-value">-</span> } }</div>@if (userError) { <small class="text-danger" role="alert">{{ userError }}</small> }</div>
+                   <div><span class="ticket-drawer__label">Módulo</span>@if (canManage()) { <div class="ticket-drawer__module-row" [attr.aria-busy]="moduleSaving ? 'true' : null"><span class="ticket-drawer__module-value">{{ ticket.module ? ticket.module.code + ' - ' + ticket.module.name : '-' }}</span>@if (ticket.module) { <button type="button" class="btn btn-link btn-sm p-0 text-danger" [attr.aria-disabled]="moduleSaving ? 'true' : null" aria-label="Limpiar módulo" title="Limpiar módulo" (click)="clearModule($event)"><i class="pi pi-times" aria-hidden="true"></i></button> } @else { <button type="button" class="btn btn-link btn-sm p-0" [attr.aria-disabled]="moduleSaving ? 'true' : null" aria-label="Seleccionar módulo" title="Seleccionar módulo" (click)="openModuleSelector($event)"><i class="pi pi-search" aria-hidden="true"></i></button> }</div> } @else { <span>{{ ticket.module ? ticket.module.code + ' - ' + ticket.module.name : '-' }}</span> } @if (moduleError) { <small class="text-danger" role="alert">{{ moduleError }}</small> }</div>
+                 <div><span class="ticket-drawer__label">Creado</span><span>{{ ticket.createdAt | date:'short' }}</span></div>
+                <div><span class="ticket-drawer__label">Actualizado</span><span>{{ ticket.updatedAt | date:'short' }}</span></div>
+                </div>
+              </section>
+              <section class="ticket-related-events">
+                <div class="ticket-section__heading d-flex align-items-center justify-content-between gap-2"><h3>Eventos relacionados</h3>@if (canManage()) { <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEventAssociation()">Asociar evento existente</button> }</div>
+                <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
+              </section>
+            </div>
+          </app-ui-card>
+           <app-ui-card title="Descripción" className="mb-3">
+             <div card-body><p class="mb-0 ticket-readable-text">{{ ticket.description || '-' }}</p></div>
+           </app-ui-card>
+           <div class="ticket-drawer__content-grid">
+               <app-ui-card title="Comentarios" className="mb-3"><div card-actions>@if (latestEmailOriginal; as file) { <button type="button" class="btn btn-link btn-sm p-0" aria-label="Ver último correo original" title="Ver último correo original" (click)="openEmailOriginal(file)"><ng-icon name="lucideMailSearch" size="16" /></button> }</div>
+                <div card-body>
+                @if (canManage()) {
+                 <form class="ticket-comment-composer mb-3" (ngSubmit)="submitComment()">
+                  <label for="ticket-comment" class="form-label fw-semibold">Agregar comentario</label>
+                   <textarea id="ticket-comment" name="comment" class="form-control" rows="3" [(ngModel)]="commentDraft" [disabled]="commentSaving" (keydown.enter)="onCommentKeydown($event)" placeholder="Escribí un comentario..."></textarea>
+                  <div class="d-flex align-items-center gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm" [disabled]="commentSaving || !commentDraft.trim()">{{ commentSaving ? 'Enviando...' : 'Enviar comentario' }}</button>
+                    <label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="privateComment" [(ngModel)]="commentPrivate" [disabled]="commentSaving"><span class="form-check-label">Comentario privado</span></label>
+                    @if (commentError) { <small class="text-danger" role="alert">{{ commentError }}</small> }
+                  </div>
+                </form>
+              }
+                  @for (comment of displayedComments; track comment.id; let last = $last) { <article class="ticket-comment-card d-flex gap-2 align-items-start" [class.pb-3]="!last"><div class="ticket-comment-icon rounded-circle d-flex align-items-center justify-content-center" aria-hidden="true"><i class="pi pi-comment"></i></div><div class="flex-grow-1 border rounded p-2 bg-body-tertiary"><p class="mb-1 small text-body-secondary"><span class="fw-semibold text-body">{{ provenanceLabel(comment) }}</span> comentó @if (comment.visibility === 'PRIVATE') { <span class="badge text-bg-warning ms-1">Privado</span> }</p><div class="mb-1 ticket-readable-text">{{ comment.text }}</div>@for (file of comment.attachments ?? []; track file.id) { @if (!isHiddenEmailAttachment(file)) { <a class="d-block small" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> } }<p class="mb-0 small text-body-secondary">{{ comment.createdAt | date:'short' }}</p></div></article> } @empty { <div class="text-muted">Sin comentarios.</div> }
+               @if (hasMoreComments) { <button type="button" class="btn btn-link btn-sm px-0" (click)="toggleComments()">{{ commentsExpanded ? 'Ocultar comentarios anteriores' : 'Ver comentarios anteriores' }}</button> }
+               </div>
+             </app-ui-card>
+               <app-ui-card title="Archivos Adjuntos" className="mb-3">
+                 <div card-body><div class="ticket-attachments">@for (file of ticket.attachments; track file.id) { @if (!isHiddenEmailAttachment(file)) { <a class="ticket-attachment-row" [href]="apiBaseUrl + file.downloadUrl" target="_blank" rel="noopener"><i class="pi pi-file" aria-hidden="true"></i><span class="flex-grow-1">{{ file.name }}</span><small class="text-body-secondary">{{ file.createdAt | date:'short' }}</small></a> } } @empty { <div class="text-muted">Sin archivos adjuntos.</div> }</div></div>
+             </app-ui-card>
+           </div>
+         }
       </div>
     </div>
   </ng-template>
 </p-drawer>
 
-<p-dialog [(visible)]="associationDialogVisible" header="Asociar evento existente" [modal]="true" [style]="{ width: 'min(760px, 96vw)' }">
-  <input class="form-control mb-3" [(ngModel)]="eventSearch" placeholder="Buscar por evento, título o cliente" aria-label="Buscar eventos" />
-  @if (associationError) { <div class="alert alert-danger">{{ associationError }}</div> }
-  @if (loadingEvents) { <p class="text-muted">Cargando eventos...</p> }
-  @if (!loadingEvents && !filteredEvents.length && !associationError) { <p class="text-muted">No hay eventos disponibles para este cliente.</p> }
-  <div class="d-flex flex-column gap-2">
-    @for (event of filteredEvents; track event.id) {
-      <button type="button" class="btn btn-outline-secondary text-start" (click)="associateEvent(event)" [disabled]="associatingEventId !== null">
-        <strong>{{ event.evento || event.tipoCodigo + '-' + event.numero }}</strong>
-        <span class="d-block small text-muted">{{ event.titulo }}</span>
-      </button>
-    }
-  </div>
+<p-dialog [(visible)]="emailDialogVisible" header="Correo original" [modal]="true" [draggable]="false" [resizable]="false" [maximizable]="true" [style]="{ width: 'min(900px, 96vw)' }">
+  @if (emailLoading) { <p class="text-muted">Cargando correo...</p> } @else if (emailOriginal) { <div class="small mb-2">@for (header of emailOriginal.headers | keyvalue; track header.key) { <div><strong>{{ header.key }}:</strong> {{ header.value }}</div> }</div>@if (emailOriginal.html) { <div class="email-original-html" [innerHTML]="emailOriginal.html"></div> } @else { <pre class="email-original-text">{{ emailOriginal.text || 'Sin contenido visible.' }}</pre> } @for (file of emailOriginal.attachments; track emailAttachmentKey(file, $index)) { @if (file.downloadUrl) { <a class="d-block small" [href]="file.downloadUrl" target="_blank" rel="noopener">{{ file.name }}</a> } } }
 </p-dialog>

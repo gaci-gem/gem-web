@@ -8,6 +8,7 @@
 export const environment = {
   // BASE_URL is a build-time placeholder resolved by tools/write-version.js.
   BASE_URL: '__BASE_URL__',
+  gemClientesUrl: '__GEM_CLIENTES_URL__',
 
   loginUrl: '__GEM_WEB_URL__/login',
   apiBaseUrl: '__BASE_URL__',

@@ -2,9 +2,9 @@ export const TICKET_STATES = [
   'INGRESADO',
   'EN_REVISION',
   'EN_DESARROLLO',
-  'RESUELTO',
-  'CERRADO',
+  'ESPERANDO_RESPUESTA_CLIENTE',
   'RECHAZADO',
+  'CERRADO',
 ] as const;
 
 export type TicketState = (typeof TICKET_STATES)[number];
@@ -15,11 +15,14 @@ export interface Ticket {
   description: string;
   status: TicketState;
   externalReference: string | null;
+  module?: { code: string; name: string } | null;
+  assignedUser?: { id: string; name: string; email: string; color: string | null } | null;
   clientName: string | null;
   clientCode: string;
   clientId: number;
   createdAt: string;
   updatedAt: string;
+  events: TicketEvent[];
 }
 
 export interface TicketPage {
@@ -34,6 +37,7 @@ export interface TicketDetail extends Ticket {
   comments: TicketComment[];
   events: TicketEvent[];
   attachments?: TicketAttachment[];
+  emailOriginal?: TicketAttachment;
 }
 
 export interface TicketComment {
@@ -48,6 +52,7 @@ export interface TicketComment {
   credentialId?: string | null;
   displayName?: string | null;
   attachments?: TicketAttachment[];
+  visibility?: 'PUBLIC' | 'PRIVATE';
 }
 
 export interface TicketAttachment {
