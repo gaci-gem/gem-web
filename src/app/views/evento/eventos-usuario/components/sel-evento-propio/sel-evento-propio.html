@@ -64,7 +64,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-evento>
             <tr style="min-height: 55px;">
-                <td class="d-flex justify-content-end" style="min-height: 55px;">
+                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                     <button
                         class="btn btn-ghost-warning"
                         (click)="select(evento)"
@@ -72,7 +72,7 @@
                     >
                         <ng-icon name="lucideSearchCheck"/>
                     </button>
-                </td>
+                </div></td>
                 <td hidden>{{ evento.id }}</td>
                 <td hidden>{{ evento.tipo.id }}</td>
                 <td hidden>{{ evento.numero }}</td>

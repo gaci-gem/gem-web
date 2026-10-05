@@ -68,7 +68,7 @@
                                 <td>
                                     <span [style.background]="tipoEvento.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span>
                                 </td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-info" (click)="mostrarModalPrioridadReglas(tipoEvento)"><ng-icon name="lucidePencilRuler"/></button>
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(tipoEvento, 'M')"><ng-icon name="lucidePencil"/></button>
@@ -76,7 +76,7 @@
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(tipoEvento)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }</button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">

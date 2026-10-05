@@ -61,14 +61,14 @@
                                 <td>{{ proyecto.sigla }}</td>
                                 <td>{{ proyecto.nombre }}</td>
                                 <td><span class="badge " style="min-width: 40%;" [ngClass]="proyecto.activo ? 'text-bg-success' : 'text-bg-danger'">{{ proyecto.activo | booleanLabel }}</span></td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(proyecto, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(proyecto)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }</button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="emptymessage">

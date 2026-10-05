@@ -33,7 +33,7 @@
               </section>
               <section class="ticket-related-events">
                 <div class="ticket-section__heading d-flex align-items-center justify-content-between gap-2"><h3>Eventos relacionados</h3>@if (canManage()) { <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEventAssociation()">Asociar evento existente</button> }</div>
-                <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
+                <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code.padStart(3, '0') }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
               </section>
             </div>
           </app-ui-card>

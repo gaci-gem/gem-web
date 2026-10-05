@@ -197,7 +197,7 @@
                                 <td> {{ evento?.fechaInicio ? (evento.fechaInicio | date : "shortDate") : "" }} </td>
                                  <td> {{ (evento?.fechaFinEst || evento?.fechaFinReal) ? ((evento.fechaFinEst || evento.fechaFinReal) | date : "shortDate") : "" }} </td>
                                 <td hidden>{{ evento?.usuarioAlta?.usuario }}</td>
-                                <td class="d-flex justify-content-end" style="min-height: 55px;">
+                                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                                     @if (!evento.cerrado && !evento.tipo.propio) { 
                                         @if (evento.etapaSiguiente) {
                                             @if (evento.etapaActualData.deAutoriza) {
@@ -236,7 +236,7 @@
                                         }
                                         <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Reasignar" (click)="mostrarModalCrud(evento, 'RAS')"><ng-icon name="lucideRotateCcw"/></button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">

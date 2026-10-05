@@ -47,6 +47,7 @@ describe('DrawerTicket', () => {
     expect(fixture.componentInstance.ticket?.subject).toBe('Subject');
     expect(fixture.componentInstance.ticket?.externalReference).toBe('EXT-7');
     expect(fixture.nativeElement.querySelector('textarea#ticket-comment')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.ticket-related-events app-badge-click')?.textContent.trim()).toBe('TIP01-007');
   });
 
   it('loads and renders sanitized email HTML, plain fallback, and duplicate attachments', (done) => {

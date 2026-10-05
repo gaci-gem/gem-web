@@ -59,7 +59,7 @@
                                 <td>{{ entorno.codigo }}</td>
                                 <td>{{ entorno.nombre }}</td>
                                 <td><span class="badge " style="min-width: 40%;" [ngClass]="entorno.activo ? 'text-bg-success' : 'text-bg-danger'">{{ entorno.activo | booleanLabel }}</span></td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(entorno, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
@@ -68,7 +68,7 @@
                                              @if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }
                                          </button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
