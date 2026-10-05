@@ -46,8 +46,8 @@
                     @if (ticket.events.length) {
                       <div class="ticket-events-list d-flex align-items-center gap-1">
                         @for (event of ticket.events.slice(0, 3); track event.id) {
-                          <a class="badge text-decoration-none" [style.background-color]="event.color" [routerLink]="['/evento/evento', event.id]" [attr.aria-label]="'Ver evento ' + event.type + '-' + event.code" (click)="$event.stopPropagation()">
-                            {{ event.type }}-{{ event.code }}
+                          <a class="badge text-decoration-none" [style.background-color]="event.color" [routerLink]="['/evento/evento', event.id]" [attr.aria-label]="'Ver evento ' + event.type + '-' + event.code.padStart(3, '0')" (click)="$event.stopPropagation()">
+                            {{ event.type }}-{{ event.code.padStart(3, '0') }}
                           </a>
                         }
                         @if (ticket.events.length > 3) {
