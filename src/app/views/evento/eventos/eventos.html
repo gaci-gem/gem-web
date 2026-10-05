@@ -152,7 +152,7 @@
                 <td> {{ evento?.fechaInicio ? (evento.fechaInicio | date : "shortDate") : "" }} </td>
                  <td> {{ (evento?.fechaFinEst || evento?.fechaFinReal) ? ((evento.fechaFinEst || evento.fechaFinReal) | date : "shortDate") : "" }} </td>
                 <td hidden>{{ evento?.usuarioAlta?.usuario }}</td>
-                <td class="d-flex justify-content-end" style="min-height: 55px">
+                <td><div class="d-flex justify-content-end" style="min-height: 55px">
                     @if (!evento.cerrado) {
                         @if (can(PermisoAccion.MODIFICAR)) {
                             <button class="btn btn-ghost-warning" placement="top" ngbTooltip="Modificar" (click)="mostrarModalCrud(evento, 'M')" > <ng-icon name="lucidePencil" /> </button>
@@ -163,7 +163,7 @@
                             <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Eliminar" (click)="delete(evento)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress"> @if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2" /> } </button>
                         } 
                     }
-                </td>
+                </div></td>
               </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">

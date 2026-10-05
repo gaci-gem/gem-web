@@ -126,7 +126,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-evento>
                 <tr style="min-height: 55px;">
-                    <td class="d-flex justify-content-end" style="min-height: 55px;">@if (multiple) { <p-checkbox [binary]="true" [ngModel]="isSelected(evento.id)" (onChange)="toggleSelection(evento.id)" [inputId]="'event-' + evento.id" /> } @else { <button class="btn btn-ghost-warning" (click)="select(evento)" placement="top" ngbTooltip="Seleccionar evento"><ng-icon name="lucideSearchCheck"/></button> }</td>
+                    <td><div class="d-flex justify-content-end" style="min-height: 55px;">@if (multiple) { <p-checkbox [binary]="true" [ngModel]="isSelected(evento.id)" (onChange)="toggleSelection(evento.id)" [inputId]="'event-' + evento.id" /> } @else { <button class="btn btn-ghost-warning" (click)="select(evento)" placement="top" ngbTooltip="Seleccionar evento"><ng-icon name="lucideSearchCheck"/></button> }</div></td>
                     <td hidden>{{ evento.id }}</td><td hidden>{{ evento.tipo.id }}</td><td hidden>{{ evento.numero }}</td>
                     <td><app-badge-click [backgroundColor]="evento.tipo.color" (click)="abrirEventoDrawer(evento)" style="cursor:pointer;">{{ evento.evento }}</app-badge-click></td>
                     <td>{{ evento.titulo }}</td>

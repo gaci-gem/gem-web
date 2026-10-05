@@ -35,9 +35,9 @@
         </ng-template>
         <ng-template pTemplate="body" let-cliente>
             <tr style="min-height: 55px;">
-                <td class="d-flex justify-content-end" style="min-height: 55px;">
+                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                     <button class="btn btn-ghost-warning" (click)="select(cliente)"><ng-icon name="lucideSearchCheck"/></button>
-                </td>
+                </div></td>
                 <td hidden>{{ cliente.id }}</td>
                 <td>{{ cliente.sigla }}</td>
                 <td>{{ cliente.nombre }}</td>

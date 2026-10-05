@@ -35,9 +35,9 @@
         </ng-template>
         <ng-template pTemplate="body" let-modulo>
             <tr style="min-height: 55px;">
-                <td class="d-flex justify-content-end" style="min-height: 55px;">
+                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                     <button class="btn btn-ghost-warning" (click)="select(modulo)"><ng-icon name="lucideSearchCheck"/></button>
-                </td>
+                </div></td>
                 <td>{{ modulo.codigo }}</td>
                 <td>{{ modulo.nombre }}</td>
                 <td>{{ modulo.padreCodigo }}</td>

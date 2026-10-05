@@ -70,7 +70,7 @@
                     }
                   </td>
                   <td>{{ ticket.createdAt | date:'short' }}</td>
-                <td class="text-end d-flex gap-1 justify-content-end">
+                <td><div class="text-end d-flex gap-1 justify-content-end">
                   @if (canRead()) {
                     <button type="button" class="btn btn-ghost-primary" title="Ver ticket" aria-label="Ver ticket" (click)="open(ticket)"><ng-icon name="lucideEye" /></button>
                   } @if (canManage()) {
@@ -79,7 +79,7 @@
                   } @if (canCreateEvent()) { 
                     <button type="button" class="btn btn-ghost-primary" title="Crear evento" aria-label="Crear evento asociado al ticket" (click)="createEvent(ticket)"><ng-icon name="lucideCalendarPlus" /></button> 
                   }
-                </td>
+                </div></td>
               </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">

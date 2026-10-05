@@ -66,14 +66,14 @@
                                     > </app-badge-click> -->
                                     <span class="categoria-dot" [style.background]="rol.color" [style.display]="'inline-block'" [style.width.px]="20" [style.height.px]="20" [style.border-radius]="'4px'" [style.vertical-align]="'middle'" [style.margin-right]="'8px'"></span>
                                 </td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(rol, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(rol)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }</button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">

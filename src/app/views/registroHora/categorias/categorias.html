@@ -62,14 +62,14 @@
                                         <span class="badge bg-secondary">No</span>
                                     }
                                 </td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(categoria, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
                                     @if (can(PermisoAccion.ELIMINAR)) {
                                         <button class="btn btn-ghost-danger" (click)="delete(categoria, 'el tipo de trabajo')" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }</button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
