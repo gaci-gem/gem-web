@@ -117,7 +117,7 @@
                                 <td>{{ registro.usuario.usuario }}</td>
                                 <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>
-                                <td class="d-flex justify-content-end" style="min-height: 55px;">
+                                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                                     @if (true) {
                                     <button class="btn btn-ghost-warning"
                                         (click)="mostrarModalCrud(registro, 'M')"><ng-icon
@@ -126,7 +126,7 @@
                                     @if (true) {
                                     <button class="btn btn-ghost-danger" (click)="delete(registro)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">@if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2" /> }</button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template #expandedrow let-horas>

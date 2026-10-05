@@ -76,11 +76,11 @@
                                 <td>{{ reporte.generadoEn | date: 'short' }}</td>
                                 <td><app-status-badge [status]="reporte.estado" /></td>
                                 <td>{{ reporte.errorDescripcion }}</td>
-                                <td class="d-flex justify-content-end">
+                                <td><div class="d-flex justify-content-end">
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-success" (click)="descargarReporte(reporte)" [disabled]="!reporte.archivoUrl"><ng-icon name="lucideFileDown"/></button>
                                     }
-                                </td>
+                                </div></td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="summary">
