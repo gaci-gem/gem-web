@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth-guard';
 import { VerticalLayout } from '@layouts/vertical-layout/vertical-layout';
+import { SharedTicket } from './views/shared-ticket/shared-ticket';
 
 export const routes: Routes = [
+  { path: 'shared/ticket/:token', component: SharedTicket },
   {
     path: '',
     redirectTo: '/dashboard',

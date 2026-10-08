@@ -3,8 +3,9 @@ import { ChangeDetectorRef, Component, inject, OnInit, signal, ViewChild } from 
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
-import { MessageService } from 'primeng/api';
-import { Table, TableModule } from 'primeng/table';
+import { MenuItem, MessageService } from 'primeng/api';
+import { ContextMenuModule } from 'primeng/contextmenu';
+import { Table, TableFilterEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -24,16 +25,24 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { FiltroPreset, FiltroState } from '@core/interfaces/filtro-preset';
 import { FiltroPresetService } from '@core/services/filtro-preset';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BadgeClickComponent } from '@app/components/badge-click';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, InputTextModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, ContextMenuModule, InputTextModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
   styles: [`
     .ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; }
+    .ticket-action-column { min-width: 4.5rem; width: 4.5rem; }
+    .ticket-id-column { min-width: 5rem; }
+    .ticket-subject-column { min-width: 16rem; }
+    .ticket-client-column { min-width: 14rem; }
+    .ticket-status-column, .ticket-priority-column, .ticket-type-column { min-width: 12rem; }
+    .ticket-reference-column, .ticket-assigned-column { min-width: 14rem; }
+    .ticket-created-column { min-width: 12rem; }
+    .ticket-actions-column { min-width: 12rem; }
     .ticket-events-column { width: 16rem; min-width: 16rem; max-width: 16rem; }
     .ticket-events-list { min-width: 0; max-width: 16rem; overflow: hidden; white-space: nowrap; }
     .ticket-events-list .badge { flex: 0 0 auto; }
@@ -46,10 +55,13 @@ export class Tickets implements OnInit {
   private readonly loading = inject(LoadingService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly drawers = inject(DrawerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly permissions = inject(PermisosService);
   private readonly presetService = inject(FiltroPresetService);
   private ref: DynamicDialogRef | null = null;
   private readonly drawerClosedSubscription = this.drawers.ticketClosed$.subscribe(() => this.loadItems());
+  private clearingFilters = false;
   @ViewChild('dt') table?: Table;
 
   readonly pantalla = 'tickets';
@@ -63,11 +75,40 @@ export class Tickets implements OnInit {
   sortDirection: 'asc' | 'desc' = 'desc';
   search = '';
   estado: TicketState | '' = '';
+   prioridad = ''; tipo = '';
+   idFilter = ''; subjectFilter = ''; clientFilter = ''; externalReferenceFilter = ''; eventsFilter = ''; assignedUserFilter = ''; createdFrom = ''; createdTo = '';
   readonly states = TICKET_STATES.map((value) => ({ label: this.statusLabel(value), value }));
+  readonly priorities = [{ label: 'Crítica', value: 'CRITICA' }, { label: 'Alta', value: 'ALTA' }, { label: 'Media', value: 'MEDIA' }, { label: 'Baja', value: 'BAJA' }];
+  readonly types = [{ label: 'Consulta', value: 'CONSULTA' }, { label: 'Error / Incidente', value: 'ERROR_INCIDENTE' }, { label: 'Requerimiento / Mejora', value: 'REQUERIMIENTO_MEJORA' }];
+  contextMenuSelection: Ticket | null = null;
+  menuItems: MenuItem[] = [];
 
   ngOnInit(): void {
     this.loadPresets();
     this.loadItems();
+    this.openSharedTicket();
+  }
+
+  private openSharedTicket(): void {
+    const token = this.route.snapshot.queryParamMap.get('sharedTicketToken');
+    if (!token) return;
+
+    this.service.resolverTicketCompartido(token).subscribe({
+      next: ({ id }) => {
+        if (Number.isInteger(id) && id > 0) this.drawers.abrirTicketDrawer(id);
+        this.clearSharedTicketToken();
+      },
+      error: () => this.clearSharedTicketToken(),
+    });
+  }
+
+  private clearSharedTicketToken(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sharedTicketToken: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   ngOnDestroy(): void {
@@ -128,11 +169,15 @@ export class Tickets implements OnInit {
   }
 
   clearFilters(): void {
+    this.clearingFilters = true;
+    this.table?.clear();
     this.search = '';
-    this.estado = '';
+    this.estado = ''; this.prioridad = ''; this.tipo = '';
+    this.idFilter = ''; this.subjectFilter = ''; this.clientFilter = ''; this.externalReferenceFilter = ''; this.eventsFilter = ''; this.assignedUserFilter = ''; this.createdFrom = ''; this.createdTo = '';
     this.selectedPresetId = '';
     this.page = 1;
     if (this.table) this.table.first = 0;
+    this.clearingFilters = false;
     this.loadItems();
   }
 
@@ -144,7 +189,7 @@ export class Tickets implements OnInit {
 
   loadItems(): void {
     this.loading.show();
-    this.service.list({ search: this.search, estado: this.estado || undefined, page: this.page, limit: this.limit }).pipe(finalize(() => this.loading.hide())).subscribe({
+     this.service.list({ search: this.search, id: this.idFilter ? Number(this.idFilter) : undefined, subject: this.subjectFilter || undefined, client: this.clientFilter || undefined, status: this.estado || undefined, priority: this.prioridad || undefined, type: this.tipo || undefined, externalReference: this.externalReferenceFilter || undefined, events: this.eventsFilter || undefined, assignedUser: this.assignedUserFilter || undefined, createdFrom: this.createdFrom || undefined, createdTo: this.createdTo || undefined, page: this.page, limit: this.limit, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(finalize(() => this.loading.hide())).subscribe({
       next: (result) => { this.tickets = result.data; this.total = result.total; this.cdr.detectChanges(); },
       error: (error) => this.showError(error),
     });
@@ -157,7 +202,7 @@ export class Tickets implements OnInit {
   }
 
   onSort(event: { field?: string; order?: number }): void {
-    if (!['subject', 'clientName', 'status', 'createdAt'].includes(event.field as string)) return;
+    if (!['subject', 'clientName', 'status', 'priority', 'type', 'createdAt'].includes(event.field as string)) return;
     this.sortField = event.field as TicketSortField;
     this.sortDirection = event.order === 1 ? 'asc' : 'desc';
     this.page = 1;
@@ -168,6 +213,37 @@ export class Tickets implements OnInit {
   canRead(): boolean { return this.permissions.can(buildPermiso(PermisoClave.TICKET, PermisoAccion.LEER)); }
   canManage(): boolean { return this.permissions.can(buildPermiso(PermisoClave.TICKET, PermisoAccion.GESTIONAR)); }
   canCreateEvent(): boolean { return this.permissions.can(buildPermiso(PermisoClave.EVENTO, PermisoAccion.CREAR)); }
+
+  buildContextMenu(ticket: Ticket | null): void {
+    this.contextMenuSelection = ticket;
+    if (!ticket) {
+      this.menuItems = [];
+      return;
+    }
+
+    this.menuItems = [
+      { label: 'Ver ticket', icon: 'pi pi-eye', command: () => this.openSelectedTicket() },
+      ...(this.canManage() ? [
+        { label: 'Cambiar estado', icon: 'pi pi-arrow-right-arrow-left', command: () => this.manageSelectedTicket((item) => this.transition(item)) },
+        { label: 'Referencia Externa', icon: 'pi pi-pencil', command: () => this.manageSelectedTicket((item) => this.updateReference(item)) },
+      ] : []),
+      ...(this.canCreateEvent() ? [
+        { label: 'Crear evento', icon: 'pi pi-calendar-plus', command: () => this.createSelectedEvent() },
+      ] : []),
+    ];
+  }
+
+  private openSelectedTicket(): void {
+    if (this.contextMenuSelection) this.open(this.contextMenuSelection);
+  }
+
+  private manageSelectedTicket(action: (ticket: Ticket) => void): void {
+    if (this.contextMenuSelection && this.canManage()) action(this.contextMenuSelection);
+  }
+
+  private createSelectedEvent(): void {
+    if (this.contextMenuSelection && this.canCreateEvent()) this.createEvent(this.contextMenuSelection);
+  }
 
   open(ticket: Ticket): void {
     if (!this.canRead()) return;
@@ -216,6 +292,24 @@ export class Tickets implements OnInit {
   statusClass(status: TicketState): string {
     return { INGRESADO: 'text-bg-secondary', EN_REVISION: 'text-bg-info', EN_DESARROLLO: 'text-bg-primary', ESPERANDO_RESPUESTA_CLIENTE: 'text-bg-warning', RECHAZADO: 'text-bg-danger', CERRADO: 'text-bg-dark' }[status] || 'text-bg-secondary';
   }
+
+  onColumnFilter(event: TableFilterEvent): void {
+    if (this.clearingFilters) return;
+    const value = (field: string): string => {
+      const metadata = event.filters?.[field];
+      const first = Array.isArray(metadata) ? metadata[0] : metadata;
+      const constraint = first?.constraints?.[0] ?? first;
+      const raw = constraint?.value;
+      if (raw instanceof Date) return raw.toISOString().slice(0, 10);
+      return raw == null ? '' : String(raw).trim();
+    };
+    this.idFilter = value('id'); this.subjectFilter = value('subject'); this.clientFilter = value('client');
+    this.estado = value('status') as TicketState | ''; this.prioridad = value('priority'); this.tipo = value('type');
+    this.externalReferenceFilter = value('externalReference'); this.eventsFilter = value('events'); this.assignedUserFilter = value('assignedUser');
+    this.createdFrom = value('createdFrom'); this.createdTo = value('createdTo'); this.onFilterChange();
+  }
+  priorityLabel(value: string): string { return ({ CRITICA: '🔴 Crítica', ALTA: '🟠 Alta', MEDIA: '🟡 Media', BAJA: '🟢 Baja' } as Record<string, string>)[value] ?? '🟡 Media'; }
+  typeLabel(value: string | null): string { return ({ CONSULTA: 'Consultas', ERROR_INCIDENTE: 'Error / Incidente', REQUERIMIENTO_MEJORA: 'Requerimiento / Mejora' } as Record<string, string>)[value ?? ''] ?? 'Sin clasificar'; }
 
   /*
   this.dialogService.open(ChangelogModalComponent, {

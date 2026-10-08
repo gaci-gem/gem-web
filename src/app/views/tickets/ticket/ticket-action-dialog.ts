@@ -16,7 +16,7 @@ import { PermisosService } from '@core/services/permisos';
       <form (ngSubmit)="submit()" class="d-flex flex-column gap-3">
         <label class="form-label">Nuevo estado<select class="form-select" name="state" [(ngModel)]="state" required><option value="">Seleccionar...</option>@for (value of transitions; track value) { <option [value]="value">{{ stateLabel(value) }}</option> }</select></label>
         <small class="text-muted">Rechazado y Cerrado cierran el ticket.</small>
-        @if (state === 'RECHAZADO') { <label class="form-label">Motivo del rechazo <span class="text-danger">*</span><input class="form-control" name="reason" [(ngModel)]="reason" required /></label> }
+         @if (state === 'RECHAZADO' || state === 'CERRADO') { <label class="form-label">Observación <span class="text-danger">*</span><textarea class="form-control" name="observation" [(ngModel)]="reason" maxlength="1000" rows="3" required></textarea></label> }
         <div class="d-flex justify-content-end gap-2"><button class="btn btn-secondary" type="button" (click)="cancel()" [disabled]="saving">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="!state || (state === 'RECHAZADO' && !reason.trim()) || saving">Actualizar</button></div>
       </form>
     } @else if (mode === 'reference') {
@@ -49,9 +49,9 @@ export class TicketActionDialog {
   submit(): void {
     if (!this.permissions.can('TIK.GESTIONAR')) return;
     if (this.mode === 'state') {
-      if (!this.state || (this.state === 'RECHAZADO' && !this.reason.trim())) return;
+       if (!this.state || ((this.state === 'RECHAZADO' || this.state === 'CERRADO') && !this.reason.trim())) return;
       this.saving = true;
-      this.service.transition(this.ticketId, this.state as TicketState, this.reason).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });
+       this.service.transition(this.ticketId, this.state as TicketState, this.reason.trim() || undefined).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });
     } else if (this.mode === 'reference') {
       this.saving = true;
       this.service.updateExternalReference(this.ticketId, this.reference.trim() || null).pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.closeChanged(), error: () => undefined });

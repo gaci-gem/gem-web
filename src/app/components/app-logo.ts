@@ -20,7 +20,12 @@ import { appLogo, appLogoCompleto_dark, appLogoCompleto_light, appName } from '@
       </span>
     </a>
   `,
-  styles: ``,
+  styles: `
+    :host .logo-dark { display: block; }
+    :host .logo-light { display: none; }
+    :host-context(html[data-bs-theme="dark"]) .logo-dark { display: none; }
+    :host-context(html[data-bs-theme="dark"]) .logo-light { display: block; }
+  `,
 })
 export class AppLogo {
   @Input() logoMaxWidth: number = 140

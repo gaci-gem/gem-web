@@ -9,14 +9,21 @@ export const TICKET_STATES = [
 
 export type TicketState = (typeof TICKET_STATES)[number];
 
+export type TicketOrigin = 'EMAIL' | 'GEM_CLIENTES' | 'GEM_WEB';
+
 export interface Ticket {
   id: number;
   subject: string;
+  origin: TicketOrigin;
   description: string;
   status: TicketState;
+  priority: 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAJA';
+  type: 'CONSULTA' | 'ERROR_INCIDENTE' | 'REQUERIMIENTO_MEJORA' | null;
   externalReference: string | null;
+  observation: string | null;
   module?: { code: string; name: string } | null;
   assignedUser?: { id: string; name: string; email: string; color: string | null } | null;
+  creator: { id: string; login: string } | null;
   clientName: string | null;
   clientCode: string;
   clientId: number;
