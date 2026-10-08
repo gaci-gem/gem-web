@@ -13,6 +13,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.getAccessToken();
   const publicExcluded = ['/auth/crearUsuario'];
   const excluded = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/profile'];
+  const silentSessionProbe = req.headers.has('X-Silent-Session-Probe');
 
   // Si el request ya tiene la marca de intento de refresh, no lo reintentes
   if (req.headers.get('X-Refresh-Attempt')) {
@@ -28,6 +29,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
+        if (silentSessionProbe) return throwError(() => error);
         // Public form errors must not be interpreted as an expired session.
         if (publicExcluded.some(path => req.url.includes(path))) {
           return throwError(() => error);

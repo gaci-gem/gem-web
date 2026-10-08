@@ -8,7 +8,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 
 describe('DrawerTicket', () => {
   let fixture: ComponentFixture<DrawerTicket>;
-  const service = jasmine.createSpyObj<TicketService>('TicketService', ['detail', 'associateEvent', 'replaceEvents', 'comment', 'updateModule', 'emailOriginal']);
+  const service = jasmine.createSpyObj<TicketService>('TicketService', ['detail', 'associateEvent', 'replaceEvents', 'comment', 'updateModule', 'emailOriginal', 'emitirLinkCompartido']);
   const drawerService = jasmine.createSpyObj<DrawerService>('DrawerService', ['abrirEventoDrawer']);
   const permissions = jasmine.createSpyObj<PermisosService>('PermisosService', ['can']);
   const dialogService = jasmine.createSpyObj<DialogService>('DialogService', ['open']);
@@ -17,15 +17,18 @@ describe('DrawerTicket', () => {
     service.associateEvent.calls.reset();
     service.replaceEvents.calls.reset();
     service.detail.calls.reset();
+    service.emitirLinkCompartido.calls.reset();
     dialogService.open.calls.reset();
     service.detail.and.returnValue(of({
-      id: 7, subject: 'Subject', description: 'Description', status: 'INGRESADO',
+      id: 7, subject: 'Subject', description: 'Description', status: 'INGRESADO', origin: 'GEM_WEB',
+       priority: 'MEDIA', type: 'CONSULTA', observation: null, creator: null,
        externalReference: 'EXT-7', clientName: 'Client', clientCode: 'CLI', clientId: 11,
        createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-02T00:00:00Z', comments: [], events: [{ id: 'event-7', type: 'TIP01', code: '7', title: 'Event', visibleState: 'OPEN', color: '#123456' }],
     }));
     service.associateEvent.and.returnValue(of({} as any));
     service.replaceEvents.and.returnValue(of({} as any));
     service.updateModule.and.returnValue(of({ module: null } as any));
+    service.emitirLinkCompartido.and.returnValue(of({ token: 'token', destino: 'GEM_WEB', url: 'https://gem.example/shared/token' }));
     permissions.can.and.returnValue(true);
     await TestBed.configureTestingModule({
       imports: [DrawerTicket],
@@ -70,22 +73,20 @@ describe('DrawerTicket', () => {
     }, 50);
   });
 
-  it('generates direct GEM and GEM Clientes links', () => {
-    expect(fixture.componentInstance.gemUrl).toBe(`${window.location.origin}/gem-clientes/tickets/7`);
-    expect(fixture.componentInstance.gemClientesUrl).toBe('http://localhost:4201/tickets/7');
-  });
-
-  it('copies either destination and exposes transient feedback', async () => {
+  it('generates and copies the server-issued shared link with accessible feedback', async () => {
     const writeText = jasmine.createSpy('writeText').and.returnValue(Promise.resolve());
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-    await fixture.componentInstance.copyLink('clientes');
-    expect(writeText).toHaveBeenCalledWith('http://localhost:4201/tickets/7');
-    expect(fixture.componentInstance.copiedLink).toBe('clientes');
+    fixture.componentInstance.compartirLink();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(service.emitirLinkCompartido).toHaveBeenCalledWith(7);
+    expect(writeText).toHaveBeenCalledWith('https://gem.example/shared/token');
+    expect(fixture.componentInstance.shareFeedback).toBe('Link compartido copiado');
   });
 
-  it('renders explicit GEM Web and GEM Clientes copy controls', () => {
-    expect(fixture.nativeElement.querySelector('[aria-label="Copiar link de GEM Web"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[aria-label="Copiar link de GEM Clientes"]')).not.toBeNull();
+  it('renders one share control without a direct ticket URL', () => {
+    expect(fixture.nativeElement.querySelectorAll('[aria-label="Compartir ticket"]').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[aria-label="Copiar link de GEM Web"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Copiar link de GEM Clientes"]')).toBeNull();
   });
 
   it('renders description and comments with whitespace-safe readable classes', () => {

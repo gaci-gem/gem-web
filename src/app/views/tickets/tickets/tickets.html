@@ -14,34 +14,47 @@
           </p-toolbar>
           <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
              <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Buscar..." /></span>
-             <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
+              <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
+              <select class="form-select" aria-label="Filtrar por prioridad" style="width: 170px" [(ngModel)]="prioridad" (ngModelChange)="onFilterChange()"><option value="">Todas las prioridades</option><option value="CRITICA">🔴 Crítica</option><option value="ALTA">🟠 Alta</option><option value="MEDIA">🟡 Media</option><option value="BAJA">🟢 Baja</option></select>
+              <select class="form-select" aria-label="Filtrar por tipo" style="width: 220px" [(ngModel)]="tipo" (ngModelChange)="onFilterChange()"><option value="">Todos los tipos</option><option value="CONSULTA">Consultas</option><option value="ERROR_INCIDENTE">Error / Incidente</option><option value="REQUERIMIENTO_MEJORA">Requerimiento / Mejora</option></select>
           </div>
-           <p-table #dt [value]="tickets" [lazy]="true" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [paginator]="true" [rowHover]="true" dataKey="id"
+           <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
+           <p-table #dt [value]="tickets" [lazy]="true" (onFilter)="onColumnFilter($event)" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [paginator]="true" [rowHover]="true" dataKey="id"
+             [(contextMenuSelection)]="contextMenuSelection" [contextMenu]="cm" (contextMenuSelectionChange)="buildContextMenu($event)"
              appKeyboardListNavigation [keyboardListItems]="tickets" (keyboardRowActivate)="open($event)"
             [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']"
-            size="small" [scrollable]="true">
-             <ng-template pTemplate="header">
-              <tr>
-                <th pSortableColumn="id">Id</th>
-                 <th pSortableColumn="subject">Asunto <p-sortIcon field="subject"></p-sortIcon></th>
-                  <th pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon></th>
-                   <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
-                 <th>Referencia externa</th>
-                   <th class="ticket-events-column">Eventos</th>
-                   <th>Usuario asignado</th>
-                   <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
-                <th>Acciones</th>
+             size="small" [scrollable]="true" scrollWidth="max-content">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th class="ticket-action-column">Ver</th>
+                  <th class="ticket-id-column" pSortableColumn="id">Id <p-columnFilter type="numeric" field="id" display="menu" matchMode="equals" /></th>
+                   <th class="ticket-subject-column" pSortableColumn="subject">Asunto <p-sortIcon field="subject"></p-sortIcon><p-columnFilter type="text" field="subject" display="menu" matchMode="contains" /></th>
+                    <th class="ticket-client-column" pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon><p-columnFilter type="text" field="client" display="menu" matchMode="contains" /></th>
+                       <th class="ticket-status-column" pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon><p-columnFilter field="status" display="menu" matchMode="equals"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por estado" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todos</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select></ng-template></p-columnFilter></th>
+                       <th class="ticket-priority-column" pSortableColumn="priority">Prioridad <p-sortIcon field="priority"></p-sortIcon><p-columnFilter field="priority" display="menu" matchMode="equals"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por prioridad" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todas</option>@for (priority of priorities; track priority.value) { <option [value]="priority.value">{{ priority.label }}</option> }</select></ng-template></p-columnFilter></th><th class="ticket-type-column" pSortableColumn="type">Tipo <p-sortIcon field="type"></p-sortIcon><p-columnFilter field="type" display="menu" matchMode="equals"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por tipo" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todos</option>@for (type of types; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></ng-template></p-columnFilter></th>
+                   <th class="ticket-reference-column">Referencia externa <p-columnFilter type="text" field="externalReference" display="menu" matchMode="contains" /></th>
+                     <th class="ticket-events-column">Eventos <p-columnFilter type="text" field="events" display="menu" matchMode="contains" /></th>
+                     <th class="ticket-assigned-column">Usuario asignado <p-columnFilter type="text" field="assignedUser" display="menu" matchMode="contains" /></th>
+                     <th class="ticket-created-column" pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon><p-columnFilter type="date" field="createdFrom" display="menu" matchMode="dateIs" /><p-columnFilter type="date" field="createdTo" display="menu" matchMode="dateIs" /></th>
+                 <th class="ticket-actions-column">Acciones</th>
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-ticket>
-              <tr>
-                <td>{{ ticket.id }}</td>
-                <td>{{ ticket.subject }}</td>
+               <tr [pContextMenuRow]="ticket">
+                 <td class="ticket-action-column">
+                   @if (canRead()) {
+                     <button type="button" class="btn btn-ghost-primary" title="Ver ticket" aria-label="Ver ticket" (click)="open(ticket)"><ng-icon name="lucideEye" /></button>
+                   }
+                 </td>
+                 <td class="ticket-id-column">{{ ticket.id }}</td>
+                  <td>{{ ticket.subject }}</td>
                 <td>{{ ticket.clientCode }}{{ ticket.clientName ? ' - ' + ticket.clientName : '' }}</td>
                  <td>
                   <span class="badge ticket-status-badge d-inline-flex {{ statusClass(ticket.status) }}">{{ statusLabel(ticket.status) }}</span>
                 </td>
-                 <td>{{ ticket.externalReference || '-' }}</td>
+                  <td [attr.aria-label]="'Prioridad: ' + priorityLabel(ticket.priority)">{{ priorityLabel(ticket.priority) }}</td>
+                  <td>{{ typeLabel(ticket.type) }}</td>
+                  <td>{{ ticket.externalReference || '-' }}</td>
                   <td class="ticket-events-column">
                     @if (ticket.events.length) {
                       <div class="ticket-events-list d-flex align-items-center gap-1">
@@ -68,14 +81,12 @@
                     } @else {
                       <span>-</span>
                     }
-                  </td>
+                 </td>
                   <td>{{ ticket.createdAt | date:'short' }}</td>
-                <td><div class="text-end d-flex gap-1 justify-content-end">
-                  @if (canRead()) {
-                    <button type="button" class="btn btn-ghost-primary" title="Ver ticket" aria-label="Ver ticket" (click)="open(ticket)"><ng-icon name="lucideEye" /></button>
-                  } @if (canManage()) {
+                 <td class="ticket-actions-column"><div class="text-end d-flex gap-1 justify-content-end">
+                   @if (canManage()) {
                     <button type="button" class="btn btn-ghost-primary" title="Cambiar estado" aria-label="Cambiar estado" (click)="transition(ticket)"><ng-icon name="lucideArrowRightLeft" /></button>
-                    <button type="button" class="btn btn-ghost-primary" title="Actualizar referencia externa" aria-label="Actualizar referencia externa" (click)="updateReference(ticket)"><ng-icon name="lucidePencil" /></button>
+                    <button type="button" class="btn btn-ghost-primary" title="Referencia Externa" aria-label="Referencia Externa" (click)="updateReference(ticket)"><ng-icon name="lucidePencil" /></button>
                   } @if (canCreateEvent()) { 
                     <button type="button" class="btn btn-ghost-primary" title="Crear evento" aria-label="Crear evento asociado al ticket" (click)="createEvent(ticket)"><ng-icon name="lucideCalendarPlus" /></button> 
                   }
@@ -84,7 +95,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                  <td colspan="9" class="text-muted">No hay tickets.</td>
+                   <td colspan="11" class="text-muted">No hay tickets.</td>
              </tr>
              </ng-template>
              <ng-template pTemplate="summary">
