@@ -14,6 +14,15 @@ import { UserStorageService } from '@core/services/user-storage'
 import { environment } from '@/environments/environment'
 import { isTrustedReturnUrl } from '@core/utils/is-trusted-return-url'
 
+const SHARED_TICKET_RETURN_URL_KEY = 'gem-web.shared-ticket.return-url';
+
+function isValidSharedTicketReturnUrl(value: unknown): value is string {
+  return typeof value === 'string' && (
+    /^\/shared\/ticket\/[^/?#]+$/.test(value)
+    || /^\/gem-clientes\/tickets\?sharedTicketToken=[^&#]+$/.test(value)
+  )
+}
+
 // Internal — surfaced for testability of the redirect decision without
 // triggering `window.location.href` from a Karma test (which would navigate
 // the runner away).
@@ -188,8 +197,25 @@ export class SignIn implements OnInit {
   }
 
   loginOk() {
-    const returnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
+    const queryReturnUrl = this.rutActiva.snapshot.queryParams['returnUrl'];
+    const storedReturnUrl = sessionStorage.getItem(SHARED_TICKET_RETURN_URL_KEY);
+    let returnUrl: string | undefined = typeof queryReturnUrl === 'string' ? queryReturnUrl : undefined;
+
+    if (queryReturnUrl !== undefined) {
+      if (isValidSharedTicketReturnUrl(queryReturnUrl)) returnUrl = queryReturnUrl;
+      else if (storedReturnUrl !== null) sessionStorage.removeItem(SHARED_TICKET_RETURN_URL_KEY);
+    } else if (storedReturnUrl !== null) {
+      if (isValidSharedTicketReturnUrl(storedReturnUrl)) returnUrl = storedReturnUrl;
+      sessionStorage.removeItem(SHARED_TICKET_RETURN_URL_KEY);
+    }
+
     const inicio_default = this.userStorage.getUsuario()?.pagina_inicio;
+
+    if (isValidSharedTicketReturnUrl(returnUrl)) {
+      sessionStorage.removeItem(SHARED_TICKET_RETURN_URL_KEY);
+      this.router.navigateByUrl(returnUrl);
+      return;
+    }
 
     // Slice 2 (shared-auth-cross-origin): the helper gates the open-redirect
     // attack surface and decouples the dev URL-token handover from a hardcoded

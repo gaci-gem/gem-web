@@ -1,6 +1,7 @@
 export const environment = {
     BASE_URL: '',
-    gemClientesUrl: 'http://localhost:4201',
+    gemDocsUrl: 'http://localhost:4201',
+    gemClientesUrl: 'http://localhost:4202',
 
     loginUrl: 'http://localhost:4200/login',
     apiBaseUrl: 'http://localhost:4000',

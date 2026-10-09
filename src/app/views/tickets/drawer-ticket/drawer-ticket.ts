@@ -40,7 +40,8 @@ import { EventoSelect } from '@/app/views/evento/evento-select/evento-select';
        .ticket-card--header { padding: 1.25rem; }
       .ticket-card__top { border-bottom: 1px solid var(--ins-border-color); padding-bottom: 1rem; }
       .ticket-card__identity { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-top: .35rem; }
-      .ticket-card__title { display: flex; align-items: baseline; gap: .65rem; min-width: 0; font-size: 1.45rem; line-height: 1.2; font-weight: 700; }
+       .ticket-card__title { display: flex; align-items: center; gap: .65rem; min-width: 0; font-size: 1.45rem; line-height: 1.2; font-weight: 700; }
+       .ticket-card__origin-icon { margin-right: .35rem; }
       .ticket-card__title .ticket-drawer__subject { min-width: 0; }
       .ticket-drawer__metadata { margin-top: 1rem; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem 1.5rem; }
       .ticket-drawer__metadata > div { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
@@ -88,8 +89,9 @@ export class DrawerTicket {
   commentError: string | null = null;
   commentPrivate = false;
   commentsExpanded = false;
-  copiedLink: 'gem' | 'clientes' | null = null;
-  private copyFeedbackTimeout: ReturnType<typeof setTimeout> | null = null;
+  shareFeedback = '';
+  sharingLink = false;
+  private shareFeedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   moduleSaving = false;
   moduleError: string | null = null;
   emailDialogVisible = false;
@@ -99,19 +101,32 @@ export class DrawerTicket {
   private eventoDialog: DynamicDialogRef | null = null;
   private usuarioDialog: DynamicDialogRef | null = null;
   userSaving = false; userError: string | null = null;
+  prioritySaving = false; typeSaving = false;
 
-  get gemUrl(): string {
-    return `${window.location.origin}/gem-clientes/tickets/${this.ticket?.id ?? this.ticketId}`;
+  async compartirLink(): Promise<void> {
+    if (!this.ticket || this.sharingLink) return;
+    this.sharingLink = true;
+    this.shareFeedback = '';
+    this.service.emitirLinkCompartido(this.ticket.id).subscribe({
+      next: async ({ url, destinos }) => {
+        const generatedUrl = url ?? destinos[0]?.url;
+        const copied = generatedUrl ? await this.copyGeneratedUrl(generatedUrl) : false;
+        this.sharingLink = false;
+        this.shareFeedback = copied ? 'Link compartido copiado' : 'No pudimos copiar el link compartido';
+        this.showShareFeedback();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.sharingLink = false;
+        this.shareFeedback = 'No pudimos generar el link compartido';
+        this.showShareFeedback();
+        this.cdr.detectChanges();
+      },
+    });
   }
 
-  get gemClientesUrl(): string | null {
-    const baseUrl = (environment.gemClientesUrl as string | undefined)?.trim().replace(/\/+$/, '');
-    return baseUrl ? `${baseUrl}/tickets/${this.ticket?.id ?? this.ticketId}` : null;
-  }
-
-  async copyLink(target: 'gem' | 'clientes'): Promise<void> {
-    const url = target === 'gem' ? this.gemUrl : this.gemClientesUrl;
-    if (!url) return;
+  private async copyGeneratedUrl(url: string): Promise<boolean> {
+    if (!url) return false;
     let copied = false;
     if (navigator.clipboard?.writeText) {
       try {
@@ -130,14 +145,15 @@ export class DrawerTicket {
       copied = document.execCommand('copy');
       input.remove();
     }
-    if (!copied) return;
-    this.copiedLink = target;
-    if (this.copyFeedbackTimeout) clearTimeout(this.copyFeedbackTimeout);
-    this.copyFeedbackTimeout = setTimeout(() => {
-      this.copiedLink = null;
+    return copied;
+  }
+
+  private showShareFeedback(): void {
+    if (this.shareFeedbackTimeout) clearTimeout(this.shareFeedbackTimeout);
+    this.shareFeedbackTimeout = setTimeout(() => {
+      this.shareFeedback = '';
       this.cdr.detectChanges();
     }, 1800);
-    this.cdr.detectChanges();
   }
 
   ngOnChanges(): void {
@@ -157,7 +173,6 @@ export class DrawerTicket {
     const key = `${this.visible}:${this.ticketId}`;
     if (this.loadedKey === key) return;
     this.loadedKey = key;
-    this.ticket = null;
     this.error = null;
     this.commentDraft = '';
     this.commentError = null;
@@ -196,6 +211,10 @@ export class DrawerTicket {
   statusLabel(status: string): string {
     return ({ INGRESADO: 'Ingresado', EN_REVISION: 'En revisión', EN_DESARROLLO: 'En desarrollo', ESPERANDO_RESPUESTA_CLIENTE: 'Esperando respuesta del cliente', RECHAZADO: 'Rechazado', CERRADO: 'Cerrado' } as Record<string, string>)[status] ?? status.replaceAll('_', ' ');
   }
+  priorityLabel(value: string): string { return ({ CRITICA: '🔴 Crítica', ALTA: '🟠 Alta', MEDIA: '🟡 Media', BAJA: '🟢 Baja' } as Record<string, string>)[value] ?? '🟡 Media'; }
+  typeLabel(value: string | null): string { return ({ CONSULTA: 'Consultas', ERROR_INCIDENTE: 'Error / Incidente', REQUERIMIENTO_MEJORA: 'Requerimiento / Mejora' } as Record<string, string>)[value ?? ''] ?? 'Sin clasificar'; }
+  updatePriority(value: string): void { if (!this.ticket || !this.canManage() || this.prioritySaving) return; this.prioritySaving = true; this.service.updatePriority(this.ticket.id, value as Ticket['priority']).pipe(finalize(() => { this.prioritySaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => this.ticket = { ...this.ticket!, priority: updated.priority }, error: () => this.cdr.detectChanges() }); }
+  updateType(value: string): void { if (!this.ticket || !this.canManage() || this.typeSaving) return; this.typeSaving = true; this.service.updateType(this.ticket.id, (value || null) as Ticket['type']).pipe(finalize(() => { this.typeSaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => this.ticket = { ...this.ticket!, type: updated.type }, error: () => this.cdr.detectChanges() }); }
 
   openAssignedUser(userId: string, event?: Event): void {
     event?.preventDefault();
