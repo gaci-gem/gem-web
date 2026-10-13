@@ -58,6 +58,41 @@ describe('SseService', () => {
     expect((window as any).EventSource).not.toHaveBeenCalled();
   });
 
+  it('should connect once when the token becomes available after the initial attempt', () => {
+    jasmine.clock().install();
+    try {
+      authServiceMock.getAccessToken.and.returnValues(null, 'late-token');
+
+      service.connect();
+      expect((window as any).EventSource).not.toHaveBeenCalled();
+
+      jasmine.clock().tick(500);
+
+      expect((window as any).EventSource).toHaveBeenCalledTimes(1);
+      expect((window as any).EventSource).toHaveBeenCalledWith(
+        '/notificacion/sse?token=late-token',
+      );
+      service.connect();
+      expect((window as any).EventSource).toHaveBeenCalledTimes(1);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('should stop retrying when the token remains unavailable', () => {
+    jasmine.clock().install();
+    try {
+      authServiceMock.getAccessToken.and.returnValue(null);
+      service.connect();
+      jasmine.clock().tick(500 * 11);
+
+      expect((window as any).EventSource).not.toHaveBeenCalled();
+      expect((service as any).tokenRetryTimer).toBeNull();
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
   it('should connect when token is available and create EventSource with correct URL', () => {
     service.connect();
     eventSourceInstance.onopen();

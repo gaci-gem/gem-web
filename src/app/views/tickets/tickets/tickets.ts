@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
@@ -27,6 +27,7 @@ import { FiltroPreset, FiltroState } from '@core/interfaces/filtro-preset';
 import { FiltroPresetService } from '@core/services/filtro-preset';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BadgeClickComponent } from '@app/components/badge-click';
+import { SseService } from '@core/services/sse.service';
 
 @Component({
   selector: 'app-tickets',
@@ -59,6 +60,7 @@ export class Tickets implements OnInit {
   private readonly router = inject(Router);
   private readonly permissions = inject(PermisosService);
   private readonly presetService = inject(FiltroPresetService);
+  private readonly sse = inject(SseService);
   private ref: DynamicDialogRef | null = null;
   private readonly drawerClosedSubscription = this.drawers.ticketClosed$.subscribe(() => this.loadItems());
   private clearingFilters = false;
@@ -82,10 +84,20 @@ export class Tickets implements OnInit {
   readonly types = [{ label: 'Consulta', value: 'CONSULTA' }, { label: 'Error / Incidente', value: 'ERROR_INCIDENTE' }, { label: 'Requerimiento / Mejora', value: 'REQUERIMIENTO_MEJORA' }];
   contextMenuSelection: Ticket | null = null;
   menuItems: MenuItem[] = [];
+  private lastTicketMutationKey = '';
+  private readonly ticketMutationEffect = effect(() => {
+    const event = this.sse.ticketMutations()[0];
+    if (!event || !event.ticketId) return;
+    const mutationKey = `${event.ticketId}:${event.operation}:${event.timestamp}`;
+    if (mutationKey === this.lastTicketMutationKey) return;
+    this.lastTicketMutationKey = mutationKey;
+    if (event.operation === 'CREATED' || this.tickets.some((ticket) => ticket.id === event.ticketId)) this.loadItems();
+  });
 
   ngOnInit(): void {
     this.loadPresets();
     this.loadItems();
+    this.sse.connect();
     this.openSharedTicket();
   }
 
