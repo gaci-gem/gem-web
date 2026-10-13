@@ -1,0 +1,23 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 mt-3">
+      <app-ui-card title="Templates de email">
+         <div card-body>
+    <p-toolbar styleClass="mb-2 gap-2">
+      <ng-template pTemplate="left"><app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" /></ng-template>
+      <ng-template pTemplate="right"><app-control-trabajar-con [mostrarNuevo]="false" [mostrarDesplegable]="false" /></ng-template>
+    </p-toolbar>
+    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="search" [value]="searchValue()" (input)="searchValue.set(getEventValue($event)); saveFilterSession() ; filtrar($event, dt)" placeholder="Buscar..." aria-label="Buscar templates" /></span></div>
+    @if (error) { <div class="alert alert-danger">No se pudo cargar el catálogo de templates de email.</div> }
+    <p-table #dt [value]="templates" [loading]="cargando" [globalFilterFields]="['clave', 'nombre', 'familia', 'descripcion']" dataKey="clave" [rowHover]="true" size="small">
+       <ng-template pTemplate="header"><tr><th>Clave</th><th>Nombre</th><th>Descripción</th><th></th></tr></ng-template>
+       <ng-template pTemplate="body" let-template><tr><td><code>{{ template.clave }}</code></td><td>{{ template.nombre }}</td><td>{{ template.descripcion }}</td><td class="text-end">@if (puedeModificar(template)) { <button type="button" class="btn btn-ghost-warning" (click)="modificar(template)">Modificar</button> }</td></tr></ng-template>
+       <ng-template pTemplate="emptymessage"><tr><td colspan="4" class="text-center text-muted py-4">{{ error ? 'No se pudo cargar el catálogo.' : 'No se encontraron templates.' }}</td></tr></ng-template>
+    </p-table>
+        </div>
+      </app-ui-card>
+    </div>
+  </div>
+</div>

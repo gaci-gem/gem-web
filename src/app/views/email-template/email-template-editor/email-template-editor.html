@@ -1,0 +1,45 @@
+<p-toast></p-toast>
+<div class="container-fluid py-3">
+  <div class="mb-3"><button type="button" class="btn btn-link px-0" (click)="volver()">← Volver al listado</button></div>
+  <app-ui-card title="Editor productivo Markdown"><div card-body>
+         <form [formGroup]="form" (ngSubmit)="guardar()">
+           <div class="mb-3"><label class="form-label" for="asunto">Asunto</label><input id="asunto" class="form-control" formControlName="asunto" maxlength="255"></div>
+           <div class="row g-3">
+              <div class="col-12 col-xl-6"><label class="form-label" for="markdown">Markdown</label><textarea #markdownEditor id="markdown" class="form-control font-monospace editor-markdown" formControlName="markdown" rows="24"></textarea></div>
+               <div class="col-12 col-xl-6"><h2 class="h6">Preview server-side</h2>@if (previsualizando) { <p role="status">Actualizando preview…</p> } @if (previewHtml) { <iframe #previewFrame class="w-100 border rounded preview-markdown" [srcdoc]="previewHtml" sandbox="allow-same-origin" (load)="ajustarAlturaPreview()" title="Preview server-side"></iframe> } @else if (!previsualizando) { <p class="text-muted" role="status">No hay preview disponible.</p> }</div>
+           </div>
+           <div class="d-flex gap-2 mt-3"><button type="submit" class="btn btn-primary" [disabled]="guardando || cargando">{{ guardando ? 'Guardando…' : 'Guardar' }}</button><button type="button" class="btn btn-outline-primary" (click)="abrirPrueba()" [disabled]="cargando || enviandoPrueba">Enviar prueba</button></div>
+          </form>
+          <p-dialog header="Enviar prueba" [(visible)]="pruebaVisible" [modal]="true"><form [formGroup]="pruebaForm" (ngSubmit)="enviarPrueba()"><label for="prueba-email" class="form-label">Email destino</label><input id="prueba-email" type="email" pInputText class="w-100" formControlName="email"><div class="d-flex justify-content-end gap-2 mt-3"><button pButton type="button" label="Cancelar" (click)="cerrarPrueba()"></button><button pButton type="submit" label="Enviar" [disabled]="enviandoPrueba"></button></div></form></p-dialog>
+        </div></app-ui-card>
+  <app-ui-card className="mt-3" title="Variables" [isTogglable]="true" [initialCollapsed]="true">
+    <div card-body>
+      <dl class="row g-3 small mb-0">
+        @for (variable of variables; track variable.token) {
+          <div class="col-12 col-md-6 col-xl-4">
+            <dt class="mb-1"><code class="text-break">{{ variable.token }}</code> — {{ variable.nombre }}</dt>
+            <dd class="text-muted mb-0">{{ variable.descripcion }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+  </app-ui-card>
+  <app-ui-card className="mt-3" title="Ayuda Markdown" [isTogglable]="true" [initialCollapsed]="true">
+    <div card-body>
+      <p class="small text-muted">{{ ayuda }}</p>
+      <div class="row g-3">
+        @for (bloque of bloquesMarkdown; track bloque) {
+          <div class="col-12 col-xl-6">
+            <div class="border rounded p-3 h-100">
+              <h3 class="h6">{{ bloque }}</h3>
+              <div class="row g-2">
+                <div class="col-12 col-md-6"><div class="small fw-semibold">Sintaxis</div><pre class="small bg-light p-2 mb-0"><code>{{ ejemploMarkdown(bloque).sintaxis }}</code></pre></div>
+                <div class="col-12 col-md-6"><div class="small fw-semibold">Preview seguro</div><div class="border rounded p-2 bg-white" aria-label="Ejemplo renderizado">{{ ejemploMarkdown(bloque).resultado }}</div></div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </app-ui-card>
+ </div>

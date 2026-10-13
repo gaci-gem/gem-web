@@ -1,0 +1,21 @@
+.editor-markdown,
+.preview-markdown {
+  min-height: 360px;
+}
+
+.editor-markdown {
+  overflow-y: hidden;
+  resize: vertical;
+}
+
+.preview-markdown {
+  display: block;
+  overflow: hidden;
+}
+
+@media (max-width: 1199.98px) {
+  .editor-markdown,
+  .preview-markdown {
+    min-height: 300px;
+  }
+}

@@ -142,6 +142,11 @@ export const VIEWS_ROUTES: Routes = [
     data: { permisoClave: PermisoClave.NOV },
     canActivate: [PermisoVerGuard]
   },
+  {
+    path: '',
+    loadChildren: () =>
+      import('./email-template/email-template.route').then((mod) => mod.EMAIL_TEMPLATE_ROUTES),
+  },
 
 
 
