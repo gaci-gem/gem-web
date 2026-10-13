@@ -193,6 +193,19 @@ describe('DrawerTicket', () => {
     expect(fixture.nativeElement.querySelector('[aria-label="Ver último correo original"]')).toBeNull();
   });
 
+  it('offers the initial email original from root ticket attachments before any reply exists', () => {
+    fixture.componentInstance.ticket = {
+      ...fixture.componentInstance.ticket!,
+      comments: [],
+      attachments: [{ id: 'initial', name: 'initial.eml', mimeType: 'message/rfc822', downloadUrl: '/initial', createdAt: '', size: 1, checksum: '' }],
+    };
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.latestEmailOriginal?.id).toBe('initial');
+    expect(fixture.nativeElement.querySelector('[aria-label="Ver último correo original"] ng-icon')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href$="/initial"]')).toBeNull();
+  });
+
   it('posts a comment, prepends the response, and clears the draft', () => {
     const comment = { id: 9, text: 'New comment', createdAt: '2026-02-01T00:00:00Z', updatedAt: '' };
     service.comment.and.returnValue(of(comment));

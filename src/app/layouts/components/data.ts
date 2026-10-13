@@ -158,6 +158,12 @@ export const menuItems: MenuItemType[] = [
     permisoClave: PermisoClave.SISTEMA
   },
   {
+    label: 'Templates de email',
+    icon: 'lucideMail',
+    url: '/email-template',
+    permisoClave: 'EMT',
+  },
+  {
     label: 'Tipos de Trabajo',
     icon: 'lucideBriefcase',
     url: '/hora/categorias',

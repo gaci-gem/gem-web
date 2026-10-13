@@ -56,7 +56,7 @@ export type MenuItemType = {
   isSpecial?: boolean
   children?: MenuItemType[]
   isCollapsed?: boolean
-  permisoClave?:PermisoClave
+  permisoClave?:PermisoClave | string
   permisoAccion?:PermisoAccion
 }
 
