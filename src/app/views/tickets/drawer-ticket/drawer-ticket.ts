@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -24,6 +24,7 @@ import { UsuarioSelect } from '@/app/views/usuario/usuario-select/usuario-select
 import { Usuario } from '@core/interfaces/usuario';
 import { modalConfig } from '@/app/types/modals';
 import { EventoSelect } from '@/app/views/evento/evento-select/evento-select';
+import { SseService } from '@core/services/sse.service';
 
 @Component({
   selector: 'app-drawer-ticket',
@@ -71,6 +72,7 @@ export class DrawerTicket {
   private readonly service = inject(TicketService);
   private readonly drawerService = inject(DrawerService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sse = inject(SseService);
   private readonly permissions = inject(PermisosService);
   private readonly dialogService = inject(DialogService);
 
@@ -102,6 +104,7 @@ export class DrawerTicket {
   private usuarioDialog: DynamicDialogRef | null = null;
   userSaving = false; userError: string | null = null;
   prioritySaving = false; typeSaving = false;
+  private lastMutationKey: string | null = null;
 
   async compartirLink(): Promise<void> {
     if (!this.ticket || this.sharingLink) return;
@@ -234,7 +237,30 @@ export class DrawerTicket {
       const file = (comment.attachments ?? []).find(attachment => attachment.mimeType.toLowerCase() === 'message/rfc822');
       if (file) return file;
     }
-    return null;
+    return (this.ticket?.attachments ?? []).find(attachment => attachment.mimeType.toLowerCase() === 'message/rfc822') ?? null;
+  }
+
+  constructor() {
+    effect(() => {
+      const mutation = this.sse.ticketMutations()[0];
+      if (!mutation || !this.visible || String(mutation.ticketId) !== String(this.ticketId)) return;
+      const key = `${mutation.ticketId}:${mutation.timestamp}:${mutation.operation}`;
+      if (key === this.lastMutationKey) return;
+      this.lastMutationKey = key;
+      // No pisar edición local: el usuario conserva el formulario y podrá recargar al finalizar.
+      if (this.commentSaving || this.moduleSaving || this.userSaving || this.externalEditing()) return;
+      this.refreshTicketFromServer();
+    });
+  }
+
+  private externalEditing(): boolean {
+    return this.emailDialogVisible || this.commentDraft.trim().length > 0;
+  }
+
+  private refreshTicketFromServer(): void {
+    if (!this.ticketId || this.loading) return;
+    this.loadedKey = null;
+    this.loadTicket();
   }
 
   isHiddenEmailAttachment(file: { name: string; mimeType: string }): boolean {

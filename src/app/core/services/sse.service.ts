@@ -7,12 +7,11 @@ import {
 } from '@angular/core';
 import { Notificacion } from '@core/interfaces/notificacion';
 import { environment } from '@/environments/environment';
-import { AuthService } from '@core/services/auth';
+import { TicketMutationNotification } from '@core/interfaces/ticket-mutation';
 
 @Injectable({ providedIn: 'root' })
 export class SseService {
   private eventSource: EventSource | null = null;
-  private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
   readonly notifications = signal<Notificacion[]>([]);
@@ -20,6 +19,7 @@ export class SseService {
     () => this.notifications().filter((n) => !n.leida).length,
   );
   readonly connected = signal(false);
+  readonly ticketMutations = signal<TicketMutationNotification[]>([]);
 
   private readonly BASE_URL = environment.BASE_URL;
   private readonly RECONNECT_BASE = 1000;
@@ -39,13 +39,11 @@ export class SseService {
   connect(): void {
     if (this.eventSource || this.isDestroyed) return;
 
-    const token = this.authService.getAccessToken();
-    if (!token) return;
-
     this.lastMessageTime = Date.now();
 
     this.eventSource = new EventSource(
-      `${this.BASE_URL}/notificacion/sse?token=${encodeURIComponent(token)}`,
+      `${this.BASE_URL}/notificacion/sse`,
+      { withCredentials: true },
     );
 
     this.eventSource.onopen = () => {
@@ -67,6 +65,10 @@ export class SseService {
         if (data && data.type === 'heartbeat') return;
 
         const notif = data as Notificacion;
+        if (data?.type === 'TICKET_MUTATION') {
+          this.ticketMutations.update((events) => [data as TicketMutationNotification, ...events].slice(0, 50));
+          return;
+        }
         this.notifications.update((list) => {
           if (list.some((n) => n.id !== undefined && n.id === notif.id))
             return list;
