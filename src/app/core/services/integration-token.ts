@@ -11,6 +11,7 @@ import {
 export class IntegrationTokenService {
   private readonly http = inject(HttpClient);
   private readonly endpoint = `${environment.BASE_URL}/auth/integration-tokens`;
+  private readonly externalEndpoint = `${environment.BASE_URL}/auth/integraciones-tokens`;
 
   create(
     request: IntegrationTokenRequest,
@@ -24,5 +25,15 @@ export class IntegrationTokenService {
 
   revoke(id: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.endpoint}/${id}`);
+  }
+
+  createExternal(request: IntegrationTokenRequest): Observable<IntegrationTokenResponse> {
+    return this.http.post<IntegrationTokenResponse>(this.externalEndpoint, request);
+  }
+  listExternal(): Observable<IntegrationTokenResponse[]> {
+    return this.http.get<IntegrationTokenResponse[]>(this.externalEndpoint);
+  }
+  revokeExternal(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.externalEndpoint}/${id}`);
   }
 }

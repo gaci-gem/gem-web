@@ -164,6 +164,12 @@ export const menuItems: MenuItemType[] = [
     permisoClave: 'EMT',
   },
   {
+    label: 'Tokens de integración',
+    icon: 'lucideKeyRound',
+    url: '/integraciones/tokens',
+    permisoClave: 'INTTOKEN',
+  },
+  {
     label: 'Tipos de Trabajo',
     icon: 'lucideBriefcase',
     url: '/hora/categorias',

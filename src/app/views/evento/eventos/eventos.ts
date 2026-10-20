@@ -412,7 +412,16 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
         this.loadingService.hide();
       })
     ).subscribe({
-      next: () => this.afterChange('Eventos importados correctamente.'),
+      next: (respuesta) => {
+        const total = Number(respuesta?.total ?? 0);
+        const importados = Array.isArray(respuesta?.importados)
+          ? respuesta.importados
+          : [];
+        const correctos = importados.filter((item: { status?: string }) => item.status === 'ok').length;
+        const fallos = importados.filter((item: { status?: string }) => item.status === 'error').length;
+        const detalle = `Importación hecha: ${correctos} de ${total} registros importados correctamente`;
+        this.afterChange(fallos > 0 ? `${detalle}. Hubo errores en ${fallos} registros.` : `${detalle}.`);
+      },
       error: (err) => this.showError(err?.error?.message || 'Error al importar eventos.')
     });
   }
