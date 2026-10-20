@@ -5,6 +5,10 @@ import { Dashboard } from './dashboard/dashboard'
 
 export const VIEWS_ROUTES: Routes = [
   {
+    path: 'integraciones/tokens',
+    loadComponent: () => import('./integraciones/tokens/integracion-tokens').then((m) => m.IntegracionTokensComponent),
+  },
+  {
     path: 'dashboard',
     component: Dashboard,
     data: { title: 'Dashboard', permisoClave: 'ADM' },
