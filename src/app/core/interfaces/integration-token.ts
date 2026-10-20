@@ -2,6 +2,7 @@ export interface IntegrationTokenRequest {
   label: string;
   kind?: string;
   expiresInDays?: number;
+  scopes?: string[];
 }
 
 export interface IntegrationTokenResponse {
@@ -14,4 +15,5 @@ export interface IntegrationTokenResponse {
   createdAt?: string;
   lastUsedAt?: string | null;
   revokedAt?: string | null;
+  scopes?: string[];
 }
