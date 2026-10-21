@@ -76,11 +76,16 @@
                                     @if (can(PermisoAccion.MODIFICAR)) {
                                         <button class="btn btn-ghost-warning" (click)="mostrarModalCrud(usuario, 'M')"><ng-icon name="lucidePencil"/></button>
                                     }
-                                    @if (can(PermisoAccion.ELIMINAR)) {
+                                     @if (can(PermisoAccion.ELIMINAR)) {
                                          <button class="btn btn-ghost-danger" (click)="delete(usuario)" [disabled]="actionInProgress" [attr.aria-busy]="actionInProgress" [attr.title]="actionInProgress ? 'Eliminando...' : 'Eliminar'">
                                              @if (actionInProgress) { Eliminando... } @else { <ng-icon name="lucideTrash2"/> }
                                          </button>
-                                    }
+                                     }
+                                     @if (!usuario.activo && can(PermisoAccion.MODIFICAR)) {
+                                         <button class="btn btn-ghost-success" (click)="reactivar(usuario)" [disabled]="actionInProgress" title="Reactivar">
+                                             <ng-icon name="lucideRotateCcw"/>
+                                         </button>
+                                     }
                                 </div></td>
                             </tr>
                         </ng-template>
