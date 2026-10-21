@@ -67,6 +67,10 @@ export class UsuarioService {
     return this.http.delete<UsuarioInterface>(`${this.URL_COMPLETA}/usuario/${usuarioId}`);
   }
 
+  reactivar(usuarioId: string): Observable<UsuarioInterface> {
+    return this.http.patch<UsuarioInterface>(`${this.URL_COMPLETA}/usuario/${usuarioId}/reactivar`, {});
+  }
+
   // importaciones
 
   descargarPlantilla(options?: any): Observable<any> {

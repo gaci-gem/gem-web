@@ -212,6 +212,22 @@ export class Usuarios extends TrabajarCon<Usuario> {
     });
   }
 
+  reactivar(usuario: Usuario): void {
+    if (this.actionInProgress || usuario.activo) return;
+    this.confirmationService.confirm({
+      message: '¿Seguro que querés reactivar este usuario?',
+      header: 'Confirmar reactivación',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.actionInProgress = true;
+        this.usuarioService.reactivar(usuario.id ?? '').pipe(finalize(() => this.actionInProgress = false)).subscribe({
+          next: () => this.afterChange('Usuario reactivado correctamente.'),
+          error: (err) => this.showError(err.error?.message || 'Error al reactivar el usuario.')
+        });
+      }
+    });
+  }
+
   mostrarModalCrud(usuario: Usuario | null, modo: 'A' | 'M') {
     const data = { item: usuario, modo };
     const header = modo === 'A' ? 'Nuevo Usuario' : 'Modificar Usuario';
