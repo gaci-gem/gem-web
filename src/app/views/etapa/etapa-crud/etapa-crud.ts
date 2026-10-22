@@ -105,7 +105,7 @@ export class EtapaCrud extends CrudFormModal<Etapa> implements OnInit{
       requisitosArray.removeAt(0);
     }
     if (data.requisitos && Array.isArray(data.requisitos)) {
-      data.requisitos.forEach(req => {
+      data.requisitos.filter(req => req.activo !== false).forEach(req => {
         requisitosArray.push(this.createRequisitoGroup(req));
       });
     }
