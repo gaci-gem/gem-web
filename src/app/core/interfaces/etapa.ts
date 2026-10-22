@@ -20,6 +20,7 @@ export interface Etapa_requisito {
   descripcion?: string;
   obligatorio: boolean;
   tipo: Tipo_requisito;
+  activo?: boolean;
 
   etapa?:Etapa;
   // eventoRequisitos?: evento_requisitos[];
