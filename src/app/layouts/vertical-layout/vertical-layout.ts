@@ -11,6 +11,7 @@ import { GreetingBannerComponent } from '@app/components/greeting-banner/greetin
 import { DialogService } from 'primeng/dynamicdialog'
 import { CHANGELOG } from '@core/services/changelog'
 import { ChangelogModalComponent } from '@views/changelog/changelog-modal'
+import { shouldShowChangelog } from '@core/services/version'
 
 @Component({
   selector: 'app-vertical-layout',
@@ -64,7 +65,7 @@ export class VerticalLayout implements OnInit, OnDestroy {
     const latestVersion = releasedVersions[0]?.version;
     const lastSeenVersion = localStorage.getItem('lastSeenVersion');
 
-    if (latestVersion && latestVersion !== lastSeenVersion) {
+    if (shouldShowChangelog(latestVersion ?? null, lastSeenVersion)) {
       // Esperar un poco para que la app termine de cargar
       setTimeout(() => {
         this.dialogService.open(ChangelogModalComponent, {
