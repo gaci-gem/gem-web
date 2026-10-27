@@ -4,6 +4,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Cliente } from '@core/interfaces/cliente';
 import { Observable } from 'rxjs';
+import { AdvancedFilter, serializeAdvancedFilters } from '@core/utils/advanced-filters';
 
 export interface ClientePage {
   data: Cliente[];
@@ -21,6 +22,7 @@ export interface ClienteListParams {
   limit?: number;
   sortField?: 'id' | 'sigla' | 'nombre' | 'activo';
   sortDirection?: 'asc' | 'desc';
+  advancedFilters?: AdvancedFilter[];
 }
 
 @Injectable({
@@ -35,8 +37,11 @@ export class ClienteService {
   getAll(activo: FiltroActivo = FiltroActivo.TRUE, params?: ClienteListParams): Observable<Cliente[] | ClientePage> {
     let httpParams = new HttpParams().set('activo', activo);
     Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (key === 'advancedFilters') return;
       if (value !== undefined && value !== null && value !== '') httpParams = httpParams.set(key, String(value));
     });
+    const advancedFilters = serializeAdvancedFilters(params?.advancedFilters ?? []);
+    if (advancedFilters) httpParams = httpParams.set('advancedFilters', advancedFilters);
     return this.http.get<Cliente[] | ClientePage>(`${this.URL_COMPLETA}/cliente`, { params: httpParams });
   }
 

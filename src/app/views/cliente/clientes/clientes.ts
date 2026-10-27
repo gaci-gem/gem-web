@@ -6,6 +6,7 @@ import { UiCard } from '@app/components/ui-card';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { Cliente } from '@core/interfaces/cliente';
 import { ClientePage, ClienteService } from '@core/services/cliente';
+import { advancedFiltersFromTable } from '@core/utils/advanced-filters';
 import { LoadingService } from '@core/services/loading.service';
 import { NgIcon } from '@ng-icons/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -119,10 +120,11 @@ export class Clientes extends TrabajarCon<Cliente> {
 
   protected loadItems(first = 0, rows = 10): void {
     this.loadingService.show();
+    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, { sigla: 'client', nombre: 'client' });
     this.clienteService.getAll(this.filtroActivo, {
       globalSearch: this.globalFilter.trim(),
-      sigla: this.getColumnFilter('sigla'),
-      nombre: this.getColumnFilter('nombre'),
+      ...(advancedFilters.length ? {} : { sigla: this.getColumnFilter('sigla'), nombre: this.getColumnFilter('nombre') }),
+      advancedFilters,
       page: Math.floor(first / rows) + 1,
       limit: rows,
       sortField: this.sortField,

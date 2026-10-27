@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Adicional, Preferencia, UsuarioCompleto, Usuario as UsuarioInterface } from '@core/interfaces/usuario';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
@@ -100,11 +100,14 @@ export class UsuarioService {
   // PREFERENCIAS
 
   setPreferencias(usuarioId:string, preferencias: Preferencia[]) : Observable<Preferencia[]>{
-    return this.http.post<Preferencia[]>(`${this.URL_COMPLETA}/usuario/${usuarioId}/preferencias`, preferencias);
+    const normalizadas = preferencias.map(preferencia => ({ ...preferencia, clave: preferencia.clave.trim() }));
+    return this.http.post<Preferencia[]>(`${this.URL_COMPLETA}/usuario/${usuarioId}/preferencias`, normalizadas);
   }
 
   getPreferencias(usuarioId:string) : Observable<Preferencia[]>{
-    return this.http.get<Preferencia[]>(`${this.URL_COMPLETA}/usuario/${usuarioId}/preferencias`);
+    return this.http.get<Preferencia[]>(`${this.URL_COMPLETA}/usuario/${usuarioId}/preferencias`).pipe(
+      map(preferencias => preferencias.map(preferencia => ({ ...preferencia, clave: preferencia.clave.trim() })))
+    );
   }
 
   // adicionales
