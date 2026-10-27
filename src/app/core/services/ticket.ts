@@ -10,12 +10,15 @@ import {
   TicketState,
 } from '@core/interfaces/ticket';
 
+export interface TicketAdvancedConstraint { matchMode: string; value: unknown; }
+export interface TicketAdvancedFilter { field: string; operator: 'and' | 'or'; constraints: TicketAdvancedConstraint[]; }
+
 @Injectable({ providedIn: 'root' })
 export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets`;
 
-  list(filters: { search?: string; estado?: TicketState; prioridad?: string; tipo?: string; status?: TicketState; priority?: string; type?: string; id?: number; subject?: string; client?: string; externalReference?: string; events?: string; assignedUser?: string; createdFrom?: string; createdTo?: string; clientId?: number; page?: number; limit?: number; sortField?: TicketSortField; sortDirection?: 'asc' | 'desc' }): Observable<TicketPage> {
+  list(filters: { search?: string; estado?: TicketState; prioridad?: string; tipo?: string; status?: TicketState; priority?: string; type?: string; id?: number; subject?: string; client?: string; externalReference?: string; events?: string; assignedUser?: string; createdFrom?: string; createdTo?: string; clientId?: number; page?: number; limit?: number; sortField?: TicketSortField; sortDirection?: 'asc' | 'desc'; advancedFilters?: TicketAdvancedFilter[] }): Observable<TicketPage> {
     let params = new HttpParams();
     if (filters.search) params = params.set('search', filters.search);
     if (filters.estado) params = params.set('estado', filters.estado);
@@ -31,6 +34,7 @@ export class TicketService {
     if (filters.limit) params = params.set('limit', filters.limit);
     if (filters.sortField) params = params.set('sortField', filters.sortField);
     if (filters.sortDirection) params = params.set('sortDirection', filters.sortDirection);
+    if (filters.advancedFilters?.length) params = params.set('advancedFilters', JSON.stringify(filters.advancedFilters));
     return this.http.get<TicketPage>(this.baseUrl, { params });
   }
 

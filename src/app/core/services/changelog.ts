@@ -16,6 +16,20 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.2',
+    date: '2026-10-27',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Configuramos recordatorios para eventos próximos a vencer y eventos sin actividad.',
+      },
+      {
+        type: 'improvement',
+        text: 'Mejoramos la actualización de notificaciones y la experiencia de filtrado de tickets.',
+      },
+    ],
+  },
+  {
     version: '0.5.1',
     date: '2026-10-23',
     changes: [

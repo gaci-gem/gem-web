@@ -14,10 +14,13 @@
           </p-toolbar>
           <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
              <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Buscar..." /></span>
-              <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
-              <select class="form-select" aria-label="Filtrar por prioridad" style="width: 170px" [(ngModel)]="prioridad" (ngModelChange)="onFilterChange()"><option value="">Todas las prioridades</option><option value="CRITICA">🔴 Crítica</option><option value="ALTA">🟠 Alta</option><option value="MEDIA">🟡 Media</option><option value="BAJA">🟢 Baja</option></select>
-              <select class="form-select" aria-label="Filtrar por tipo" style="width: 220px" [(ngModel)]="tipo" (ngModelChange)="onFilterChange()"><option value="">Todos los tipos</option><option value="CONSULTA">Consultas</option><option value="ERROR_INCIDENTE">Error / Incidente</option><option value="REQUERIMIENTO_MEJORA">Requerimiento / Mejora</option></select>
-          </div>
+               <p-autoComplete [(ngModel)]="clientesSeleccionados" [suggestions]="clientesSugeridos" (completeMethod)="buscarClientes($event)" (ngModelChange)="onClientesChange($event)" [multiple]="true" [forceSelection]="true" [optionLabel]="etiquetaCliente" placeholder="Filtrar por cliente" styleClass="ticket-client-filter" [style]="{ width: '420px', maxWidth: '100%' }">
+                 <ng-template let-cliente pTemplate="item">{{ etiquetaCliente(cliente) }}</ng-template>
+               </p-autoComplete>
+               <select class="form-select" style="width: 210px" [(ngModel)]="estado" (ngModelChange)="onFilterChange()"><option value="">Todos los estados</option>@for (state of states; track state.value) { <option [value]="state.value">{{ state.label }}</option> }</select>
+               <select class="form-select" aria-label="Filtrar por prioridad" style="width: 170px" [(ngModel)]="prioridad" (ngModelChange)="onFilterChange()"><option value="">Todas las prioridades</option><option value="CRITICA">🔴 Crítica</option><option value="ALTA">🟠 Alta</option><option value="MEDIA">🟡 Media</option><option value="BAJA">🟢 Baja</option></select>
+                <select class="form-select" aria-label="Filtrar por tipo" style="width: 220px" [(ngModel)]="tipo" (ngModelChange)="onFilterChange()"><option value="">Todos los tipos</option><option value="CONSULTA">Consultas</option><option value="ERROR_INCIDENTE">Error / Incidente</option><option value="REQUERIMIENTO_MEJORA">Requerimiento / Mejora</option></select>
+           </div>
            <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
            <p-table #dt [value]="tickets" [lazy]="true" (onFilter)="onColumnFilter($event)" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [paginator]="true" [rowHover]="true" dataKey="id"
              [(contextMenuSelection)]="contextMenuSelection" [contextMenu]="cm" (contextMenuSelectionChange)="buildContextMenu($event)"

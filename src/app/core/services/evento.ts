@@ -4,6 +4,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Evento, Evento_requisito, Evento_requisito_completo, EventoCompleto, EventoDocumentacion, EventoVistaOpciones, EventoVistaResponse, NotionPageResult, VidaEvento } from '@core/interfaces/evento';
 import { Observable, tap } from 'rxjs';
+import { AdvancedFilter, serializeAdvancedFilters } from '@core/utils/advanced-filters';
 
 export interface EventoCompletoPage {
   data: EventoCompleto[];
@@ -30,6 +31,7 @@ export interface EventoCompletoParams {
   limit?: number;
   sortField?: EventoCompletoSortField;
   sortDirection?: 'asc' | 'desc';
+  advancedFilters?: AdvancedFilter[];
 }
 
 export type EventoCompletoSortField =
@@ -56,9 +58,11 @@ export class EventoService {
     let httpParams = new HttpParams().set('cerrado', cerrado);
     Object.entries(params ?? {}).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, Array.isArray(value) ? value.join(',') : String(value));
+        if (key !== 'advancedFilters') httpParams = httpParams.set(key, Array.isArray(value) ? value.join(',') : String(value));
       }
     });
+    const advancedFilters = serializeAdvancedFilters(params?.advancedFilters ?? []);
+    if (advancedFilters) httpParams = httpParams.set('advancedFilters', advancedFilters);
     return this.http.get<EventoCompleto[] | EventoCompletoPage>(`${this.URL_COMPLETA}/evento/completo`, { params: httpParams });
   }
 
@@ -68,9 +72,11 @@ export class EventoService {
     let httpParams = new HttpParams().set('cerrado', FiltroActivo.FALSE);
     Object.entries(params ?? {}).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, Array.isArray(value) ? value.join(',') : String(value));
+        if (key !== 'advancedFilters') httpParams = httpParams.set(key, Array.isArray(value) ? value.join(',') : String(value));
       }
     });
+    const advancedFilters = serializeAdvancedFilters(params?.advancedFilters ?? []);
+    if (advancedFilters) httpParams = httpParams.set('advancedFilters', advancedFilters);
     return this.http.get<EventoCompleto[] | EventoCompletoPage>(
       `${this.URL_COMPLETA}/evento/completo/usuario/${usuarioId}`,
       { params: httpParams },

@@ -5,7 +5,9 @@ export enum UsuarioPreferencias {
     NOTIFICAR_ADICION_ADJUNTO = 'notificar_adicion_adjunto', // notifica al usuario sobre nuevas adiciones // COMENTARIO, ADJUNTO
     NOTIFICAR_ELIMINACION = 'notificar_eliminacion', // notifica al usuario sobre eliminaciones
     RECORDATORIO_HORAS = 'recordatorio_horas', // envía recordatorios sobre la carga de horas
-    RECORDATORIO_EVENTOS = 'recordatorio_eventos', // envía recordatorios sobre eventos pendientes
+    RECORDATORIO_EVENTOS = 'recordatorio_eventos', // clave legacy para ambos recordatorios de eventos
+    RECORDATORIO_EVENTOS_PROXIMOS = 'recordatorio_eventos_prox',
+    RECORDATORIO_EVENTOS_SIN_ACTIVIDAD = 'recordatorio_eventos_sin_act',
     PAGINA_INICIO = 'pagina_inicio', // preferencia para seleccionar la página de inicio
     NOTIFICAR_VIA_EMAIL = 'notificar_via_email', // preferencia para seleccionar notificación vía email
 }
@@ -27,7 +29,11 @@ export const getDescripcionUsuarioPref = (pref:UsuarioPreferencias) => {
         case UsuarioPreferencias.RECORDATORIO_HORAS:
             return 'Carga de horas no realizada en los últimos 2 días';
         case UsuarioPreferencias.RECORDATORIO_EVENTOS:
-            return 'Eventos pendientes cerca de su fecha límite';
+            return 'Recordatorio legacy de eventos';
+        case UsuarioPreferencias.RECORDATORIO_EVENTOS_PROXIMOS:
+            return 'Eventos próximos a vencer';
+        case UsuarioPreferencias.RECORDATORIO_EVENTOS_SIN_ACTIVIDAD:
+            return 'Eventos sin actividad';
         case UsuarioPreferencias.PAGINA_INICIO:
             return 'Selecciona la página que se mostrará al iniciar sesión (Dashboard, Lista de eventos, Calendario)';
         default:
@@ -134,16 +140,16 @@ export const PREFERENCIAS_GENERALES: PreferenceItem[] = [
 // Constante: Recordatorios
 export const PREFERENCIAS_RECORDATORIOS: PreferenceItem[] = [
     {
-        clave: UsuarioPreferencias.RECORDATORIO_HORAS,
-        label: 'Recordatorio de horas',
+        clave: UsuarioPreferencias.RECORDATORIO_EVENTOS_PROXIMOS,
+        label: 'Recordatorio de eventos próximos a vencer',
         tipo: 'toggle',
-        descripcion: getDescripcionUsuarioPref(UsuarioPreferencias.RECORDATORIO_HORAS)
+        descripcion: getDescripcionUsuarioPref(UsuarioPreferencias.RECORDATORIO_EVENTOS_PROXIMOS)
     },
     {
-        clave: UsuarioPreferencias.RECORDATORIO_EVENTOS,
-        label: 'Recordatorio de eventos',
+        clave: UsuarioPreferencias.RECORDATORIO_EVENTOS_SIN_ACTIVIDAD,
+        label: 'Recordatorio de eventos sin actividad',
         tipo: 'toggle',
-        descripcion: getDescripcionUsuarioPref(UsuarioPreferencias.RECORDATORIO_EVENTOS)
+        descripcion: getDescripcionUsuarioPref(UsuarioPreferencias.RECORDATORIO_EVENTOS_SIN_ACTIVIDAD)
     }
 ];
 

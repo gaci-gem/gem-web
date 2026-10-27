@@ -67,6 +67,52 @@ describe('Tickets', () => {
     expect(component.loadItems).toHaveBeenCalled();
   });
 
+  it('resets pagination and reloads when the client selection changes', () => {
+    const component = Object.create(Tickets.prototype) as any;
+    component.table = { first: 20 };
+    component.page = 3;
+    component.loadItems = jasmine.createSpy('loadItems');
+
+    const cliente = { id: 7, sigla: 'ACME', nombre: 'Acme S.A.', activo: true };
+    component.onClientesChange([cliente]);
+
+    expect(component.clientesSeleccionados).toEqual([cliente]);
+    expect(component.page).toBe(1);
+    expect(component.table.first).toBe(0);
+    expect(component.loadItems).toHaveBeenCalledOnceWith();
+  });
+
+  it('serializes selected clients by numeric id instead of the visible label', () => {
+    const component = Object.create(Tickets.prototype) as any;
+    component.advancedFilters = [];
+    component.clientesSeleccionados = [{ id: 2, sigla: 'GACI', nombre: 'GACI' }];
+    component.search = '';
+    component.idFilter = '';
+    component.clientFilter = '';
+    component.estado = '';
+    component.prioridad = '';
+    component.tipo = '';
+    component.subjectFilter = '';
+    component.externalReferenceFilter = '';
+    component.eventsFilter = '';
+    component.assignedUserFilter = '';
+    component.createdFrom = '';
+    component.createdTo = '';
+    component.page = 1;
+    component.limit = 10;
+    component.sortField = 'createdAt';
+    component.sortDirection = 'desc';
+    component.loading = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
+    component.service = jasmine.createSpyObj('TicketService', ['list']);
+    component.service.list.and.returnValue(of({ data: [], total: 0 }));
+
+    component.loadItems();
+
+    expect(component.service.list).toHaveBeenCalledWith(jasmine.objectContaining({
+      advancedFilters: [{ field: 'clientId', operator: 'or', constraints: [{ matchMode: 'equals', value: 2 }] }],
+    }));
+  });
+
   it('refreshes when the ticket drawer emits its closed event', () => {
     const closed = new Subject<void>();
     const component = Object.create(Tickets.prototype) as any;
