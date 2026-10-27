@@ -28,6 +28,7 @@ import {
   formatEventoNumero,
 } from '@core/interfaces/evento';
 import { PermisoClave } from '@core/interfaces/rol';
+import { advancedFiltersFromTable, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
 import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
 import { EventoFilterState, FiltroState } from '@core/interfaces/filtro-preset';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
@@ -378,6 +379,8 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
     params.globalSearch = this.globalFilter.trim();
+    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, { 'cliente.nombre': 'client' });
+    params.advancedFilters = advancedFilters;
     const fieldMap: Record<string, string> = {
       evento: 'eventoSearch',
       titulo: 'titulo',
@@ -390,7 +393,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
       const filter = Array.isArray(metadata) ? metadata[0] : metadata;
       const target = fieldMap[field];
-      if (target && typeof filter?.value === 'string' && filter.value.trim()) {
+      if (target && !(target === 'cliente' && advancedFilters.some(item => item.field === 'client')) && typeof filter?.value === 'string' && filter.value.trim()) {
         params[target] = filter.value.trim();
       }
     });

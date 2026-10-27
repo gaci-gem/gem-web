@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, Input, OnInit } from "@angular/core";
 import { Preferencia, UsuarioCompleto } from "@core/interfaces/usuario";
 import { NgIcon } from "@ng-icons/core";
-import { NotificationGroup, PREFERENCIAS_GENERALES, PREFERENCIAS_NOTIFICACIONES, PREFERENCIAS_OTROS, PREFERENCIAS_RECORDATORIOS, PreferenceItem, USUARIO_PREFERENCIAS_GRUPOS, getDescripcionUsuarioPref } from "@/app/constants/preferencias_usuario";
+import { NotificationGroup, PREFERENCIAS_GENERALES, PREFERENCIAS_NOTIFICACIONES, PREFERENCIAS_OTROS, PREFERENCIAS_RECORDATORIOS, PreferenceItem, USUARIO_PREFERENCIAS_GRUPOS } from "@/app/constants/preferencias_usuario";
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService } from "@core/services/usuario";
@@ -87,25 +87,21 @@ import { finalize } from 'rxjs';
             </div>
         </app-ui-card>
 
-        <app-ui-card title="Recordatorios" titleIcon="lucideMessageCircleWarning" helperText="Recordatorios vía email.">
-            <div card-body class="">
+        <app-ui-card title="Recordatorios" titleIcon="lucideMessageCircleWarning">
+            <div card-body>
                 @for (pref_r of pref_recordatorios; track pref_r.clave) {
-                    @switch (pref_r.tipo) {
-                        @case ('toggle') {
-                            <div class="form-check form-check-info form-switch mb-2">
-                                <input
-                                type="checkbox"
-                                class="form-check-input"
-                                [id]="pref_r.clave"
-                                [checked]="isPreferenciaActiva(pref_r)"
-                                (change)="togglePreferencia(pref_r, $event)"
-                                />
-                                <label class="form-check-label" [for]="pref_r.clave">
-                                    &nbsp;&nbsp;{{ pref_r.descripcion }}
-                                </label>
-                            </div>
-                        }
-                    }
+                    <div class="form-check form-check-info form-switch mb-2">
+                        <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [id]="pref_r.clave"
+                        [checked]="isPreferenciaActiva(pref_r)"
+                        (change)="togglePreferencia(pref_r, $event)"
+                        />
+                        <label class="form-check-label" [for]="pref_r.clave">
+                            &nbsp;&nbsp;{{ pref_r.label }}
+                        </label>
+                    </div>
                 }
             </div>
         </app-ui-card>
@@ -142,8 +138,8 @@ export class TabPreferencias implements OnInit {
     grupos:any = USUARIO_PREFERENCIAS_GRUPOS;
     pref_notificaciones:NotificationGroup[] = PREFERENCIAS_NOTIFICACIONES;
     pref_general:PreferenceItem[] = PREFERENCIAS_GENERALES;
-    pref_otros:PreferenceItem[] = PREFERENCIAS_OTROS;
     pref_recordatorios:PreferenceItem[] = PREFERENCIAS_RECORDATORIOS;
+    pref_otros:PreferenceItem[] = PREFERENCIAS_OTROS;
     estadoGuardado: 'idle' | 'guardando' | 'guardado' | 'error' = 'idle';
     private preferenciasGuardadas: Preferencia[] = [];
     private preferenciasPendientes: Preferencia[] | null = null;
@@ -155,7 +151,7 @@ export class TabPreferencias implements OnInit {
 
     isPreferenciaActiva(pref: any): boolean {
         if (!this.usuario || !this.usuario.preferencias) return false;
-        return this.usuario.preferencias.some((p: any) => p.clave === pref.clave);
+        return this.usuario.preferencias.some((p: any) => this.claveNormalizada(p.clave) === this.claveNormalizada(pref.clave));
     }
 
     togglePreferencia(pref: any, event: any) {
@@ -163,11 +159,11 @@ export class TabPreferencias implements OnInit {
         if (!this.usuario.preferencias) this.usuario.preferencias = [];
         const checked = event.target.checked;
         if (checked) {
-            if (!this.usuario.preferencias.some((p: any) => p.clave === pref.clave)) {
+            if (!this.usuario.preferencias.some((p: any) => this.claveNormalizada(p.clave) === this.claveNormalizada(pref.clave))) {
                 this.usuario.preferencias.push({ usuarioId: this.usuario.id!, clave: pref.clave, descripcion: '' /*pref.descripcion */ });
             }
         } else {
-            this.usuario.preferencias = this.usuario.preferencias.filter((p: any) => p.clave !== pref.clave);
+            this.usuario.preferencias = this.usuario.preferencias.filter((p: any) => this.claveNormalizada(p.clave) !== this.claveNormalizada(pref.clave));
         }
         this.guardarPreferencias();
     }
@@ -175,7 +171,7 @@ export class TabPreferencias implements OnInit {
     setPreferenciaValor(pref: any, valor: string) {
         if (!this.usuario) return;
         if (!this.usuario.preferencias) this.usuario.preferencias = [];
-        const existingPrefIndex = this.usuario.preferencias.findIndex((p: any) => p.clave === pref.clave);
+        const existingPrefIndex = this.usuario.preferencias.findIndex((p: any) => this.claveNormalizada(p.clave) === this.claveNormalizada(pref.clave));
         if (existingPrefIndex !== -1) {
             this.usuario.preferencias[existingPrefIndex].descripcion = valor;
         } else {
@@ -185,7 +181,7 @@ export class TabPreferencias implements OnInit {
     }
 
     private copiarPreferencias(): Preferencia[] {
-        return (this.usuario?.preferencias ?? []).map(pref => ({ ...pref }));
+        return (this.usuario?.preferencias ?? []).map(pref => ({ ...pref, clave: this.claveNormalizada(pref.clave) }));
     }
 
     private guardarPreferencias(): void {
@@ -207,7 +203,7 @@ export class TabPreferencias implements OnInit {
             })
         ).subscribe({
             next: (guardadas) => {
-                this.preferenciasGuardadas = guardadas.map(pref => ({ ...pref }));
+                this.preferenciasGuardadas = guardadas.map(pref => ({ ...pref, clave: this.claveNormalizada(pref.clave) }));
                 this.estadoGuardado = 'guardado';
             },
             error: () => {
@@ -221,8 +217,12 @@ export class TabPreferencias implements OnInit {
 
     getPreferenciaValor(pref: any): string {
         if (!this.usuario || !this.usuario.preferencias) return '';
-        const foundPref = this.usuario.preferencias.find((p: any) => p.clave === pref.clave);
+        const foundPref = this.usuario.preferencias.find((p: any) => this.claveNormalizada(p.clave) === this.claveNormalizada(pref.clave));
         return foundPref ? foundPref.descripcion : '';
+    }
+
+    private claveNormalizada(clave: unknown): string {
+        return typeof clave === 'string' ? clave.trim() : '';
     }
 
 }

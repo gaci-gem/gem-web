@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
 import { EventoCompletoPage, EventoCompletoSortField, EventoService } from '@core/services/evento';
+import { advancedFiltersFromTable, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { EventoCrud } from '../evento-crud/evento-crud';
@@ -244,6 +245,8 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
     params.globalSearch = this.globalFilter.trim();
+    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, { 'cliente.nombre': 'client' });
+    params.advancedFilters = advancedFilters;
     const fieldMap: Record<string, string> = {
       eventoSearch: 'eventoSearch',
       titulo: 'titulo',
@@ -256,7 +259,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
       const filter = Array.isArray(metadata) ? metadata[0] : metadata;
       const target = fieldMap[field];
-      if (target && typeof filter?.value === 'string' && filter.value.trim()) {
+      if (target && !(target === 'cliente' && advancedFilters.some(item => item.field === 'client')) && typeof filter?.value === 'string' && filter.value.trim()) {
         params[target] = filter.value.trim();
       }
     });

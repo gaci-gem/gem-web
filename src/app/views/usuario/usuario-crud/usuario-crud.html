@@ -171,6 +171,18 @@
 
     </div>
 
+    @if (modo === 'M' && puedeModificarPreferenciasAdministradas) {
+      <div class="col-12">
+        <section aria-labelledby="recordatorioHorasTitulo" class="border rounded p-3">
+          <h5 id="recordatorioHorasTitulo" class="mb-2">Preferencias administradas</h5>
+          <div class="form-check form-switch">
+            <input id="recordatorioHoras" class="form-check-input" type="checkbox" formControlName="recordatorioHoras">
+            <label class="form-check-label" for="recordatorioHoras">Recordatorio de carga de horas</label>
+          </div>
+        </section>
+      </div>
+    }
+
     <div class="col-12 mb-5">
       <button class="btn btn-primary" type="submit" [disabled]="form.invalid || submitting" [attr.aria-busy]="submitting">
         @if (submitting) {

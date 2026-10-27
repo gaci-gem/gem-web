@@ -1,7 +1,10 @@
 import { Component, EventEmitter, inject, Input, OnInit, Output } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { FormsModule } from '@angular/forms';
 import { UsuarioCompleto } from "@core/interfaces/usuario";
+import { UsuarioPreferencias } from '@/app/constants/preferencias_usuario';
 import { UsuarioService } from "@core/services/usuario";
+import { PermisosService } from '@core/services/permisos';
 import { ConfirmationService, MessageService } from "primeng/api";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import { UsuarioAdicionalClave } from "@/app/constants/adicionales_usuario";
@@ -11,6 +14,7 @@ import { finalize } from 'rxjs';
     selector: 'app-tab-modificar',
     imports: [
         ReactiveFormsModule,
+        FormsModule,
         ConfirmDialogModule,
     ],
     template: `
@@ -94,6 +98,20 @@ import { finalize } from 'rxjs';
 
         <hr class="my-4">
 
+        @if (puedeModificarPreferenciasAdministradas) {
+            <section aria-labelledby="preferenciasAdministradasTitulo" class="mb-4">
+                <h5 id="preferenciasAdministradasTitulo" class="mb-3">Preferencias administradas</h5>
+                <p class="text-muted small">Configurá los recordatorios que recibirá este usuario.</p>
+                @for (preferencia of preferenciasAdministradas; track preferencia.clave) {
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" [id]="preferencia.clave" [checked]="preferenciaActiva(preferencia.clave)" (change)="cambiarPreferencia(preferencia.clave, $event)">
+                        <label class="form-check-label" [for]="preferencia.clave">{{ preferencia.label }}</label>
+                    </div>
+                }
+                @if (estadoPreferencias) { <div class="small mt-2" [class.text-success]="estadoPreferencias === 'guardado'" [class.text-danger]="estadoPreferencias === 'error'" role="status">{{ estadoPreferencias === 'guardado' ? 'Preferencias guardadas.' : 'No se pudieron guardar las preferencias.' }}</div> }
+            </section>
+        }
+
         <form [formGroup]="formAdicionales" (ngSubmit)="modificarAdicionales($event)" id="formAdicionales">
             <h5 class="mb-3">Información Adicional</h5>
             <div class="row">
@@ -128,11 +146,20 @@ export class TabModificar implements OnInit {
     private fb = inject(FormBuilder);
     protected confirmationService = inject(ConfirmationService);
     private usuarioService = inject(UsuarioService);
+    private permisosService = inject(PermisosService);
     protected messageService = inject(MessageService);
     guardandoUsuario = false;
     guardandoAdicional = false;
     estadoUsuario: 'guardado' | 'error' | null = null;
     estadoAdicional: 'guardado' | 'error' | null = null;
+    estadoPreferencias: 'guardado' | 'error' | null = null;
+    readonly preferenciasAdministradas = [
+        { clave: UsuarioPreferencias.RECORDATORIO_HORAS, label: 'Recordatorio de carga de horas' },
+    ] as const;
+
+    get puedeModificarPreferenciasAdministradas(): boolean {
+        return this.permisosService.can('USR.MODIFICAR');
+    }
     
     formUsuario = this.fb.group({
         nombre: ['', Validators.required],
@@ -173,6 +200,28 @@ export class TabModificar implements OnInit {
                 urlDiscord: urlDiscord.valor
             });
         }
+    }
+
+    preferenciaActiva(clave: string): boolean {
+        const preferencia = (this.usuario?.preferencias ?? []).find(preferencia => preferencia.clave === clave);
+        if (clave === UsuarioPreferencias.RECORDATORIO_HORAS && !preferencia) return true;
+        return Boolean(preferencia && preferencia.descripcion !== 'false');
+    }
+
+    cambiarPreferencia(clave: string, event: Event): void {
+        if (!this.usuario?.id) return;
+        const activa = (event.target as HTMLInputElement).checked;
+        const preferencias = [...(this.usuario.preferencias ?? [])].filter(preferencia => preferencia.clave !== clave);
+        if (activa || clave === UsuarioPreferencias.RECORDATORIO_HORAS) {
+            preferencias.push({ usuarioId: this.usuario.id, clave, descripcion: activa ? '' : 'false' });
+        }
+        this.usuarioService.setPreferencias(this.usuario.id, preferencias).subscribe({
+            next: guardadas => {
+                this.usuario.preferencias = guardadas;
+                this.estadoPreferencias = 'guardado';
+            },
+            error: () => this.estadoPreferencias = 'error',
+        });
     }
 
     modificarUsuario(event: any) {
