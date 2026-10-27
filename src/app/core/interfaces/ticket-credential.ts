@@ -7,6 +7,9 @@ export interface TicketCredential {
   identidadId: string;
   login: string;
   activo: boolean;
+  enviarConfirmacionesTicket: boolean;
+  enviarActualizacionesTicket: boolean;
+  recibirActualizacionesTodosLosTickets: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,4 +17,7 @@ export interface TicketCredential {
 export interface TicketCredentialUpdate {
   login?: string;
   activo?: boolean;
+  enviarConfirmacionesTicket?: boolean;
+  enviarActualizacionesTicket?: boolean;
+  recibirActualizacionesTodosLosTickets?: boolean;
 }

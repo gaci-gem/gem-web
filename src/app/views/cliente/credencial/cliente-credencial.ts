@@ -10,6 +10,7 @@ import { Cliente } from '@core/interfaces/cliente';
 import { TicketCredential } from '@core/interfaces/ticket-credential';
 import { TicketCredentialService } from '@core/services/ticket-credential';
 import { PermisosService } from '@core/services/permisos';
+import { LoadingService } from '@core/services/loading.service';
 
 @Component({
   selector: 'app-cliente-credencial',
@@ -25,7 +26,8 @@ export class ClienteCredencial {
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly permissions = inject(PermisosService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly loadingService = inject(LoadingService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly cliente = this.config.data?.cliente as Cliente;
   readonly form = new FormGroup({
@@ -40,10 +42,12 @@ export class ClienteCredencial {
     this.load();
   }
 
-  load(): void {
+  load(showGlobalLoading = true): void {
     if (!this.cliente.id) return;
+    if (showGlobalLoading) this.loadingService.show();
     this.service.list(this.cliente.id).pipe(
       finalize(() => {
+        if (showGlobalLoading) this.loadingService.hide();
         this.cdr.detectChanges();
       })
     )
@@ -63,8 +67,9 @@ export class ClienteCredencial {
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.cliente.id) return;
     this.loading = true;
-    this.service.create(this.cliente.id, this.form.getRawValue()).pipe(finalize(() => this.loading = false)).subscribe({
-      next: () => { this.form.reset(); this.load(); this.messageService.add({ severity: 'success', summary: 'Credential created', detail: 'The temporary password was sent by email.' }); },
+    this.loadingService.show();
+    this.service.create(this.cliente.id, this.form.getRawValue()).pipe(finalize(() => { this.loading = false; this.loadingService.hide(); this.cdr.detectChanges(); })).subscribe({
+       next: () => { this.form.reset(); this.load(false); this.messageService.add({ severity: 'success', summary: 'Credencial creada', detail: 'La contraseña temporal fue enviada por correo electrónico.' }); },
       error: (error: HttpErrorResponse) => this.showError(error),
     });
   }
@@ -74,8 +79,9 @@ export class ClienteCredencial {
     if (!this.canManage()) return;
     if (!this.cliente.id) return;
     this.loading = true;
-    this.service.rotate(this.cliente.id, credential.id).pipe(finalize(() => this.loading = false)).subscribe({
-      next: () => { this.load(); this.messageService.add({ severity: 'success', summary: 'Password rotated', detail: 'The new temporary password was sent by email.' }); },
+    this.loadingService.show();
+    this.service.rotate(this.cliente.id, credential.id).pipe(finalize(() => { this.loading = false; this.loadingService.hide(); this.cdr.detectChanges(); })).subscribe({
+       next: () => { this.load(false); this.messageService.add({ severity: 'success', summary: 'Contraseña renovada', detail: 'La nueva contraseña temporal fue enviada por correo electrónico.' }); },
       error: (error: HttpErrorResponse) => this.showError(error),
     });
   }
@@ -85,18 +91,29 @@ export class ClienteCredencial {
     if (!this.canManage()) return;
     if (!this.cliente.id) return;
     this.loading = true;
-    this.service.update(this.cliente.id, credential.id, { activo: !credential.activo }).pipe(finalize(() => this.loading = false)).subscribe({
-      next: () => this.load(), error: (error: HttpErrorResponse) => this.showError(error),
+    this.loadingService.show();
+    this.service.update(this.cliente.id, credential.id, { activo: !credential.activo }).pipe(finalize(() => { this.loading = false; this.loadingService.hide(); this.cdr.detectChanges(); })).subscribe({
+      next: () => this.load(false), error: (error: HttpErrorResponse) => this.showError(error),
+    });
+  }
+
+  actualizarPreferencia(credential: TicketCredential, campo: 'enviarConfirmacionesTicket' | 'enviarActualizacionesTicket' | 'recibirActualizacionesTodosLosTickets', valor: boolean): void {
+    if (this.loading || !this.canManage() || !this.cliente.id) return;
+    this.loading = true;
+    this.loadingService.show();
+    this.service.update(this.cliente.id, credential.id, { [campo]: valor }).pipe(finalize(() => { this.loading = false; this.loadingService.hide(); this.cdr.detectChanges(); })).subscribe({
+      next: () => this.load(false),
+      error: (error: HttpErrorResponse) => this.showError(error),
     });
   }
 
   confirmToggle(credential: TicketCredential): void {
-    this.confirmationService.confirm({ header: credential.activo ? 'Deactivate credential' : 'Activate credential', message: 'Continue with this access change?', accept: () => this.toggle(credential) });
+    this.confirmationService.confirm({ header: credential.activo ? 'Desactivar credencial' : 'Activar credencial', message: '¿Desea continuar con este cambio de acceso?', accept: () => this.toggle(credential) });
   }
 
   cerrar(): void { this.ref.close(); }
 
   private showError(error: HttpErrorResponse): void {
-    this.messageService.add({ severity: 'error', summary: 'Error', detail: error.error?.message || 'Credential operation failed.' });
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: error.error?.message || 'La operación de credencial falló.' });
   }
 }
