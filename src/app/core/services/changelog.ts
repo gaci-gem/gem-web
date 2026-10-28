@@ -16,6 +16,17 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.4',
+    date: '2026-10-28',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Corregimos la actualización de las fechas de eventos desde el detalle y mostramos los errores mediante notificaciones claras.',
+        link: '/evento/eventos',
+      },
+    ],
+  },
+  {
     version: '0.5.2',
     date: '2026-10-27',
     changes: [

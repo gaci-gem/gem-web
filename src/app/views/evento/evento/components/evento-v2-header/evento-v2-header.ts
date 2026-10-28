@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, inject, Input } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { EventoCompleto, Evento, eventoFromEventoCompleto } from '@core/interfaces/evento';
+import { EventoCompleto, Evento } from '@core/interfaces/evento';
 import { EventoService } from '@core/services/evento';
 import { DrawerService } from '@core/services/drawer.service';
 import { BadgeClickComponent } from '@app/components/badge-click';
@@ -14,6 +14,8 @@ import { UserStorageService, UsuarioLogeado } from '@core/services/user-storage'
 import { finalize } from 'rxjs';
 import { EstimacionDetalle } from '../evento-v2-details-files/evento-v2-details-files';
 import { PopoverModule } from 'primeng/popover';
+import { MessageService } from 'primeng/api';
+import { showErrorToast } from '@/app/utils/message-utils';
 
 @Component({
   selector: 'app-evento-v2-header',
@@ -26,6 +28,7 @@ export class EventoV2HeaderComponent {
   private eventoService = inject(EventoService);
   private drawerService = inject(DrawerService);
   private userStorageService = inject(UserStorageService);
+  private messageService = inject(MessageService);
   private readonly cdRef = inject(ChangeDetectorRef);
 
   @Input({ required: true }) evento!: EventoCompleto;
@@ -71,24 +74,26 @@ export class EventoV2HeaderComponent {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  onFechaChange(event: any, campo: string): void {
+  onFechaChange(event: any, campo: 'fechaFinEst' | 'fechaEntrega' | 'fechaEntregaReal'): void {
     if (this.fechaGuardando) return;
     const iso = event ? `${event}T00:00:00.000Z` : null;
     if (campo && this.evento) {
       (this.evento as any)[campo] = iso;
     }
-    const aux: Evento = {
-      ...eventoFromEventoCompleto(this.evento),
-      [campo]: iso,
-    };
+    const payload = { id: this.evento.id, [campo]: iso } as Pick<Evento, 'id'> &
+      Partial<Pick<Evento, 'fechaFinEst' | 'fechaEntrega' | 'fechaEntregaReal'>>;
     this.fechaGuardando = campo;
     this.estadoFecha = null;
-    this.eventoService.update(this.evento.id!, aux).pipe(finalize(() => {
+    this.eventoService.update(this.evento.id!, payload as Evento).pipe(finalize(() => {
       this.fechaGuardando = null;
       this.cdRef.detectChanges();
     })).subscribe({
       next: () => this.estadoFecha = 'guardado',
-      error: () => this.estadoFecha = 'error',
+      error: (error) => {
+        this.estadoFecha = 'error';
+        const mensaje = error?.error?.message ?? error?.message ?? 'No se pudo guardar la fecha.';
+        showErrorToast(this.messageService, 'Error', Array.isArray(mensaje) ? mensaje.join(', ') : mensaje);
+      },
     });
   }
 
