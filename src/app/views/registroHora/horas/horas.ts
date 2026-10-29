@@ -10,7 +10,7 @@ import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
-import { Categoria, RegistroHora } from '@core/interfaces/registro-hora';
+import { Categoria, Hora, RegistroHora } from '@core/interfaces/registro-hora';
 import { RegistroHoraQuery, RegistroHoraService } from '@core/services/registro-hora';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
@@ -20,7 +20,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SelectModule } from 'primeng/select';
-import { Table, TableModule, TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -74,6 +74,7 @@ export class Horas extends TrabajarCon<RegistroHora> {
   categoriaFiltro: string | null = null;
   usuarioFiltro = '';
   readonly tiposTrabajo = TIPOS_TRABAJO;
+  private expandedRegistroKeys = new Set<string>();
 
   constructor() {
     super(
@@ -187,8 +188,9 @@ export class Horas extends TrabajarCon<RegistroHora> {
   }
 
   onClearFecha(): void {
-    this.inicializarFiltroFecha();
-    this.onFechaChange();
+    this.dateRangeFilter = undefined;
+    this.resetPaginator();
+    this.consultarRegistros();
   }
 
   isFiltered(table: Table): boolean {
@@ -240,16 +242,47 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.first = 0;
   }
 
+  cantidadIntervalos(registro: RegistroHora): number {
+    return registro.horas?.length ?? 0;
+  }
+
+  registroKey(registro: RegistroHora): string {
+    if (registro.id != null) return String(registro.id);
+
+    const fecha = registro.fecha instanceof Date
+      ? registro.fecha.toISOString()
+      : String(registro.fecha);
+    return `${registro.usuarioId}|${fecha}`;
+  }
+
+  isRegistroExpandido(registro: RegistroHora): boolean {
+    return this.expandedRegistroKeys.has(this.registroKey(registro));
+  }
+
+  toggleRegistro(registro: RegistroHora): void {
+    const key = this.registroKey(registro);
+    if (this.expandedRegistroKeys.has(key)) {
+      this.expandedRegistroKeys.delete(key);
+    } else {
+      this.expandedRegistroKeys.add(key);
+    }
+  }
+
+  eventoLabel(hora: Hora): string {
+    return hora.eventoTxt || hora.evento?.titulo || 'Evento sin título';
+  }
+
   consultarRegistros(desde?: Date, hasta?: Date) {
-    if (!desde || !hasta) return;
     this.loadingService.show();
     const query: RegistroHoraQuery = {
       page: Math.floor(this.first / this.rows) + 1,
       limit: this.rows,
-      fechaDesde: desde.toISOString().slice(0, 10),
-      fechaHasta: hasta.toISOString().slice(0, 10),
+      ...(desde && hasta ? {
+        fechaDesde: desde.toISOString().slice(0, 10),
+        fechaHasta: hasta.toISOString().slice(0, 10),
+      } : {}),
       categoriaCodigo: this.categoriaFiltro || undefined,
-      usuario: this.usuarioFiltro || undefined,
+      buscar: this.usuarioFiltro || undefined,
       orderBy: this.sortField,
       orderDir: this.sortDirection,
     };

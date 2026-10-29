@@ -62,4 +62,36 @@ describe('Horas', () => {
     expect(hora?.categoria?.descripcion).toBe('Desarrollo');
     expect(hora?.categoria?.color).toBe('#2196F3');
   });
+
+  it('debe enviar buscar y no usuario para el filtro general', () => {
+    const fixture = TestBed.createComponent(Horas);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    component.usuarioFiltro = 'ana';
+
+    component.consultarRegistros();
+
+    expect(registroHoraServiceSpy.getAll).toHaveBeenCalledWith(jasmine.objectContaining({ buscar: 'ana' }));
+    const query = registroHoraServiceSpy.getAll.calls.mostRecent().args[0] as Record<string, unknown>;
+    expect(query['usuario']).toBeUndefined();
+  });
+
+  it('expande y contrae registros de forma independiente con claves estables', () => {
+    const fixture = TestBed.createComponent(Horas);
+    const component = fixture.componentInstance;
+    const primero = { ...mockResponse[0].registrosHora[0], usuarioId: 'u-1' } as any;
+    const segundo = { ...primero, id: 2 } as any;
+
+    component.toggleRegistro(primero);
+    expect(component.isRegistroExpandido(primero)).toBeTrue();
+    expect(component.isRegistroExpandido(segundo)).toBeFalse();
+
+    component.toggleRegistro(segundo);
+    expect(component.isRegistroExpandido(primero)).toBeTrue();
+    expect(component.isRegistroExpandido(segundo)).toBeTrue();
+
+    component.toggleRegistro(primero);
+    expect(component.isRegistroExpandido(primero)).toBeFalse();
+    expect(component.isRegistroExpandido(segundo)).toBeTrue();
+  });
 });

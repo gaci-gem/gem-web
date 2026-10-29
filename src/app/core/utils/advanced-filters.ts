@@ -23,8 +23,34 @@ export const EVENTO_TABLE_FIELD_MAP: Record<string, string> = {
   'usuarioActual.usuario': 'usuario',
 };
 
+export const EVENTO_QUERY_FIELD_MAP: Record<string, string> = {
+  evento: 'eventoSearch',
+  eventoSearch: 'eventoSearch',
+  titulo: 'titulo',
+  'cliente.nombre': 'cliente',
+  'etapaActualData.nombre': 'etapa',
+  'producto.nombre': 'producto',
+  'modulo.nombre': 'modulo',
+  'usuarioActual.usuario': 'usuario',
+};
+
 export function hasAdvancedFilterField(filters: AdvancedFilter[], field: string): boolean {
   return filters.some((filter) => filter.field === field);
+}
+
+export function withoutCoveredLegacyFilters<T extends Record<string, unknown>>(
+  params: T,
+  filters: Array<{ field: string }>,
+  fieldAliases: Record<string, string | string[]>,
+): T {
+  const covered = new Set<string>();
+  for (const filter of filters) {
+    const legacyFields = fieldAliases[filter.field];
+    for (const field of Array.isArray(legacyFields) ? legacyFields : [legacyFields]) {
+      if (field) covered.add(field);
+    }
+  }
+  return Object.fromEntries(Object.entries(params).filter(([key]) => !covered.has(key))) as T;
 }
 
 export function serializeAdvancedFilters(filters: AdvancedFilter[]): string | undefined {
@@ -37,6 +63,7 @@ export function advancedFiltersFromTable(
 ): AdvancedFilter[] {
   const result: AdvancedFilter[] = [];
   for (const [tableField, metadata] of Object.entries(tableFilters ?? {})) {
+    if (tableField === 'global') continue;
     const field = fields[tableField] ?? tableField;
     const entries = Array.isArray(metadata) ? metadata : [metadata];
     const constraints = entries.flatMap((entry: any) => entry?.constraints ?? [entry])
