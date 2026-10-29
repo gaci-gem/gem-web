@@ -32,6 +32,7 @@ import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocompl
 import { ClienteService } from '@core/services/cliente';
 import { Cliente } from '@core/interfaces/cliente';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
+import { withoutCoveredLegacyFilters } from '@core/utils/advanced-filters';
 
 @Component({
   selector: 'app-tickets',
@@ -261,7 +262,8 @@ export class Tickets implements OnInit {
      this.loading.show();
      const advancedFilters = this.advancedFilters.filter((filter) => filter.field !== 'client');
       if (this.clientesSeleccionados.length) advancedFilters.push({ field: 'clientId', operator: 'or', constraints: this.clientesSeleccionados.map((cliente) => ({ matchMode: 'equals', value: cliente.id })) });
-     this.service.list({ search: this.search, id: this.idFilter ? Number(this.idFilter) : undefined, subject: this.subjectFilter || undefined, client: this.clientFilter || undefined, status: this.estado || undefined, priority: this.prioridad || undefined, type: this.tipo || undefined, externalReference: this.externalReferenceFilter || undefined, events: this.eventsFilter || undefined, assignedUser: this.assignedUserFilter || undefined, createdFrom: this.createdFrom || undefined, createdTo: this.createdTo || undefined, advancedFilters, page: this.page, limit: this.limit, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(finalize(() => this.loading.hide())).subscribe({
+      const filters = withoutCoveredLegacyFilters({ search: this.search, id: this.idFilter ? Number(this.idFilter) : undefined, subject: this.subjectFilter || undefined, client: this.clientFilter || undefined, status: this.estado || undefined, priority: this.prioridad || undefined, type: this.tipo || undefined, externalReference: this.externalReferenceFilter || undefined, events: this.eventsFilter || undefined, assignedUser: this.assignedUserFilter || undefined, createdFrom: this.createdFrom || undefined, createdTo: this.createdTo || undefined, advancedFilters, page: this.page, limit: this.limit, sortField: this.sortField, sortDirection: this.sortDirection }, advancedFilters, { id: 'id', subject: 'subject', client: 'client', status: 'status', priority: 'priority', type: 'type', externalReference: 'externalReference', events: 'events', assignedUser: 'assignedUser', createdAt: ['createdFrom', 'createdTo'] });
+      this.service.list(filters as Parameters<TicketService['list']>[0]).pipe(finalize(() => this.loading.hide())).subscribe({
       next: (result) => { this.tickets = result.data; this.total = result.total; this.cdr.detectChanges(); },
       error: (error) => this.showError(error),
     });
@@ -368,12 +370,12 @@ export class Tickets implements OnInit {
   onColumnFilter(event: TableFilterEvent): void {
     if (this.clearingFilters) return;
     const advancedFilters: TicketAdvancedFilter[] = [];
-    const value = (field: string): string => {
+    const value = (field: string, advancedField = field): string => {
       const metadata = event.filters?.[field];
       const first = Array.isArray(metadata) ? metadata[0] : metadata;
       const entries = Array.isArray(metadata) ? metadata : [metadata];
       const constraints = entries.flatMap((entry: any) => entry?.constraints ?? [entry]).filter((constraint: any) => constraint?.value !== null && constraint?.value !== undefined && constraint.value !== '');
-      if (constraints.length) advancedFilters.push({ field, operator: entries.find((entry: any) => entry?.operator === 'or') ? 'or' : 'and', constraints: constraints.map((constraint: any) => ({ matchMode: String(constraint.matchMode ?? 'contains'), value: constraint.value instanceof Date ? constraint.value.toISOString().slice(0, 10) : constraint.value })) });
+      if (constraints.length) advancedFilters.push({ field: advancedField, operator: entries.find((entry: any) => entry?.operator === 'or') ? 'or' : 'and', constraints: constraints.map((constraint: any) => ({ matchMode: advancedField === 'createdAt' ? 'equals' : String(constraint.matchMode ?? 'contains'), value: constraint.value instanceof Date ? constraint.value.toISOString().slice(0, 10) : constraint.value })) });
       const constraint = constraints[0];
       const raw = constraint?.value;
       if (raw instanceof Date) return raw.toISOString().slice(0, 10);
@@ -382,7 +384,7 @@ export class Tickets implements OnInit {
     this.idFilter = value('id'); this.subjectFilter = value('subject'); this.clientFilter = value('client');
     this.estado = value('status') as TicketState | ''; this.prioridad = value('priority'); this.tipo = value('type');
     this.externalReferenceFilter = value('externalReference'); this.eventsFilter = value('events'); this.assignedUserFilter = value('assignedUser');
-    this.createdFrom = value('createdFrom'); this.createdTo = value('createdTo'); this.advancedFilters = advancedFilters; this.onFilterChange();
+    this.createdFrom = value('createdFrom', 'createdAt'); this.createdTo = value('createdTo', 'createdAt'); this.advancedFilters = advancedFilters; this.onFilterChange();
   }
   priorityLabel(value: string): string { return ({ CRITICA: '🔴 Crítica', ALTA: '🟠 Alta', MEDIA: '🟡 Media', BAJA: '🟢 Baja' } as Record<string, string>)[value] ?? '🟡 Media'; }
   typeLabel(value: string | null): string { return ({ CONSULTA: 'Consultas', ERROR_INCIDENTE: 'Error / Incidente', REQUERIMIENTO_MEJORA: 'Requerimiento / Mejora' } as Record<string, string>)[value ?? ''] ?? 'Sin clasificar'; }

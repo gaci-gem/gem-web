@@ -125,4 +125,23 @@ describe('Tickets', () => {
     expect(component.loadItems).toHaveBeenCalledOnceWith();
     component.drawerClosedSubscription.unsubscribe();
   });
+
+  it('maps date column filters to createdAt equals constraints while preserving range parameters', () => {
+    const component = Object.create(Tickets.prototype) as any;
+    component.clearingFilters = false;
+    component.onFilterChange = jasmine.createSpy('onFilterChange');
+
+    component.onColumnFilter({ filters: {
+      createdFrom: { value: new Date('2026-01-10T00:00:00.000Z'), matchMode: 'dateIs' },
+      createdTo: { value: new Date('2026-01-12T00:00:00.000Z'), matchMode: 'dateIs' },
+    } } as any);
+
+    expect(component.createdFrom).toBe('2026-01-10');
+    expect(component.createdTo).toBe('2026-01-12');
+    expect(component.advancedFilters).toEqual([
+      { field: 'createdAt', operator: 'and', constraints: [{ matchMode: 'equals', value: '2026-01-10' }] },
+      { field: 'createdAt', operator: 'and', constraints: [{ matchMode: 'equals', value: '2026-01-12' }] },
+    ]);
+    expect(component.advancedFilters.some((filter: any) => filter.field === 'createdFrom' || filter.field === 'createdTo')).toBeFalse();
+  });
 });

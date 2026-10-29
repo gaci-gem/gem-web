@@ -1,0 +1,12 @@
+/* Anchos estables para evitar que el contenido filtrado redistribuya la tabla. */
+:host ::ng-deep .p-datatable .columna-seleccion { width: 64px; min-width: 64px; max-width: 64px; }
+:host ::ng-deep .p-datatable .columna-evento { width: 110px; min-width: 110px; max-width: 110px; }
+:host ::ng-deep .p-datatable .columna-titulo { width: 440px; min-width: 440px; max-width: 440px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:host ::ng-deep .p-datatable .columna-etapa { width: 180px; min-width: 180px; max-width: 180px; white-space: normal; overflow-wrap: anywhere; }
+:host ::ng-deep .p-datatable .columna-cliente { width: 220px; min-width: 220px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; }
+:host ::ng-deep .p-datatable .columna-producto { width: 220px; min-width: 220px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; }
+:host ::ng-deep .p-datatable .columna-modulo { width: 180px; min-width: 180px; max-width: 180px; white-space: normal; overflow-wrap: anywhere; }
+:host ::ng-deep .p-datatable .columna-prioridad { width: 100px; min-width: 100px; max-width: 100px; }
+:host ::ng-deep .p-datatable .columna-usuario { width: 140px; min-width: 140px; max-width: 140px; }
+:host ::ng-deep .p-datatable .columna-fecha { width: 145px; min-width: 145px; max-width: 145px; white-space: nowrap; }
+:host ::ng-deep .p-datatable .columna-acciones { width: 170px; min-width: 170px; max-width: 170px; }
