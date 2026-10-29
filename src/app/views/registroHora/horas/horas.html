@@ -29,39 +29,46 @@
                                 <th>Acciones</th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-registro let-expanded="expanded">
+                        <ng-template pTemplate="body" let-registro>
                             <tr>
-                                <td><p-button type="button" pRipple [pRowToggler]="registro" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" /></td>
+                                <td>
+                                    <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true"
+                                        [icon]="isRegistroExpandido(registro) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                                        (click)="toggleRegistro(registro)"
+                                        [attr.aria-expanded]="isRegistroExpandido(registro)"
+                                        [attr.aria-controls]="'detalle-' + registroKey(registro)"
+                                        [attr.aria-label]="isRegistroExpandido(registro) ? 'Ocultar detalle del día' : 'Mostrar detalle del día'" />
+                                </td>
                                 <td>{{ registro.fecha | date:'fullDate' }}</td>
                                 <td>{{ registro.createdAt | date:'short' }}</td>
                                 <td>{{ registro.usuario?.usuario || (registro.usuario?.nombre + ' ' + registro.usuario?.apellido) }}</td>
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>
                                 <td></td>
                             </tr>
-                        </ng-template>
-                        <ng-template pTemplate="rowexpansion" let-registro>
-                            <tr>
-                                <td colspan="5">
-                                    <p-table [value]="registro.horas" dataKey="id" size="small">
-                                        <ng-template pTemplate="header">
-                                            <tr><th>Inicio</th><th>Final</th><th>Evento</th><th>Detalle</th><th>Categoría</th><th>Diferencia</th></tr>
-                                        </ng-template>
-                                        <ng-template pTemplate="body" let-hora>
-                                            <tr>
-                                                <td>{{ hora.inicio | date:'HH:mm' }}</td>
-                                                <td>{{ hora.fin | date:'HH:mm' }}</td>
-                                                <td>{{ hora.evento?.tipoCodigo }}-{{ hora.evento?.numero }} | {{ hora.evento?.titulo }}</td>
-                                                <td>{{ hora.detalle }}</td>
-                                                <td>
-                                                    <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span>
-                                                    <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
-                                                </td>
-                                                <td>{{ hora.diferenciaFormateada }} hs.</td>
-                                            </tr>
-                                        </ng-template>
-                                    </p-table>
-                                </td>
-                            </tr>
+                            @if (isRegistroExpandido(registro)) {
+                                <tr>
+                                    <td colspan="6" [id]="'detalle-' + registroKey(registro)">
+                                        <p-table [value]="registro.horas ?? []" dataKey="id" size="small">
+                                            <ng-template pTemplate="header">
+                                                <tr><th>Inicio</th><th>Final</th><th>Evento</th><th>Detalle</th><th>Categoría</th><th>Diferencia</th></tr>
+                                            </ng-template>
+                                            <ng-template pTemplate="body" let-hora>
+                                                <tr>
+                                                    <td>{{ hora.inicio | date:'HH:mm' }}</td>
+                                                    <td>{{ hora.fin | date:'HH:mm' }}</td>
+                                                    <td>{{ eventoLabel(hora) }}</td>
+                                                    <td>{{ hora.detalle }}</td>
+                                                    <td>
+                                                        <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span>
+                                                        <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
+                                                    </td>
+                                                    <td>{{ hora.diferenciaFormateada }} hs.</td>
+                                                </tr>
+                                            </ng-template>
+                                        </p-table>
+                                    </td>
+                                </tr>
+                            }
                         </ng-template>
                         <ng-template pTemplate="emptymessage">
                             <tr><td colspan="5" class="text-center py-4">No se encontraron registros de hora.</td></tr>

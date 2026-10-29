@@ -49,6 +49,36 @@ describe('HorasUsuario', () => {
     expect(component.totalRecords).toBe(0);
   });
 
+  it('should send the literal global search together with the selected month', () => {
+    const registroHoraService = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getCategorias', 'getByUsuario']);
+    registroHoraService.getCategorias.and.returnValue(of([]));
+    registroHoraService.getByUsuario.and.returnValue(of({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }));
+
+    TestBed.configureTestingModule({
+      imports: [HorasUsuario],
+      providers: [
+        { provide: RegistroHoraService, useValue: registroHoraService },
+        { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
+        { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
+        { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
+        { provide: ViewportService, useValue: { isMobile: signal(true) } },
+        DialogService, MessageService, ConfirmationService, provideZonelessChangeDetection(),
+      ],
+    });
+
+    const component = TestBed.createComponent(HorasUsuario).componentInstance;
+    component.usuarioFiltro = '27';
+    component.consultarRegistros(new Date(2026, 1, 1));
+
+    expect(registroHoraService.getByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({
+      buscar: '27',
+      mes: 2,
+      anio: 2026,
+    }));
+    expect(registroHoraService.getByUsuario.calls.mostRecent().args[1].usuario).toBeUndefined();
+  });
+
   it('should reset the paginator when the period changes', () => {
     const registroHoraService = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getCategorias', 'getByUsuario']);
     registroHoraService.getCategorias.and.returnValue(of([]));

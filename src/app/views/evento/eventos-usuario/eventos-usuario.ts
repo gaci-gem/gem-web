@@ -28,7 +28,7 @@ import {
   formatEventoNumero,
 } from '@core/interfaces/evento';
 import { PermisoClave } from '@core/interfaces/rol';
-import { advancedFiltersFromTable, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
+import { advancedFiltersFromTable, EVENTO_QUERY_FIELD_MAP, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
 import { PadZeroPipe } from '@core/pipes/pad-zero.pipe';
 import { EventoFilterState, FiltroState } from '@core/interfaces/filtro-preset';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
@@ -379,21 +379,13 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
     params.globalSearch = this.globalFilter.trim();
-    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, { 'cliente.nombre': 'client' });
+    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, EVENTO_TABLE_FIELD_MAP);
     params.advancedFilters = advancedFilters;
-    const fieldMap: Record<string, string> = {
-      evento: 'eventoSearch',
-      titulo: 'titulo',
-      'etapaActualData.nombre': 'etapa',
-      'cliente.nombre': 'cliente',
-      'producto.nombre': 'producto',
-      'modulo.nombre': 'modulo',
-      'usuarioActual.usuario': 'usuario',
-    };
     Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
       const filter = Array.isArray(metadata) ? metadata[0] : metadata;
-      const target = fieldMap[field];
-      if (target && !(target === 'cliente' && advancedFilters.some(item => item.field === 'client')) && typeof filter?.value === 'string' && filter.value.trim()) {
+      const target = EVENTO_QUERY_FIELD_MAP[field];
+      const advancedFilterField = target === 'cliente' ? 'client' : target;
+      if (target && !hasAdvancedFilterField(advancedFilters, advancedFilterField) && typeof filter?.value === 'string' && filter.value.trim()) {
         params[target] = filter.value.trim();
       }
     });

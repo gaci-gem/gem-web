@@ -167,11 +167,11 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
   consultarRegistros(fechaFiltro:any){
     this.loadingService.show();
     const query: RegistroHoraQuery = {
-      mes: fechaFiltro.getMonth() + 1,
-      anio: fechaFiltro.getFullYear(),
       page: Math.floor(this.first / this.rows) + 1,
       limit: this.rows,
-      usuario: this.usuarioFiltro || undefined,
+      buscar: this.usuarioFiltro.trim() || undefined,
+      mes: fechaFiltro.getMonth() + 1,
+      anio: fechaFiltro.getFullYear(),
       orderBy: this.sortField,
       orderDir: this.sortDirection,
     };

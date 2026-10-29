@@ -16,6 +16,38 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.5',
+    date: '2026-10-28',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Mejoramos la combinación de filtros avanzados y parámetros legacy en eventos y registros de hora.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'fix',
+        text: 'Corregimos la visualización de correos originales y adjuntos EML en los tickets.',
+        link: '/gem-clientes/tickets',
+      },
+      {
+        type: 'improvement',
+        text: 'Ajustamos las columnas de eventos para facilitar la lectura de títulos largos y mostrar su contenido completo mediante tooltip.',
+        link: '/evento/eventos',
+      },
+    ],
+  },
+  {
+    version: '0.5.4',
+    date: '2026-10-28',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Corregimos la actualización de las fechas de eventos desde el detalle y mostramos los errores mediante notificaciones claras.',
+        link: '/evento/eventos',
+      },
+    ],
+  },
+  {
     version: '0.5.2',
     date: '2026-10-27',
     changes: [

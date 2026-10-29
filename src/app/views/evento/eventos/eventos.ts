@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { CircularEvento, Evento, EventoCompleto, formatEventoNumero } from '@core/interfaces/evento';
 import { EventoCompletoPage, EventoCompletoSortField, EventoService } from '@core/services/evento';
-import { advancedFiltersFromTable, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
+import { advancedFiltersFromTable, EVENTO_QUERY_FIELD_MAP, EVENTO_TABLE_FIELD_MAP, hasAdvancedFilterField } from '@core/utils/advanced-filters';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { EventoCrud } from '../evento-crud/evento-crud';
@@ -245,21 +245,14 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
       params.hasta = this.formatearFecha(this.filtroFecha[1]);
     }
     params.globalSearch = this.globalFilter.trim();
-    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, { 'cliente.nombre': 'client' });
+    const advancedFilters = advancedFiltersFromTable(this.table?.filters as Record<string, unknown>, EVENTO_TABLE_FIELD_MAP);
     params.advancedFilters = advancedFilters;
-    const fieldMap: Record<string, string> = {
-      eventoSearch: 'eventoSearch',
-      titulo: 'titulo',
-      'etapaActualData.nombre': 'etapa',
-      'cliente.nombre': 'cliente',
-      'producto.nombre': 'producto',
-      'modulo.nombre': 'modulo',
-      'usuarioActual.usuario': 'usuario',
-    };
+    const fieldMap = EVENTO_QUERY_FIELD_MAP;
     Object.entries(this.table?.filters ?? {}).forEach(([field, metadata]: [string, any]) => {
       const filter = Array.isArray(metadata) ? metadata[0] : metadata;
       const target = fieldMap[field];
-      if (target && !(target === 'cliente' && advancedFilters.some(item => item.field === 'client')) && typeof filter?.value === 'string' && filter.value.trim()) {
+      const advancedFilterField = target === 'cliente' ? 'client' : target;
+      if (target && !hasAdvancedFilterField(advancedFilters, advancedFilterField) && typeof filter?.value === 'string' && filter.value.trim()) {
         params[target] = filter.value.trim();
       }
     });

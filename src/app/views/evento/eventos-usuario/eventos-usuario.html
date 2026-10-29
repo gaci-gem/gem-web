@@ -66,7 +66,7 @@
                         [rows]="10"
                         [paginator]="true"
                         [globalFilterFields]="['id', 'tipo.codigo', 'numero', 'evento', 'titulo', 'etapaActualData.nombre', 'cliente.sigla', 'cliente.nombre', 'producto.sigla', 'producto.nombre', 'producto.entornoCodigo', 'modulo.codigo', 'modulo.nombre', 'usuarioActual.usuario']"
-                        [tableStyle]="{ 'min-width': '75rem' }"
+                         [tableStyle]="{ 'min-width': '2264px' }"
                         [rowHover]="true"
                         dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
@@ -82,65 +82,65 @@
                     >
                         <ng-template pTemplate="header">
                             <tr style="min-height: 55px;">
-                                <th style="width: 4rem" pFrozenColumn>
+                                 <th class="columna-seleccion" pFrozenColumn>
                                     <!-- <p-tableHeaderCheckbox></p-tableHeaderCheckbox> -->
                                 </th>
                                  <th hidden>Id</th>
                                  <th hidden>Tipo</th>
                                  <th hidden>Numero</th>
-                                   <th style="min-width: 110px;" pFrozenColumn pSortableColumn="numero">
+                                    <th class="columna-evento" pFrozenColumn pSortableColumn="numero">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                          Evento
                                          <p-sortIcon field="numero"></p-sortIcon>
                                          <p-columnFilter type="text" field="evento" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                 <th>
+                                  <th class="columna-titulo">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Titulo
                                         <p-columnFilter type="text" field="titulo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>  
                                     </div>
                                 </th>
-                                 <th filterField="etapaActualData.nombre">
+                                  <th class="columna-etapa" filterField="etapaActualData.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Etapa
                                         <p-columnFilter type="text" field="etapaActualData.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div></th>
-                                 <th filterField="cliente.nombre">
+                                  <th class="columna-cliente" filterField="cliente.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Cliente
                                         <p-columnFilter type="text" field="cliente.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                 <th filterField="producto.nombre">
+                                  <th class="columna-producto" filterField="producto.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Producto
                                         <p-columnFilter type="text" field="producto.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                 <th filterField="modulo.nombre">
+                                  <th class="columna-modulo" filterField="modulo.nombre">
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Modulo
                                         <p-columnFilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                  <th pSortableColumn="prioridadFin">Prioridad <p-sortIcon field="prioridadFin"></p-sortIcon></th>
-                                 <th style="min-width: 115px;" filterField="usuarioActual.usuario" hidden>
+                                   <th class="columna-prioridad" pSortableColumn="prioridadFin">Prioridad <p-sortIcon field="prioridadFin"></p-sortIcon></th>
+                                  <th class="columna-usuario" filterField="usuarioActual.usuario" hidden>
                                     <div class="flex align-items-center" style="justify-content: space-around;">
                                         Usuario
                                         <p-columnFilter type="text" field="usuarioActual.usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
                                     </div>
                                 </th>
-                                  <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
-                                  <th pSortableColumn="fechaInicio">Inicio <p-sortIcon field="fechaInicio"></p-sortIcon></th>
-                                  <th pSortableColumn="fechaFinEst">Fin <p-sortIcon field="fechaFinEst"></p-sortIcon></th>
+                                   <th class="columna-fecha" pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon></th>
+                                   <th class="columna-fecha" pSortableColumn="fechaInicio">Inicio <p-sortIcon field="fechaInicio"></p-sortIcon></th>
+                                   <th class="columna-fecha" pSortableColumn="fechaFinEst">Fin <p-sortIcon field="fechaFinEst"></p-sortIcon></th>
                                  <th hidden>Usuario Alta</th>
-                                <th></th>
+                                 <th class="columna-acciones"></th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-evento>
                             <tr style="min-height: 55px" [pSelectableRow]="evento" [pContextMenuRow]="evento" [class.table-success]="eventoEnTrabajo?.id === evento.id">
-                                <td pFrozenColumn>
+                                 <td class="columna-seleccion" pFrozenColumn>
                                     @if (!eventoEnTrabajo || eventoEnTrabajo.id !== evento.id) {
                                         <button 
                                             class="btn btn-ghost-success me-1" 
@@ -165,7 +165,7 @@
                                 <td hidden>{{ evento?.id }}</td>
                                 <td hidden>{{ evento?.tipo?.id }}</td>
                                 <td hidden>{{ evento?.numero }}</td>
-                                <td pFrozenColumn>
+                                 <td class="columna-evento" pFrozenColumn>
                                     <app-badge-click 
                                         [backgroundColor]="evento.tipo.color"
                                         (click)="abrirEventoDrawer(evento)"
@@ -174,12 +174,12 @@
                                         {{ evento.evento }}
                                     </app-badge-click>
                                 </td>
-                                <td>{{ evento?.titulo }}</td>
-                                <td>{{ evento?.etapaActualData?.nombre }}</td>
-                                <td>{{ evento?.cliente ? evento.cliente?.sigla + " - " + evento.cliente?.nombre : "-" }} </td>
-                                <td>{{ evento?.producto ? evento.producto?.sigla + " - " + evento.producto?.nombre + (evento.producto?.entornoCodigo ? " | " + evento.producto.entornoCodigo : "") : "-" }} </td>
-                                <td>{{ evento?.modulo ? evento.modulo?.codigo + " - " + evento.modulo?.nombre : "-" }} </td>
-                                <td>
+                                  <td class="columna-titulo" [attr.title]="evento?.titulo || ''">{{ evento?.titulo }}</td>
+                                 <td class="columna-etapa">{{ evento?.etapaActualData?.nombre }}</td>
+                                 <td class="columna-cliente">{{ evento?.cliente ? evento.cliente?.sigla + " - " + evento.cliente?.nombre : "-" }} </td>
+                                 <td class="columna-producto">{{ evento?.producto ? evento.producto?.sigla + " - " + evento.producto?.nombre + (evento.producto?.entornoCodigo ? " | " + evento.producto.entornoCodigo : "") : "-" }} </td>
+                                 <td class="columna-modulo">{{ evento?.modulo ? evento.modulo?.codigo + " - " + evento.modulo?.nombre : "-" }} </td>
+                                 <td class="columna-prioridad">
                                 <div class="d-flex justify-content-center">
                                     <app-prioridad-icon [nivel]="evento?.prioridadFin" ></app-prioridad-icon>
                                 </div>
@@ -193,11 +193,11 @@
                                         {{ evento?.usuarioActual?.usuario }}
                                     </app-badge-click>
                                 </td>
-                                <td> {{ evento?.createdAt ? (evento.createdAt | date : "short") : "" }} </td>
-                                <td> {{ evento?.fechaInicio ? (evento.fechaInicio | date : "shortDate") : "" }} </td>
-                                 <td> {{ (evento?.fechaFinEst || evento?.fechaFinReal) ? ((evento.fechaFinEst || evento.fechaFinReal) | date : "shortDate") : "" }} </td>
+                                 <td class="columna-fecha"> {{ evento?.createdAt ? (evento.createdAt | date : "short") : "" }} </td>
+                                 <td class="columna-fecha"> {{ evento?.fechaInicio ? (evento.fechaInicio | date : "shortDate") : "" }} </td>
+                                  <td class="columna-fecha"> {{ (evento?.fechaFinEst || evento?.fechaFinReal) ? ((evento.fechaFinEst || evento.fechaFinReal) | date : "shortDate") : "" }} </td>
                                 <td hidden>{{ evento?.usuarioAlta?.usuario }}</td>
-                                <td><div class="d-flex justify-content-end" style="min-height: 55px;">
+                                 <td class="columna-acciones"><div class="d-flex justify-content-end" style="min-height: 55px;">
                                     @if (!evento.cerrado && !evento.tipo.propio) { 
                                         @if (evento.etapaSiguiente) {
                                             @if (evento.etapaActualData.deAutoriza) {

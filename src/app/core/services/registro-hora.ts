@@ -108,6 +108,7 @@ export interface RegistroHoraQuery {
   anio?: number;
   categoriaCodigo?: string;
   usuarioId?: string;
+  buscar?: string;
   usuario?: string;
   orderBy?: 'fecha' | 'createdAt';
   orderDir?: 'asc' | 'desc';
