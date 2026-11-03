@@ -3,13 +3,9 @@
     <ng-container>
       Versión: {{ versionInfo.version }}
       @if (isProdBuild) {
-        <ng-container>
-          ({{ versionInfo.commitHash }})
-        </ng-container>
+        ({{ versionInfo.commitHash }})
       } @else {
-        <ng-container>
-          ({{ versionInfo.branch }} | {{ versionInfo.commitHash }})
-        </ng-container>
+        ({{ versionInfo.branch }} | {{ versionInfo.commitHash }})
       }
     </ng-container>
   }
