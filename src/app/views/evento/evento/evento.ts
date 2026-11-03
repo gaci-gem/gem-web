@@ -262,7 +262,7 @@ export class Evento {
     this.eventoService
       .getEventoVista(eventoId, {
         incluirAdjuntos: true,
-        adjuntosActivo: 'all',
+        adjuntosActivo: true,
       })
       .pipe(finalize(() => this.finalizeBlockLoading('adjuntos', eventoId)))
       .subscribe({
