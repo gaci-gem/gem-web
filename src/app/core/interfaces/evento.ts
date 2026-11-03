@@ -302,6 +302,9 @@ export interface VidaEvento {
   id?: number;
   eventoId: string;
   etapaNumero: number;
+  etapaNombre?: string | null;
+  etapaNombreAnterior?: string | null;
+  etapaNombreSiguiente?: string | null;
   usuarioId: string;
   fecha: Date;
   adicionId?: number;

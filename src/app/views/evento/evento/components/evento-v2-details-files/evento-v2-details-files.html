@@ -63,24 +63,46 @@
         </div>
       } @else if (requisitos.length > 0) {
         <div class="table-responsive requisitos-table-wrap">
-          <table class="table table-sm align-middle mb-0 requisitos-table">
+            <table class="table table-sm mb-0 requisitos-table">
             <thead>
               <tr>
-                <th style="width: 8%"></th>
-                <th style="width: 30%">Requisito</th>
-                <th style="width: 24%">Etapa</th>
-                <th style="width: 38%">Valor</th>
+                <th class="requisito-estado-col">Estado</th>
+                <th>Requisito</th>
+                <th>Etapa</th>
               </tr>
             </thead>
             <tbody>
               @for (req of requisitos; track req.requisito + req.etapa) {
-                <tr>
-                  <td>
+                <tr class="requisito-resumen-row">
+                  <td class="requisito-estado-col">
                     <span class="req-status" [class.req-status--ok]="req.cumplido">{{ req.cumplido ? 'OK' : 'NO' }}</span>
                   </td>
                   <td>{{ req.requisito }}</td>
                   <td>{{ req.etapa }}</td>
-                  <td>{{ req.valor || '-' }}</td>
+                </tr>
+                <tr class="requisito-valor-row">
+                  <td colspan="3">
+                    <div class="requisito-valor-header">
+                      <span class="requisito-valor-label">Valor</span>
+                      @if (req.valor) {
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-copy"
+                          severity="secondary"
+                          [text]="true"
+                          [rounded]="true"
+                          class="requisito-copiar"
+                          title="Copiar valor"
+                          aria-label="Copiar valor"
+                          (click)="copiarValor(req.valor)"
+                        ></button>
+                      }
+                    </div>
+                    <div class="requisito-valor-container">
+                      <span class="requisito-valor">{{ req.valor || '-' }}</span>
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>

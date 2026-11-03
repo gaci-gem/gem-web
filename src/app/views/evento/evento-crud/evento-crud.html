@@ -236,15 +236,14 @@
 
       </div>
 
-      <div class="col-md-12">
-        <div class="pt-0 mt-4">
-          <!-- <FileUploader
-            (fileAdded)="onFileAdded($event)"
-          ></FileUploader> -->
-          <FileUploader style="--dropzone-min-height: 80px; --dropzone-max-height: 100px;"
-            (fileAdded)="onFileAdded($event)" />
+      @if (modo === 'A') {
+        <div class="col-md-12">
+          <div class="pt-0 mt-4">
+            <FileUploader style="--dropzone-min-height: 80px; --dropzone-max-height: 100px;"
+              (fileAdded)="onFileAdded($event)" />
+          </div>
         </div>
-      </div>
+      }
 
     </div>
 

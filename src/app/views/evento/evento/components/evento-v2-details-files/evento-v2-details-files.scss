@@ -21,9 +21,66 @@
   letter-spacing: 0.03em;
 }
 
-.requisitos-table td,
-.requisitos-table th {
+.requisitos-table th,
+.requisitos-table td {
+  vertical-align: top;
   border-color: var(--ins-border-color);
+}
+
+.requisitos-table .requisito-estado-col {
+  width: 4.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.requisitos-table .requisito-resumen-row td {
+  padding-bottom: 0.35rem;
+}
+
+.requisitos-table .requisito-valor-row td {
+  padding-top: 0.35rem;
+  padding-bottom: 0.75rem;
+}
+
+.requisito-valor-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.requisito-valor {
+  display: block;
+  min-width: 0;
+  max-height: 4rem;
+  overflow: auto;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.requisito-valor-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.requisito-valor {
+  flex: 1 1 auto;
+}
+
+.requisito-valor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2rem;
+}
+
+.requisito-copiar {
+  flex: 0 0 auto;
 }
 
 .req-status {

@@ -16,6 +16,17 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.7',
+    date: '2026-11-03',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Incorporamos la actividad de tickets en el detalle y mejoramos la gestión de archivos y eventos relacionados.',
+        link: '/gem-clientes/tickets',
+      },
+    ],
+  },
+  {
     version: '0.5.5',
     date: '2026-10-28',
     changes: [
