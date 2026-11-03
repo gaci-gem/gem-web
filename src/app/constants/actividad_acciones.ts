@@ -35,23 +35,23 @@ export function getTitleAccion(actividad: VidaEvento): string {
         case ACCIONES.ELIMINO_ADJUNTO:
             return `El usuario ${actividad.usuario?.usuario} eliminó un archivo del evento.`;
         case ACCIONES.AVANZO:
-            return `El usuario ${actividad.usuario?.usuario} avanzó el evento.`;
+            return `El usuario ${actividad.usuario?.usuario} completó la etapa ${actividad.etapaNombreAnterior ?? actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.RETROCEDIO:
-            return `El usuario ${actividad.usuario?.usuario} retrocedió el evento.`;
+            return `El usuario ${actividad.usuario?.usuario} retrocedió el evento a la etapa ${actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.REASIGNO:
             return `El usuario ${actividad.usuario?.usuario} reasignó el evento.`;
         case ACCIONES.AUTORIZO:
-            return `El usuario ${actividad.usuario?.usuario} autorizó el evento.`;
+            return `El usuario ${actividad.usuario?.usuario} autorizó la etapa ${actividad.etapaNombreAnterior ?? actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.RECHAZO:
-            return `El usuario ${actividad.usuario?.usuario} rechazó el evento.`;
+            return `El usuario ${actividad.usuario?.usuario} rechazó el avance del evento.`;
         case ACCIONES.ADD_REQUISITO:
-            return `El usuario ${actividad.usuario?.usuario} completó un requisito al evento.`;
+            return `El usuario ${actividad.usuario?.usuario} completó un requisito de la etapa ${actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.REMOVE_REQUISITO:
-            return `El usuario ${actividad.usuario?.usuario} eliminó un requisito del evento.`;
+            return `El usuario ${actividad.usuario?.usuario} eliminó un requisito de la etapa ${actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.MOD_REQUISITO:
-            return `El usuario ${actividad.usuario?.usuario} modificó un requisito del evento.`;
+            return `El usuario ${actividad.usuario?.usuario} modificó un requisito de la etapa ${actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.COMPLETADO:
-            return `El usuario ${actividad.usuario?.usuario} completó el evento.`;
+            return `El usuario ${actividad.usuario?.usuario} completó el evento en la etapa ${actividad.etapaNombre ?? 'sin nombre'}.`;
         case ACCIONES.TOMO_EVENTO:
             return `El usuario ${actividad.usuario?.usuario} tomó el evento.`;
         case ACCIONES.LIBERO_EVENTO:

@@ -1,14 +1,14 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, effect, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { BadgeClickComponent } from '@app/components/badge-click';
-import { Ticket, TicketComment, TicketDetail, TicketEvent } from '@core/interfaces/ticket';
+import { Ticket, TicketActividad, TicketComment, TicketDetail, TicketEvent } from '@core/interfaces/ticket';
 import { TicketService } from '@core/services/ticket';
 import { Evento, EventoCompleto } from '@core/interfaces/evento';
 import { DrawerService } from '@core/services/drawer.service';
@@ -25,11 +25,13 @@ import { Usuario } from '@core/interfaces/usuario';
 import { modalConfig } from '@/app/types/modals';
 import { EventoSelect } from '@/app/views/evento/evento-select/evento-select';
 import { SseService } from '@core/services/sse.service';
+import { TimeAgoComponent } from '@app/components/time-ago/time-ago';
+import { TicketActivityDialog } from './ticket-activity-dialog';
 
 @Component({
   selector: 'app-drawer-ticket',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule, DrawerModule, ButtonModule, DialogModule, BadgeClickComponent, UiCard, NgIcon],
+  imports: [CommonModule, DatePipe, FormsModule, DrawerModule, ButtonModule, DialogModule, BadgeClickComponent, UiCard, NgIcon, TimeAgoComponent],
   templateUrl: './drawer-ticket.html',
   styles: `
     :host { display: block; }
@@ -53,7 +55,12 @@ import { SseService } from '@core/services/sse.service';
       .ticket-status-badge { min-width: 8.5rem; height: 1.75rem; align-items: center; justify-content: center; align-self: flex-start; line-height: 1; text-align: center; }
      .ticket-section__heading { margin-bottom: .75rem; }
       .ticket-section__heading h3 { margin: 0; color: var(--ins-secondary-color); font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-      .ticket-related-events { border-top: 1px solid var(--ins-border-color); padding: 1rem 1.25rem 1.25rem; }
+     .ticket-related-events { border-top: 1px solid var(--ins-border-color); padding: 1rem 1.25rem 1.25rem; }
+     .ticket-activity { border-top: 1px solid var(--ins-border-color); padding: 1rem 1.25rem 1.25rem; }
+     .ticket-activity__item { position: relative; display: flex; gap: .75rem; }
+     .ticket-activity__item:not(:last-child) { padding-bottom: 1rem; }
+     .ticket-activity__item:not(:last-child)::before { content: ''; position: absolute; left: .8rem; top: 1.65rem; bottom: 0; border-left: 1px solid var(--ins-border-color); }
+     .ticket-activity__icon { z-index: 1; flex: 0 0 1.6rem; width: 1.6rem; height: 1.6rem; border: 1px solid var(--ins-border-color); border-radius: 50%; background: var(--bs-tertiary-bg); display: inline-flex; align-items: center; justify-content: center; }
     .ticket-comment-card { padding: .8rem 1rem; }
     .ticket-attachments { display: flex; flex-direction: column; gap: .5rem; }
      .ticket-attachment-row { display: flex; align-items: center; gap: .6rem; padding: .65rem .75rem; border: 1px solid var(--ins-border-color); border-radius: .4rem; color: inherit; text-decoration: none; background: var(--bs-tertiary-bg); }
@@ -67,7 +74,7 @@ import { SseService } from '@core/services/sse.service';
     @media screen and (max-width: 640px) { ::ng-deep .ticket-drawer { width: 100vw !important; } }
   `,
 })
-export class DrawerTicket {
+export class DrawerTicket implements OnDestroy {
   readonly apiBaseUrl = environment.BASE_URL;
   private readonly service = inject(TicketService);
   private readonly drawerService = inject(DrawerService);
@@ -81,6 +88,9 @@ export class DrawerTicket {
   @Output() closed = new EventEmitter<void>();
 
   ticket: TicketDetail | null = null;
+  actividades: TicketActividad[] = [];
+  actividadLoading = false;
+  actividadError: string | null = null;
   loading = false;
   error: string | null = null;
   private loadedKey: string | null = null;
@@ -105,6 +115,10 @@ export class DrawerTicket {
   userSaving = false; userError: string | null = null;
   prioritySaving = false; typeSaving = false;
   private lastMutationKey: string | null = null;
+  private readonly ticketUpdatedSubscription: Subscription;
+
+  get actividadesVisibles(): TicketActividad[] { return this.actividades.slice(0, 3); }
+  get hayMasActividad(): boolean { return this.actividades.length > 3; }
 
   async compartirLink(): Promise<void> {
     if (!this.ticket || this.sharingLink) return;
@@ -181,6 +195,7 @@ export class DrawerTicket {
     this.commentError = null;
     this.commentsExpanded = false;
     this.loading = true;
+    this.loadActividad(Number(this.ticketId));
     this.service.detail(Number(this.ticketId)).pipe(finalize(() => {
       this.loading = false;
       this.cdr.detectChanges();
@@ -193,6 +208,41 @@ export class DrawerTicket {
         this.error = error?.error?.message || 'Ticket operation failed.';
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.ticketUpdatedSubscription.unsubscribe();
+    if (this.shareFeedbackTimeout) clearTimeout(this.shareFeedbackTimeout);
+  }
+
+  private loadActividad(ticketId: number): void {
+    this.actividadLoading = true;
+    this.actividadError = null;
+    this.service.actividad(ticketId).pipe(finalize(() => { this.actividadLoading = false; this.cdr.detectChanges(); })).subscribe({
+      next: actividad => { this.actividades = [...actividad].sort((a, b) => this.activityTimestamp(b) - this.activityTimestamp(a)); },
+      error: () => { this.actividades = []; this.actividadError = 'No se pudo cargar la actividad del ticket.'; },
+    });
+  }
+
+  private activityTimestamp(item: TicketActividad): number { const value = new Date(item.createdAt).getTime(); return Number.isNaN(value) ? 0 : value; }
+  actividadIcon(accion: string): string { return ({ ACTUALIZAR_PRIORIDAD: 'lucideTags', CAMBIAR_ESTADO: 'lucideRefreshCw', ASIGNAR_USUARIO: 'lucideUserRound', ACTUALIZAR_MODULO: 'lucideBoxes', AGREGAR_COMENTARIO: 'lucideMessageCircle', ASOCIAR_EVENTO: 'lucideLink' } as Record<string, string>)[accion] ?? 'lucideHistory'; }
+  actividadTitulo(accion: string): string { return ({ ACTUALIZAR_PRIORIDAD: 'Se actualizó la prioridad', CAMBIAR_ESTADO: 'Se cambió el estado', ASIGNAR_USUARIO: 'Se actualizó el usuario asignado', ACTUALIZAR_MODULO: 'Se actualizó el módulo', AGREGAR_COMENTARIO: 'Se agregó un comentario', ASOCIAR_EVENTO: 'Se asoció un evento' } as Record<string, string>)[accion] ?? 'Se actualizó el ticket'; }
+  actividadDescripcion(item: TicketActividad): string {
+    const metadata = { ...(item.snapshot ?? {}), ...(item.metadata ?? {}) };
+    const value = (key: string) => typeof metadata[key] === 'string' ? String(metadata[key]) : '';
+    if (item.accion === 'ACTUALIZAR_PRIORIDAD') return `De ${this.priorityText(value('anterior'))} a ${this.priorityText(value('nuevo'))}.`;
+    if (item.accion === 'CAMBIAR_ESTADO') return `De ${this.statusLabel(value('estadoAnterior'))} a ${this.statusLabel(value('estadoNuevo'))}.`;
+    return '';
+  }
+  actividadActor(item: TicketActividad): string { return item.actorNombre ? `Por ${item.actorNombre}` : 'Por sistema'; }
+
+  verMasActividad(): void {
+    this.dialogService.open(TicketActivityDialog, {
+      ...modalConfig,
+      header: 'Actividad del ticket',
+      width: 'min(720px, 96vw)',
+      data: { actividades: this.actividades },
     });
   }
 
@@ -214,10 +264,11 @@ export class DrawerTicket {
   statusLabel(status: string): string {
     return ({ INGRESADO: 'Ingresado', EN_REVISION: 'En revisión', EN_DESARROLLO: 'En desarrollo', ESPERANDO_RESPUESTA_CLIENTE: 'Esperando respuesta del cliente', RECHAZADO: 'Rechazado', CERRADO: 'Cerrado' } as Record<string, string>)[status] ?? status.replaceAll('_', ' ');
   }
+  priorityText(value: string): string { return ({ CRITICA: 'Crítica', ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' } as Record<string, string>)[value] ?? 'Sin prioridad'; }
   priorityLabel(value: string): string { return ({ CRITICA: '🔴 Crítica', ALTA: '🟠 Alta', MEDIA: '🟡 Media', BAJA: '🟢 Baja' } as Record<string, string>)[value] ?? '🟡 Media'; }
   typeLabel(value: string | null): string { return ({ CONSULTA: 'Consultas', ERROR_INCIDENTE: 'Error / Incidente', REQUERIMIENTO_MEJORA: 'Requerimiento / Mejora' } as Record<string, string>)[value ?? ''] ?? 'Sin clasificar'; }
-  updatePriority(value: string): void { if (!this.ticket || !this.canManage() || this.prioritySaving) return; this.prioritySaving = true; this.service.updatePriority(this.ticket.id, value as Ticket['priority']).pipe(finalize(() => { this.prioritySaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => this.ticket = { ...this.ticket!, priority: updated.priority }, error: () => this.cdr.detectChanges() }); }
-  updateType(value: string): void { if (!this.ticket || !this.canManage() || this.typeSaving) return; this.typeSaving = true; this.service.updateType(this.ticket.id, (value || null) as Ticket['type']).pipe(finalize(() => { this.typeSaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => this.ticket = { ...this.ticket!, type: updated.type }, error: () => this.cdr.detectChanges() }); }
+  updatePriority(value: string): void { if (!this.ticket || !this.canManage() || this.prioritySaving) return; this.prioritySaving = true; this.service.updatePriority(this.ticket.id, value as Ticket['priority']).pipe(finalize(() => { this.prioritySaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => { this.ticket = { ...this.ticket!, priority: updated.priority }; this.loadActividad(this.ticket.id); }, error: () => this.cdr.detectChanges() }); }
+  updateType(value: string): void { if (!this.ticket || !this.canManage() || this.typeSaving) return; this.typeSaving = true; this.service.updateType(this.ticket.id, (value || null) as Ticket['type']).pipe(finalize(() => { this.typeSaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => { this.ticket = { ...this.ticket!, type: updated.type }; this.loadActividad(this.ticket.id); }, error: () => this.cdr.detectChanges() }); }
 
   openAssignedUser(userId: string, event?: Event): void {
     event?.preventDefault();
@@ -241,6 +292,9 @@ export class DrawerTicket {
   }
 
   constructor() {
+    this.ticketUpdatedSubscription = this.service.ticketUpdated$.subscribe(ticketId => {
+      if (this.visible && Number(this.ticketId) === ticketId) this.refreshTicketFromServer(ticketId);
+    });
     effect(() => {
       const mutation = this.sse.ticketMutations()[0];
       if (!mutation || !this.visible || String(mutation.ticketId) !== String(this.ticketId)) return;
@@ -257,7 +311,15 @@ export class DrawerTicket {
     return this.emailDialogVisible || this.commentDraft.trim().length > 0;
   }
 
-  private refreshTicketFromServer(): void {
+  private refreshTicketFromServer(ticketId?: number): void {
+    if (ticketId !== undefined) {
+      this.service.detail(ticketId).subscribe({
+        next: ticket => { this.ticket = ticket; this.cdr.detectChanges(); },
+        error: () => this.cdr.detectChanges(),
+      });
+      this.loadActividad(ticketId);
+      return;
+    }
     if (!this.ticketId || this.loading) return;
     this.loadedKey = null;
     this.loadTicket();
@@ -290,7 +352,7 @@ export class DrawerTicket {
 
   openUserSelector(event: Event): void { event.preventDefault(); event.stopPropagation(); if (this.userSaving) return; this.usuarioDialog = this.dialogService.open(UsuarioSelect, { ...modalConfig, header: 'Seleccionar usuario activo' }); this.usuarioDialog?.onClose.subscribe((user: Usuario | undefined) => { if (user?.id) this.updateUser(user.id); }); }
   clearUser(event: Event): void { event.preventDefault(); event.stopPropagation(); this.updateUser(null); }
-  updateUser(value: string | null): void { if (!this.ticket || !this.canManage() || this.userSaving) return; this.userSaving = true; this.userError = null; this.service.updateUser(this.ticket.id, value).pipe(finalize(() => { this.userSaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => { const rawUser = updated.assignedUser ?? (updated as Ticket & { usuarioAsignado?: { id: string; nombre: string; apellido?: string | null; email: string; color: string | null } | null }).usuarioAsignado ?? null; const assignedUser = rawUser && 'name' in rawUser ? rawUser : rawUser ? { id: rawUser.id, name: [rawUser.nombre, rawUser.apellido].filter(Boolean).join(' '), email: rawUser.email, color: rawUser.color } : null; this.ticket = { ...this.ticket!, assignedUser }; this.cdr.detectChanges(); }, error: error => { this.userError = error?.error?.message || 'No se pudo actualizar el usuario asignado.'; this.cdr.detectChanges(); } }); }
+  updateUser(value: string | null): void { if (!this.ticket || !this.canManage() || this.userSaving) return; this.userSaving = true; this.userError = null; this.service.updateUser(this.ticket.id, value).pipe(finalize(() => { this.userSaving = false; this.cdr.detectChanges(); })).subscribe({ next: updated => { const rawUser = updated.assignedUser ?? (updated as Ticket & { usuarioAsignado?: { id: string; nombre: string; apellido?: string | null; email: string; color: string | null } | null }).usuarioAsignado ?? null; const assignedUser = rawUser && 'name' in rawUser ? rawUser : rawUser ? { id: rawUser.id, name: [rawUser.nombre, rawUser.apellido].filter(Boolean).join(' '), email: rawUser.email, color: rawUser.color } : null; this.ticket = { ...this.ticket!, assignedUser }; this.loadActividad(this.ticket.id); this.cdr.detectChanges(); }, error: error => { this.userError = error?.error?.message || 'No se pudo actualizar el usuario asignado.'; this.cdr.detectChanges(); } }); }
 
   updateModule(value: string | null): void {
     if (!this.ticket || !this.canManage() || this.moduleSaving) return;
@@ -310,7 +372,7 @@ export class DrawerTicket {
               name: rawModule.name ?? rawModule.nombre ?? '',
             }
           : null;
-        this.ticket = { ...this.ticket!, module: responseModule };
+        this.ticket = { ...this.ticket!, module: responseModule }; this.loadActividad(this.ticket.id);
         this.cdr.detectChanges();
       }),
       error: error => Promise.resolve().then(() => {
@@ -391,7 +453,7 @@ export class DrawerTicket {
       this.cdr.detectChanges();
     })).subscribe({
       next: (comment) => {
-        this.ticket = { ...this.ticket!, comments: [comment, ...this.ticket!.comments] };
+        this.ticket = { ...this.ticket!, comments: [comment, ...this.ticket!.comments] }; this.loadActividad(this.ticket.id);
         this.commentDraft = '';
         this.commentPrivate = false;
         this.cdr.detectChanges();
@@ -439,9 +501,9 @@ export class DrawerTicket {
      if (!this.ticket) return;
      this.service.replaceEvents(this.ticket.id, events.map(event => event.id!).filter(Boolean)).subscribe({
          next: () => {
-           setTimeout(() => {
-             this.loadedKey = null;
-             this.loadTicket();
+            setTimeout(() => {
+              this.loadedKey = null;
+              this.loadTicket();
            });
          },
        error: error => { this.associationError = error?.error?.message || 'No se pudieron actualizar los eventos.'; this.cdr.detectChanges(); },
@@ -462,7 +524,8 @@ export class DrawerTicket {
           color: (event as Evento & { tipo?: { color?: string } }).tipo?.color || '#6c757d',
         };
         if (!this.ticket) return;
-        this.ticket = { ...this.ticket, events: [...this.ticket.events, linkedEvent] };
+         this.ticket = { ...this.ticket, events: [...this.ticket.events, linkedEvent] };
+         this.loadActividad(this.ticket.id);
         this.cdr.detectChanges();
       },
       error: (error) => { this.associationError = error?.error?.message || 'No se pudo asociar el evento.'; },

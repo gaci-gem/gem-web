@@ -91,6 +91,22 @@
       </div>
     }
 
+    <!-- Proyecto -->
+    @if (evento.proyecto) {
+      <div class="info-cell">
+        <span class="info-label">PROYECTO</span>
+        <p class="info-value">{{ evento.proyecto.sigla }} – {{ evento.proyecto.nombre }}</p>
+      </div>
+    }
+
+    <!-- Módulo -->
+    @if (evento.modulo) {
+      <div class="info-cell">
+        <span class="info-label">MÓDULO</span>
+        <p class="info-value">{{ evento.modulo.codigo }} – {{ evento.modulo.nombre }}</p>
+      </div>
+    }
+
     <!-- Portal tickets -->
     @if (evento.portalTickets.length) {
       <div class="info-cell">

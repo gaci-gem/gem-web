@@ -28,4 +28,20 @@ describe('TicketService', () => {
     expect(request.request.params.get('limit')).toBe('5');
     request.flush({ data: [], total: 10, page: 2, limit: 5, totalPages: 2 });
   });
+
+  it('gets ticket activity from the general endpoint', () => {
+    service.actividad(7).subscribe();
+    const request = http.expectOne(`${environment.apiBaseUrl}/tickets/7/actividad`);
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+  });
+
+  it('notifies successful ticket mutations with the ticket id', () => {
+    const updated: number[] = [];
+    service.ticketUpdated$.subscribe(id => updated.push(id));
+    service.transition(7, 'EN_REVISION').subscribe();
+    const request = http.expectOne(`${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets/7/estado`);
+    request.flush({ id: 7 });
+    expect(updated).toEqual([7]);
+  });
 });
