@@ -28,15 +28,15 @@ import { FiltroPresetService } from '@core/services/filtro-preset';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BadgeClickComponent } from '@app/components/badge-click';
 import { SseService } from '@core/services/sse.service';
-import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
 import { ClienteService } from '@core/services/cliente';
 import { Cliente } from '@core/interfaces/cliente';
+import { MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { withoutCoveredLegacyFilters } from '@core/utils/advanced-filters';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, ContextMenuModule, InputTextModule, AutoCompleteModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, ContextMenuModule, InputTextModule, MultiSelectModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
   styles: [`
@@ -52,28 +52,6 @@ import { withoutCoveredLegacyFilters } from '@core/utils/advanced-filters';
     .ticket-events-column { width: 16rem; min-width: 16rem; max-width: 16rem; }
      .ticket-events-list { min-width: 0; max-width: 16rem; overflow: hidden; white-space: nowrap; }
      .ticket-events-list .badge { flex: 0 0 auto; }
-     :host ::ng-deep .ticket-client-filter,
-     :host ::ng-deep .ticket-client-filter .p-autocomplete-input-multiple {
-       height: 42px;
-     }
-     :host ::ng-deep .ticket-client-filter .p-autocomplete-input-multiple {
-       min-height: 42px;
-       max-height: 42px;
-       flex-wrap: nowrap;
-       overflow-x: auto;
-       overflow-y: hidden;
-       align-items: center;
-     }
-     :host ::ng-deep .ticket-client-filter .p-autocomplete-input-chip {
-       flex: 1 0 4rem;
-     }
-     :host ::ng-deep .ticket-client-filter .p-autocomplete-chip {
-       flex: 0 0 auto;
-       max-width: none;
-     }
-     :host ::ng-deep .ticket-client-filter .p-autocomplete-chip .p-chip-label {
-       white-space: nowrap;
-     }
    `],
 })
 export class Tickets implements OnInit {
@@ -104,11 +82,12 @@ export class Tickets implements OnInit {
   sortField: TicketSortField = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
   search = '';
-  estado: TicketState | '' = '';
-   prioridad = ''; tipo = '';
+    estado: TicketState[] = ['INGRESADO', 'EN_REVISION', 'EN_DESARROLLO', 'ESPERANDO_RESPUESTA_CLIENTE'];
+    prioridad: string[] = []; tipo: string[] = [];
   idFilter = ''; subjectFilter = ''; clientFilter = ''; externalReferenceFilter = ''; eventsFilter = ''; assignedUserFilter = ''; createdFrom = ''; createdTo = '';
   clientesSugeridos: Cliente[] = [];
   clientesSeleccionados: Cliente[] = [];
+  clientesCargando = false;
   advancedFilters: TicketAdvancedFilter[] = [];
   readonly states = TICKET_STATES.map((value) => ({ label: this.statusLabel(value), value }));
   readonly priorities = [{ label: 'Crítica', value: 'CRITICA' }, { label: 'Alta', value: 'ALTA' }, { label: 'Media', value: 'MEDIA' }, { label: 'Baja', value: 'BAJA' }];
@@ -174,7 +153,7 @@ export class Tickets implements OnInit {
     if (!preset) return;
     const filtros = preset.filtros;
     this.search = typeof filtros['search'] === 'string' ? filtros['search'] : '';
-    this.estado = typeof filtros['estado'] === 'string' ? filtros['estado'] as TicketState | '' : '';
+     this.estado = typeof filtros['estado'] === 'string' && filtros['estado'] ? filtros['estado'].split(',') as TicketState[] : [];
     this.selectedPresetId = id;
     this.page = 1;
     if (this.table) this.table.first = 0;
@@ -215,7 +194,7 @@ export class Tickets implements OnInit {
     this.clearingFilters = true;
     this.table?.clear();
     this.search = '';
-    this.estado = ''; this.prioridad = ''; this.tipo = '';
+     this.estado = []; this.prioridad = []; this.tipo = [];
     this.idFilter = ''; this.subjectFilter = ''; this.clientFilter = ''; this.clientesSeleccionados = []; this.clientesSugeridos = []; this.externalReferenceFilter = ''; this.eventsFilter = ''; this.assignedUserFilter = ''; this.createdFrom = ''; this.createdTo = '';
     this.advancedFilters = [];
     this.selectedPresetId = '';
@@ -231,14 +210,30 @@ export class Tickets implements OnInit {
     this.loadItems();
   }
 
-  buscarClientes(event: AutoCompleteCompleteEvent): void {
-    const query = event.query.trim();
+  buscarClientes(event: MultiSelectFilterEvent): void {
+    const query = String(event.filter ?? '').trim();
     if (query.length < 2) { this.clientesSugeridos = []; return; }
-    this.clienteService.getAll(FiltroActivo.TRUE, { globalSearch: query, page: 1, limit: 20 }).subscribe({
+    this.cargarClientes(query);
+  }
+
+  cargarClientesIniciales(): void {
+    if (this.clientesSugeridos.length > 0) return;
+    this.cargarClientes();
+  }
+
+  private cargarClientes(query?: string): void {
+    this.clientesCargando = true;
+    this.clienteService.getAll(FiltroActivo.TRUE, { ...(query ? { globalSearch: query } : {}), page: 1, limit: 20 }).pipe(
+      finalize(() => {
+        this.clientesCargando = false;
+        this.cdr.detectChanges();
+      }),
+    ).subscribe({
       next: (result) => {
         const sugerencias = Array.isArray(result) ? result : result.data;
         setTimeout(() => {
-          this.clientesSugeridos = sugerencias;
+           const seleccionados = this.clientesSeleccionados.filter((cliente) => !sugerencias.some((item) => item.id === cliente.id));
+           this.clientesSugeridos = [...seleccionados, ...sugerencias];
           this.cdr.detectChanges();
         });
       },
@@ -262,7 +257,7 @@ export class Tickets implements OnInit {
      this.loading.show();
      const advancedFilters = this.advancedFilters.filter((filter) => filter.field !== 'client');
       if (this.clientesSeleccionados.length) advancedFilters.push({ field: 'clientId', operator: 'or', constraints: this.clientesSeleccionados.map((cliente) => ({ matchMode: 'equals', value: cliente.id })) });
-      const filters = withoutCoveredLegacyFilters({ search: this.search, id: this.idFilter ? Number(this.idFilter) : undefined, subject: this.subjectFilter || undefined, client: this.clientFilter || undefined, status: this.estado || undefined, priority: this.prioridad || undefined, type: this.tipo || undefined, externalReference: this.externalReferenceFilter || undefined, events: this.eventsFilter || undefined, assignedUser: this.assignedUserFilter || undefined, createdFrom: this.createdFrom || undefined, createdTo: this.createdTo || undefined, advancedFilters, page: this.page, limit: this.limit, sortField: this.sortField, sortDirection: this.sortDirection }, advancedFilters, { id: 'id', subject: 'subject', client: 'client', status: 'status', priority: 'priority', type: 'type', externalReference: 'externalReference', events: 'events', assignedUser: 'assignedUser', createdAt: ['createdFrom', 'createdTo'] });
+       const filters = withoutCoveredLegacyFilters({ search: this.search, id: this.idFilter ? Number(this.idFilter) : undefined, subject: this.subjectFilter || undefined, client: this.clientFilter || undefined, status: this.estado.length ? this.estado : undefined, priority: this.prioridad.length ? this.prioridad : undefined, type: this.tipo.length ? this.tipo : undefined, externalReference: this.externalReferenceFilter || undefined, events: this.eventsFilter || undefined, assignedUser: this.assignedUserFilter || undefined, createdFrom: this.createdFrom || undefined, createdTo: this.createdTo || undefined, advancedFilters, page: this.page, limit: this.limit, sortField: this.sortField, sortDirection: this.sortDirection }, advancedFilters, { id: 'id', subject: 'subject', client: 'client', status: 'status', priority: 'priority', type: 'type', externalReference: 'externalReference', events: 'events', assignedUser: 'assignedUser', createdAt: ['createdFrom', 'createdTo'] });
       this.service.list(filters as Parameters<TicketService['list']>[0]).pipe(finalize(() => this.loading.hide())).subscribe({
       next: (result) => { this.tickets = result.data; this.total = result.total; this.cdr.detectChanges(); },
       error: (error) => this.showError(error),
@@ -374,15 +369,18 @@ export class Tickets implements OnInit {
       const metadata = event.filters?.[field];
       const first = Array.isArray(metadata) ? metadata[0] : metadata;
       const entries = Array.isArray(metadata) ? metadata : [metadata];
-      const constraints = entries.flatMap((entry: any) => entry?.constraints ?? [entry]).filter((constraint: any) => constraint?.value !== null && constraint?.value !== undefined && constraint.value !== '');
-      if (constraints.length) advancedFilters.push({ field: advancedField, operator: entries.find((entry: any) => entry?.operator === 'or') ? 'or' : 'and', constraints: constraints.map((constraint: any) => ({ matchMode: advancedField === 'createdAt' ? 'equals' : String(constraint.matchMode ?? 'contains'), value: constraint.value instanceof Date ? constraint.value.toISOString().slice(0, 10) : constraint.value })) });
+       const constraints = entries.flatMap((entry: any) => entry?.constraints ?? [entry]).filter((constraint: any) => constraint?.value !== null && constraint?.value !== undefined && constraint.value !== '');
+       if (constraints.length) {
+         const operator = advancedField === 'status' && constraints.some((constraint: any) => Array.isArray(constraint.value)) ? 'or' : entries.find((entry: any) => entry?.operator === 'or') ? 'or' : 'and';
+         advancedFilters.push({ field: advancedField, operator, constraints: constraints.flatMap((constraint: any) => (Array.isArray(constraint.value) ? constraint.value : [constraint.value]).map((item: any) => ({ matchMode: advancedField === 'createdAt' ? 'equals' : String(constraint.matchMode ?? 'contains'), value: item instanceof Date ? item.toISOString().slice(0, 10) : item }))) });
+       }
       const constraint = constraints[0];
       const raw = constraint?.value;
       if (raw instanceof Date) return raw.toISOString().slice(0, 10);
       return raw == null ? '' : String(raw).trim();
     };
     this.idFilter = value('id'); this.subjectFilter = value('subject'); this.clientFilter = value('client');
-    this.estado = value('status') as TicketState | ''; this.prioridad = value('priority'); this.tipo = value('type');
+      const statusValue = value('status'); this.estado = statusValue ? statusValue.split(',') as TicketState[] : []; this.prioridad = value('priority') ? value('priority').split(',') : []; this.tipo = value('type') ? value('type').split(',') : [];
     this.externalReferenceFilter = value('externalReference'); this.eventsFilter = value('events'); this.assignedUserFilter = value('assignedUser');
     this.createdFrom = value('createdFrom', 'createdAt'); this.createdTo = value('createdTo', 'createdAt'); this.advancedFilters = advancedFilters; this.onFilterChange();
   }

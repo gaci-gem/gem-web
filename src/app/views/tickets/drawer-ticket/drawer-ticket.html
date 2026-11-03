@@ -37,8 +37,17 @@
               <section class="ticket-related-events">
                 <div class="ticket-section__heading d-flex align-items-center justify-content-between gap-2"><h3>Eventos relacionados</h3>@if (canManage()) { <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEventAssociation()">Asociar evento existente</button> }</div>
                 <div class="d-flex flex-wrap gap-1"> @for (event of ticket.events; track event.id) { <app-badge-click [backgroundColor]="event.color" height="2rem" (click)="openEvent(event.id)" style="cursor:pointer;">{{ event.type }}-{{ event.code.padStart(3, '0') }}</app-badge-click> } @empty { <div class="text-muted">Sin eventos relacionados.</div> } </div>
-              </section>
-            </div>
+               </section>
+               <section class="ticket-activity" aria-labelledby="ticket-activity-title">
+                 <div class="ticket-section__heading"><h3 id="ticket-activity-title">Actividad del ticket</h3></div>
+                 @if (actividadLoading) { <div class="text-muted">Cargando actividad...</div> }
+                 @else if (actividadError) { <div class="alert alert-danger mb-0" role="alert">{{ actividadError }}</div> }
+  @else { @for (item of actividadesVisibles; track item.id) { <article class="ticket-activity__item">
+                   <span class="ticket-activity__icon" aria-hidden="true"><ng-icon [name]="actividadIcon(item.accion)" size="14" /></span>
+                   <div class="flex-grow-1"><h4 class="h6 mb-1">{{ actividadTitulo(item.accion) }}</h4><p class="mb-1 text-muted">{{ actividadDescripcion(item) }}</p><p class="mb-0 small text-body-secondary">{{ actividadActor(item) }} · <app-time-ago [fecha]="item.createdAt" /></p></div>
+                  </article> } @empty { <div class="text-muted">Sin actividad registrada.</div> } @if (hayMasActividad) { <div class="text-center"><button type="button" class="btn btn-link btn-sm px-0" (click)="verMasActividad()">Ver más</button></div> } }
+               </section>
+             </div>
           </app-ui-card>
             <app-ui-card title="Descripción" className="mb-3">
               <div card-body><p class="mb-0 ticket-readable-text">{{ ticket.description || '-' }}</p></div>

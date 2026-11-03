@@ -47,6 +47,21 @@ export interface TicketDetail extends Ticket {
   emailOriginal?: TicketAttachment;
 }
 
+export interface TicketActividad {
+  id: string | number;
+  ticketId: number;
+  clienteId: number;
+  accion: string;
+  actorType: string | null;
+  origen: string | null;
+  usuarioId: string | null;
+  credentialId: string | null;
+  actorNombre?: string | null;
+  metadata: Record<string, unknown> | null;
+  snapshot: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface TicketComment {
   id: number;
   text: string;

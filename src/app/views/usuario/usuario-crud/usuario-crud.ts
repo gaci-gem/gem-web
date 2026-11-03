@@ -86,7 +86,7 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
       password: new FormControl('', [Validators.required]),
       confirmPass: new FormControl('', [Validators.required]),
       roles: new FormControl([]),
-      recordatorioHoras: new FormControl(false)
+      recordatorioHoras: new FormControl(true)
     }, { validators: passwordMatchValidator });
   }
 
@@ -143,7 +143,7 @@ export class UsuarioCrud extends CrudFormModal<Usuario> implements OnInit {
           : of(result))
       );
     }
-    const { id, ...payload } = model;
+    const { id, preferencias: _preferencias, ...payload } = model;
     return this.usuarioService.create(payload);
   }
 

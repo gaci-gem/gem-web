@@ -1,13 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@/environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import {
   TicketComment,
   Ticket,
   TicketDetail,
   TicketPage,
   TicketState,
+  TicketActividad,
 } from '@core/interfaces/ticket';
 
 export interface TicketAdvancedConstraint { matchMode: string; value: unknown; }
@@ -17,14 +18,20 @@ export interface TicketAdvancedFilter { field: string; operator: 'and' | 'or'; c
 export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.BASE_URL}/v1/gem-clientes/admin/clientes/tickets`;
+  private readonly ticketUpdatedSubject = new Subject<number>();
+  readonly ticketUpdated$ = this.ticketUpdatedSubject.asObservable();
 
-  list(filters: { search?: string; estado?: TicketState; prioridad?: string; tipo?: string; status?: TicketState; priority?: string; type?: string; id?: number; subject?: string; client?: string; externalReference?: string; events?: string; assignedUser?: string; createdFrom?: string; createdTo?: string; clientId?: number; page?: number; limit?: number; sortField?: TicketSortField; sortDirection?: 'asc' | 'desc'; advancedFilters?: TicketAdvancedFilter[] }): Observable<TicketPage> {
+  private mutation<T>(ticketId: number, request: Observable<T>): Observable<T> {
+    return request.pipe(tap(() => this.ticketUpdatedSubject.next(ticketId)));
+  }
+
+  list(filters: { search?: string; estado?: TicketState | TicketState[]; prioridad?: string; tipo?: string; status?: TicketState | TicketState[]; priority?: string; type?: string; id?: number; subject?: string; client?: string; externalReference?: string; events?: string; assignedUser?: string; createdFrom?: string; createdTo?: string; clientId?: number; page?: number; limit?: number; sortField?: TicketSortField; sortDirection?: 'asc' | 'desc'; advancedFilters?: TicketAdvancedFilter[] }): Observable<TicketPage> {
     let params = new HttpParams();
     if (filters.search) params = params.set('search', filters.search);
-    if (filters.estado) params = params.set('estado', filters.estado);
+    if (filters.estado?.length) params = params.set('estado', Array.isArray(filters.estado) ? filters.estado.join(',') : filters.estado);
     if (filters.prioridad) params = params.set('prioridad', filters.prioridad);
     if (filters.tipo) params = params.set('tipo', filters.tipo);
-    if (filters.status) params = params.set('estado', filters.status);
+    if (filters.status?.length) params = params.set('estado', Array.isArray(filters.status) ? filters.status.join(',') : filters.status);
     if (filters.priority) params = params.set('prioridad', filters.priority);
     if (filters.type) params = params.set('tipo', filters.type);
     if (filters.id !== undefined) params = params.set('id', filters.id);
@@ -40,6 +47,10 @@ export class TicketService {
 
   detail(id: number): Observable<TicketDetail> {
     return this.http.get<TicketDetail>(`${this.baseUrl}/${id}`);
+  }
+
+  actividad(id: number): Observable<TicketActividad[]> {
+    return this.http.get<TicketActividad[]>(`${environment.apiBaseUrl}/tickets/${id}/actividad`);
   }
 
   emitirLinkCompartido(id: number): Observable<{ token: string; destino?: string; destinos: Array<{ aplicacion: string; url: string }>; url?: string }> {
@@ -59,22 +70,22 @@ export class TicketService {
   }
 
   transition(id: number, estado: TicketState, observacion?: string): Observable<Ticket> {
-    return this.http.patch<Ticket>(`${this.baseUrl}/${id}/estado`, { estado, observacion });
+    return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/estado`, { estado, observacion }));
   }
 
   updateExternalReference(id: number, referenciaExterna: string | null): Observable<Ticket> {
-    return this.http.patch<Ticket>(`${this.baseUrl}/${id}/referencia-externa`, { referenciaExterna });
+    return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/referencia-externa`, { referenciaExterna }));
   }
 
   updateModule(id: number, moduloCodigo: string | null): Observable<Ticket> {
-    return this.http.patch<Ticket>(`${this.baseUrl}/${id}/modulo`, { moduloCodigo });
+    return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/modulo`, { moduloCodigo }));
   }
-  updateUser(id: number, usuarioId: string | null): Observable<Ticket> { return this.http.patch<Ticket>(`${this.baseUrl}/${id}/usuario`, { usuarioId }); }
-  updatePriority(id: number, priority: Ticket['priority']): Observable<Ticket> { return this.http.patch<Ticket>(`${this.baseUrl}/${id}/priority`, { priority }); }
-  updateType(id: number, type: Ticket['type']): Observable<Ticket> { return this.http.patch<Ticket>(`${this.baseUrl}/${id}/type`, { type }); }
+  updateUser(id: number, usuarioId: string | null): Observable<Ticket> { return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/usuario`, { usuarioId })); }
+  updatePriority(id: number, priority: Ticket['priority']): Observable<Ticket> { return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/priority`, { priority })); }
+  updateType(id: number, type: Ticket['type']): Observable<Ticket> { return this.mutation(id, this.http.patch<Ticket>(`${this.baseUrl}/${id}/type`, { type })); }
 
   comment(id: number, texto: string, visibility: 'PUBLIC' | 'PRIVATE' = 'PUBLIC'): Observable<TicketComment> {
-    return this.http.post<TicketComment>(`${this.baseUrl}/${id}/comments`, { texto, visibilidad: visibility });
+    return this.mutation(id, this.http.post<TicketComment>(`${this.baseUrl}/${id}/comments`, { texto, visibilidad: visibility }));
   }
 
   emailOriginal(ticketId: number, attachmentId: string): Observable<EmailOriginalView> {
@@ -82,15 +93,15 @@ export class TicketService {
   }
 
   createEvent(id: number, formData: FormData): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/${id}/eventos`, formData);
+    return this.mutation(id, this.http.post(`${this.baseUrl}/${id}/eventos`, formData));
   }
 
   associateEvent(ticketId: number, eventId: string): Observable<Ticket> {
-    return this.http.post<Ticket>(`${this.baseUrl}/${ticketId}/eventos/${eventId}`, {});
+    return this.mutation(ticketId, this.http.post<Ticket>(`${this.baseUrl}/${ticketId}/eventos/${eventId}`, {}));
   }
 
   replaceEvents(ticketId: number, eventoIds: string[]): Observable<Ticket> {
-    return this.http.put<Ticket>(`${this.baseUrl}/${ticketId}/eventos`, { eventoIds });
+    return this.mutation(ticketId, this.http.put<Ticket>(`${this.baseUrl}/${ticketId}/eventos`, { eventoIds }));
   }
 }
 

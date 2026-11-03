@@ -144,4 +144,9 @@ export class EventoV2DetailsFilesComponent {
     };
     return map[codigo] || '#9E9E9E';
   }
+
+  copiarValor(valor: string): void {
+    if (!valor || !navigator.clipboard) return;
+    void navigator.clipboard.writeText(valor);
+  }
 }

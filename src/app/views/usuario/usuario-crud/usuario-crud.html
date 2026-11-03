@@ -171,7 +171,7 @@
 
     </div>
 
-    @if (modo === 'M' && puedeModificarPreferenciasAdministradas) {
+    @if ((modo === 'A' || modo === 'M') && puedeModificarPreferenciasAdministradas) {
       <div class="col-12">
         <section aria-labelledby="recordatorioHorasTitulo" class="border rounded p-3">
           <h5 id="recordatorioHorasTitulo" class="mb-2">Preferencias administradas</h5>

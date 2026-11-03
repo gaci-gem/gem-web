@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { DrawerTicket } from './drawer-ticket';
 import { TicketService } from '@core/services/ticket';
 import { DrawerService } from '@core/services/drawer.service';
@@ -8,16 +8,19 @@ import { DialogService } from 'primeng/dynamicdialog';
 
 describe('DrawerTicket', () => {
   let fixture: ComponentFixture<DrawerTicket>;
-  const service = jasmine.createSpyObj<TicketService>('TicketService', ['detail', 'associateEvent', 'replaceEvents', 'comment', 'updateModule', 'emailOriginal', 'emitirLinkCompartido']);
+  const service = jasmine.createSpyObj<TicketService>('TicketService', ['detail', 'actividad', 'associateEvent', 'replaceEvents', 'comment', 'updateModule', 'emailOriginal', 'emitirLinkCompartido']);
   const drawerService = jasmine.createSpyObj<DrawerService>('DrawerService', ['abrirEventoDrawer']);
   const permissions = jasmine.createSpyObj<PermisosService>('PermisosService', ['can']);
   const dialogService = jasmine.createSpyObj<DialogService>('DialogService', ['open']);
+  const ticketUpdated$ = new Subject<number>();
 
   beforeEach(async () => {
     service.associateEvent.calls.reset();
     service.replaceEvents.calls.reset();
     service.detail.calls.reset();
+    service.actividad.calls.reset();
     service.emitirLinkCompartido.calls.reset();
+    (service as any).ticketUpdated$ = ticketUpdated$.asObservable();
     dialogService.open.calls.reset();
     service.detail.and.returnValue(of({
       id: 7, subject: 'Subject', description: 'Description', status: 'INGRESADO', origin: 'GEM_WEB',
@@ -25,10 +28,11 @@ describe('DrawerTicket', () => {
        externalReference: 'EXT-7', clientName: 'Client', clientCode: 'CLI', clientId: 11,
        createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-02T00:00:00Z', comments: [], events: [{ id: 'event-7', type: 'TIP01', code: '7', title: 'Event', visibleState: 'OPEN', color: '#123456' }],
     }));
+    service.actividad.and.returnValue(of([]));
     service.associateEvent.and.returnValue(of({} as any));
     service.replaceEvents.and.returnValue(of({} as any));
     service.updateModule.and.returnValue(of({ module: null } as any));
-    service.emitirLinkCompartido.and.returnValue(of({ token: 'token', destino: 'GEM_WEB', url: 'https://gem.example/shared/token' }));
+    service.emitirLinkCompartido.and.returnValue(of({ token: 'token', destino: 'GEM_WEB', destinos: [], url: 'https://gem.example/shared/token' }));
     permissions.can.and.returnValue(true);
     await TestBed.configureTestingModule({
       imports: [DrawerTicket],
@@ -47,10 +51,47 @@ describe('DrawerTicket', () => {
 
   it('loads and renders ticket data with the management composer', () => {
     expect(service.detail).toHaveBeenCalledWith(7);
+    expect(service.actividad).toHaveBeenCalledWith(7);
     expect(fixture.componentInstance.ticket?.subject).toBe('Subject');
     expect(fixture.componentInstance.ticket?.externalReference).toBe('EXT-7');
     expect(fixture.nativeElement.querySelector('textarea#ticket-comment')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.ticket-related-events app-badge-click')?.textContent.trim()).toBe('TIP01-007');
+  });
+
+  it('refreshes detail and activity when another ticket action succeeds', () => {
+    const detailCalls = service.detail.calls.count();
+    const activityCalls = service.actividad.calls.count();
+    ticketUpdated$.next(7);
+    expect(service.detail.calls.count()).toBe(detailCalls + 1);
+    expect(service.actividad.calls.count()).toBe(activityCalls + 1);
+  });
+
+  it('renders ticket activity with readable metadata and relative time', () => {
+    service.actividad.and.returnValue(of([
+        { id: 2, ticketId: 7, clienteId: 11, accion: 'CAMBIAR_ESTADO', actorType: 'USUARIO', actorNombre: 'Jtorossian', origen: 'GEM_WEB', usuarioId: 'uuid', credentialId: null, metadata: null, snapshot: { estadoNuevo: 'EN_DESARROLLO', estadoAnterior: 'INGRESADO' }, createdAt: '2026-01-02T00:00:00Z' },
+    ]));
+    fixture.componentInstance['loadedKey'] = null;
+    fixture.componentInstance['loadTicket']();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Se cambió el estado');
+     expect(fixture.nativeElement.textContent).toContain('De Ingresado a En desarrollo.');
+     expect(fixture.nativeElement.textContent).not.toContain('uuid');
+      expect(fixture.nativeElement.textContent).toContain('Por Jtorossian');
+   });
+
+  it('usa snapshot para prioridad, ordena actividad y limita el drawer a tres', () => {
+    const actividad = Array.from({ length: 4 }, (_, index) => ({
+      id: index + 1, ticketId: 7, clienteId: 11, accion: 'ACTUALIZAR_PRIORIDAD', actorType: 'USER', origen: 'GEM_WEB', usuarioId: null, credentialId: null,
+      metadata: null, snapshot: { anterior: 'CRITICA', nuevo: 'MEDIA' }, createdAt: `2026-01-0${index + 1}T00:00:00Z`,
+    }));
+    service.actividad.and.returnValue(of(actividad));
+    fixture.componentInstance['loadedKey'] = null;
+    fixture.componentInstance['loadTicket']();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.actividadesVisibles.length).toBe(3);
+    expect(fixture.nativeElement.textContent).toContain('De Crítica a Media.');
+    expect(fixture.nativeElement.textContent).toContain('Ver más');
   });
 
   it('loads and renders sanitized email HTML, plain fallback, and duplicate attachments', (done) => {
