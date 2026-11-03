@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, catchError, of, shareReplay } from 'rxjs';
 
 export interface AppVersion {
   version: string;
@@ -8,6 +8,10 @@ export interface AppVersion {
   commitHash: string;
   buildTime: string;
   build?: string;
+}
+
+export interface RuntimeConfig {
+  environment?: 'test' | 'prod' | string;
 }
 
 interface SimpleSemver {
@@ -43,6 +47,7 @@ export function shouldShowChangelog(currentVersion: string | null, lastSeenVersi
 @Injectable({ providedIn: 'root' })
 export class VersionService {
   private version$?: Observable<AppVersion>;
+  private runtimeConfig$?: Observable<RuntimeConfig>;
 
   constructor(private http: HttpClient) { }
 
@@ -53,5 +58,17 @@ export class VersionService {
         .pipe(shareReplay(1));
     }
     return this.version$;
+  }
+
+  getRuntimeConfig(): Observable<RuntimeConfig> {
+    if (!this.runtimeConfig$) {
+      this.runtimeConfig$ = this.http
+        .get<RuntimeConfig>('assets/runtime-config.json?nocache=' + Date.now())
+        .pipe(
+          catchError(() => of({ environment: 'test' })),
+          shareReplay(1)
+        );
+    }
+    return this.runtimeConfig$;
   }
 }

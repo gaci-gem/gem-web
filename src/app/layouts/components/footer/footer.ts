@@ -22,7 +22,11 @@ export class Footer implements OnInit {
   ngOnInit() {
     this.versionService.getVersion().subscribe(data => {
       this.versionInfo = data;
-      this.isProdBuild = ['main'].includes(data.branch);
+      this.cdr.detectChanges();
+    });
+
+    this.versionService.getRuntimeConfig().subscribe(config => {
+      this.isProdBuild = config.environment?.toLowerCase() === 'prod';
       this.cdr.detectChanges();
     });
   }
