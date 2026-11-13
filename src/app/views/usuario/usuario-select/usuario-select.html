@@ -1,12 +1,12 @@
 @if (loadingSelect) { <app-loading-spinner /> }
 <p-table #dt [value]="usuarios" [rows]="10" [paginator]="true" [globalFilterFields]="['nombre','apellido','usuario','email']">
-  <ng-template pTemplate="caption">
+  <ng-template #caption>
     <input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar usuario..." />
   </ng-template>
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <tr><th></th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Email</th></tr>
   </ng-template>
-  <ng-template pTemplate="body" let-usuario>
+  <ng-template #body let-usuario>
     <tr>
       <td><button class="btn btn-ghost-warning" (click)="select(usuario)" aria-label="Seleccionar usuario"><ng-icon name="lucideSearchCheck" /></button></td>
       <td>{{ usuario.nombre || '-' }}</td>
@@ -15,5 +15,5 @@
       <td>{{ usuario.email }}</td>
     </tr>
   </ng-template>
-  <ng-template pTemplate="summary">En total hay {{ usuarios.length }} usuarios activos.</ng-template>
+  <ng-template #summary>En total hay {{ usuarios.length }} usuarios activos.</ng-template>
 </p-table>

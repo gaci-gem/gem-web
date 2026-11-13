@@ -144,7 +144,7 @@ import { MessageService } from 'primeng/api';
         </div>
 
         @if (form.get('recipientType')?.value === 'BY_ROLE') {
-          <p-multiSelect
+          <p-multiselect
             formControlName="selectedRoles"
             [options]="roles"
             optionLabel="descripcion"
@@ -156,7 +156,7 @@ import { MessageService } from 'primeng/api';
         }
 
         @if (form.get('recipientType')?.value === 'BY_USER') {
-          <p-multiSelect
+          <p-multiselect
             formControlName="selectedUsers"
             [options]="usuarios"
             optionLabel="nombre"

@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,10 +6,10 @@
             <app-ui-card title="Usuarios">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
+                        <ng-template #start>
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
-                        <ng-template pTemplate="right">
+                        <ng-template #end>
                             @if (can(PermisoAccion.CREAR)) {
                                 <app-control-trabajar-con
                                     (nuevo)="mostrarModalCrud(null, 'A')"
@@ -20,7 +20,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap">
                         <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span>
                         <app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group>
                         <p-select [options]="roles" [(ngModel)]="rolSeleccionado" optionLabel="descripcion" optionValue="codigo" placeholder="Todos los roles" [showClear]="true" (onChange)="filtrarPorRol()" [style]="{'min-width': '200px', 'height': '37.5px'}"></p-select>
@@ -44,24 +44,24 @@
                         (onSort)="onTableSort($event)"
                         size="small"
                     >
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
                                 <th></th>
-                                <th pSortableColumn="id" hidden>Id <p-sortIcon field="id" ></p-sortIcon></th>
-                                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="apellido">Apellido <p-sortIcon field="apellido"></p-sortIcon><p-columnFilter type="text" field="apellido" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                 <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
+                                <th pSortableColumn="id" hidden>Id <p-sorticon field="id" ></p-sorticon></th>
+                                <th pSortableColumn="nombre">Nombre <p-sorticon field="nombre"></p-sorticon><p-columnfilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="apellido">Apellido <p-sorticon field="apellido"></p-sorticon><p-columnfilter type="text" field="apellido" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                 <th pSortableColumn="email">Email <p-sorticon field="email"></p-sorticon></th>
                                 <th>  </th>
-                                <th pSortableColumn="usuario">Usuario <p-sortIcon field="usuario"></p-sortIcon><p-columnFilter type="text" field="usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                 <th pSortableColumn="createdAt">Fecha Creacion <p-sortIcon field="createdAt"></p-sortIcon></th>
-                                <th pSortableColumn="ultimo_login">Ultimo Login <p-sortIcon field="ultimo_login"></p-sortIcon></th>
+                                <th pSortableColumn="usuario">Usuario <p-sorticon field="usuario"></p-sorticon><p-columnfilter type="text" field="usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                 <th pSortableColumn="createdAt">Fecha Creacion <p-sorticon field="createdAt"></p-sorticon></th>
+                                <th pSortableColumn="ultimo_login">Ultimo Login <p-sorticon field="ultimo_login"></p-sorticon></th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-usuario>
+                        <ng-template #body let-usuario>
                             <tr>
                                 <!-- <td>
-                                    <p-tableCheckbox [value]="usuario"></p-tableCheckbox>
+                                    <p-tablecheckbox [value]="usuario"></p-tablecheckbox>
                                 </td> -->
                                 <td style="width: 68px;"><button class="btn btn-ghost-info" (click)="abrirUsuarioDrawer(usuario.id)"><ng-icon name="lucideEye"/></button></td>
                                 <td hidden>{{ usuario.id }}</td>
@@ -89,7 +89,7 @@
                                 </div></td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="emptymessage">
+                        <ng-template #emptymessage>
                             <tr>
                                 <td colspan="10" class="text-center py-4">
                                     @if (isFiltered(dt)) {
@@ -104,7 +104,7 @@
                                 </td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="summary">
+                        <ng-template #summary>
                             <div class="flex align-items-center justify-content-between">En total hay {{ totalUsuarios }} Usuarios.</div>
                         </ng-template>
                     </p-table>

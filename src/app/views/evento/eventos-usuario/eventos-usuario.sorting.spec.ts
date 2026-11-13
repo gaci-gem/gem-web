@@ -15,7 +15,7 @@ describe('EventosUsuario sorting', () => {
 
     expect(component.sortField).toBe('numero');
     expect(component.sortDirection).toBe('asc');
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.loadItems).toHaveBeenCalledOnceWith();
   });
 });

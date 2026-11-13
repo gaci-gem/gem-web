@@ -32,7 +32,7 @@
       </div>
 
       <div formArrayName="horas" class="mobile-hours-editor__list">
-        @for (hora of horasFormArray.controls; track $index) {
+        @for (hora of horasFormArray.controls; track hora) {
         <article [formGroupName]="$index" class="mobile-hour-card">
           <header class="mobile-hour-card__header">
             <div class="mobile-hour-card__event">
@@ -106,12 +106,12 @@
               placeholder="Seleccionar categoría"
               appendTo="body"
             >
-              <ng-template let-item pTemplate="selectedItem">
+              <ng-template let-item #selectedItem>
                 @if (item) {
                 <span class="categoria-dot" [style.background]="item.color"></span>{{ item.descripcion }}
                 } @else { <span>Seleccionar categoría</span> }
               </ng-template>
-              <ng-template let-item pTemplate="item">
+              <ng-template let-item #item>
                 <span class="categoria-dot" [style.background]="item.color"></span>{{ item.descripcion }}
               </ng-template>
             </p-select>
@@ -160,7 +160,7 @@
           <div class="col-md-1">
           </div>
         </div>
-        @for (hora of horasFormArray.controls; track $index) {
+        @for (hora of horasFormArray.controls; track hora) {
         <div [formGroupName]="$index" class="row g-3 mb-2 ">
 
           <div class="col-12 col-md-3 mb-2 mb-md-0">
@@ -249,7 +249,7 @@
                [style]="{ 'min-width': '160px', width: '100%' }"
               appendTo="body"
             >
-              <ng-template let-item pTemplate="selectedItem">
+              <ng-template let-item #selectedItem>
                 @if (item) {
                 <span class="categoria-dot" [style.background]="item.color"></span>
                 {{ item.descripcion }}
@@ -257,7 +257,7 @@
                 <span>Categoría...</span>
                 }
               </ng-template>
-              <ng-template let-item pTemplate="item">
+              <ng-template let-item #item>
                 <span class="categoria-dot" [style.background]="item.color"></span>
                 <span>{{ item.descripcion }}</span>
               </ng-template>

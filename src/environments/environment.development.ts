@@ -16,6 +16,8 @@ export const environment = {
   useCookieAuth: false,
   REVERT_LITERAL: false,
 
+    license: 'eyJpZCI6ImFhMjM4MDU3LTRhMGUtNDlhNy04NWZmLTM3YjhjNjU5NDY2MCIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3OTQzNjA4ODQsImV4cCI6MTgyNTg5Njg4NH0.wTVafoF54ldYNHuPQNR1BbzE7mohcrV_uhUPZK-SP50tGtu5-x8BdLK73MsD3W3EnaStVvk-ZsN17kCv4DtUCA',
+
   trustedReturnOrigins: [
     'http://localhost:4201',
     'http://localhost:4200',

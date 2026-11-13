@@ -7,24 +7,24 @@
     <div class="usuarios-compartidos">
         <h4>Usuarios con Acceso</h4>
         <p-table [value]="usuariosCompartidos" [loading]="loading" responsiveLayout="scroll">
-            <ng-template pTemplate="header">
+            <ng-template #header>
                 <tr>
                     <th>Nombre</th>
                     <th>Permiso</th>
                     <th>Acciones</th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-compartido>
+            <ng-template #body let-compartido>
                     <tr>
                         <td>
                             @if (editingRow === compartido) {
-                                <p-autoComplete [(ngModel)]="compartido._tempUsuarioLabel" [suggestions]="usuariosSugeridos"
+                                <p-autocomplete [(ngModel)]="compartido._tempUsuarioLabel" [suggestions]="usuariosSugeridos"
                                     (completeMethod)="filtrarUsuarios($event)" (onSelect)="onUsuarioSelected($event, compartido)" field="usuario" [dropdown]="true" name="tempUsuario"
                                     [forceSelection]="true" appendTo="body">
-                                    <ng-template pTemplate="item" let-u>
+                                    <ng-template #item let-u>
                                         <div>{{ u?.nombre || '—' }} {{ u?.apellido || '' }} ({{ u?.usuario || '—' }})</div>
                                     </ng-template>
-                                </p-autoComplete>
+                                </p-autocomplete>
                             } @else {
                                 {{ compartido.usuario?.nombre || 'Sin nombre' }} {{ compartido.usuario?.apellido || 'Sin apellido' }}
                             }
@@ -58,5 +58,5 @@
     </div>
 </div>
 
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>

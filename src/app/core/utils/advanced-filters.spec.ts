@@ -61,7 +61,7 @@ describe('advanced filters', () => {
   it('omits legacy parameters covered by advanced filters, including aliases', () => {
     const params = withoutCoveredLegacyFilters({ etapa: 'ingreso', cliente: 'ACME', estado: 'abierto', keep: 'yes' }, [{ field: 'etapa', operator: 'and', constraints: [{ matchMode: 'contains', value: 'ingreso' }] }, { field: 'client', operator: 'and', constraints: [{ matchMode: 'contains', value: 'ACME' }] }], { etapa: 'etapa', client: ['cliente', 'client'] });
     expect(params).toEqual(jasmine.objectContaining({ estado: 'abierto', keep: 'yes' }));
-    expect(params).not.toHaveProperty('etapa');
-    expect(params).not.toHaveProperty('cliente');
+    expect(params.etapa).toBeUndefined();
+    expect(params.cliente).toBeUndefined();
   });
 });

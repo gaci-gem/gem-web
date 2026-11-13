@@ -5,47 +5,47 @@
       <app-ui-card title="Tickets">
         <div card-body>
           <p-toolbar styleClass="mb-2 gap-2">
-            <ng-template pTemplate="left">
+            <ng-template #start>
               <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId"
                 (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)"
                 (save)="savePreset($event)" (remove)="removePreset($event)"
                 (setDefault)="setPresetDefault($event)" (clearFilters)="clearFilters()" />
             </ng-template>
           </p-toolbar>
-          <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+          <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap">
              <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Buscar..." /></span>
-                <p-multiSelect [(ngModel)]="clientesSeleccionados" [options]="clientesSugeridos" (onPanelShow)="cargarClientesIniciales()" (onFilter)="buscarClientes($event)" (onChange)="onClientesChange($event.value)" [filter]="true" [loading]="clientesCargando" [showToggleAll]="false" [showClear]="true" [optionLabel]="'sigla'" placeholder="Filtrar por cliente" selectedItemsLabel="{0} clientes seleccionados" styleClass="ticket-client-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por cliente">
-                  <ng-template let-cliente pTemplate="item">{{ etiquetaCliente(cliente) }}</ng-template>
-                  <ng-template let-seleccionados pTemplate="selectedItems">
+                <p-multiselect [(ngModel)]="clientesSeleccionados" [options]="clientesSugeridos" (onPanelShow)="cargarClientesIniciales()" (onFilter)="buscarClientes($event)" (onChange)="onClientesChange($event.value)" [filter]="true" [loading]="clientesCargando" [showToggleAll]="false" [showClear]="true" [optionLabel]="'sigla'" placeholder="Filtrar por cliente" selectedItemsLabel="{0} clientes seleccionados" styleClass="ticket-client-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por cliente">
+                  <ng-template let-cliente #item>{{ etiquetaCliente(cliente) }}</ng-template>
+                  <ng-template let-seleccionados #selectedItems>
                     {{ seleccionados?.length ? seleccionados.map(etiquetaCliente).join(', ') : 'Filtrar por cliente' }}
                   </ng-template>
-                </p-multiSelect>
-                 <p-multiSelect [options]="states" [(ngModel)]="estado" optionLabel="label" optionValue="value" placeholder="Todos los estados" [showToggleAll]="true" [showClear]="true" selectedItemsLabel="{0} estados seleccionados" [style]="{ width: '260px', maxWidth: '100%' }" (onChange)="onFilterChange()" ariaLabel="Filtrar por estado" />
-                <p-multiSelect [(ngModel)]="prioridad" [options]="priorities" (onChange)="onFilterChange()" [showToggleAll]="false" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Todas las prioridades" selectedItemsLabel="{0} prioridades" styleClass="ticket-priority-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por prioridad"></p-multiSelect>
-                <p-multiSelect [(ngModel)]="tipo" [options]="types" (onChange)="onFilterChange()" [showToggleAll]="false" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Todos los tipos" selectedItemsLabel="{0} tipos" styleClass="ticket-type-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por tipo"></p-multiSelect>
+                </p-multiselect>
+                 <p-multiselect [options]="states" [(ngModel)]="estado" optionLabel="label" optionValue="value" placeholder="Todos los estados" [showToggleAll]="true" [showClear]="true" selectedItemsLabel="{0} estados seleccionados" [style]="{ width: '260px', maxWidth: '100%' }" (onChange)="onFilterChange()" ariaLabel="Filtrar por estado" />
+                <p-multiselect [(ngModel)]="prioridad" [options]="priorities" (onChange)="onFilterChange()" [showToggleAll]="false" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Todas las prioridades" selectedItemsLabel="{0} prioridades" styleClass="ticket-priority-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por prioridad"></p-multiselect>
+                <p-multiselect [(ngModel)]="tipo" [options]="types" (onChange)="onFilterChange()" [showToggleAll]="false" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Todos los tipos" selectedItemsLabel="{0} tipos" styleClass="ticket-type-filter" [style]="{ width: '260px', maxWidth: '100%' }" ariaLabel="Filtrar por tipo"></p-multiselect>
            </div>
-           <p-contextMenu #cm [model]="menuItems" appendTo="body"></p-contextMenu>
+           <p-contextmenu #cm [model]="menuItems" appendTo="body"></p-contextmenu>
            <p-table #dt [value]="tickets" [lazy]="true" (onFilter)="onColumnFilter($event)" [rows]="limit" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [totalRecords]="total" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [paginator]="true" [rowHover]="true" dataKey="id"
              [(contextMenuSelection)]="contextMenuSelection" [contextMenu]="cm" (contextMenuSelectionChange)="buildContextMenu($event)"
              appKeyboardListNavigation [keyboardListItems]="tickets" (keyboardRowActivate)="open($event)"
             [globalFilterFields]="['id','subject','description','status','externalReference','clientName','clientCode']"
              size="small" [scrollable]="true" scrollWidth="max-content">
-              <ng-template pTemplate="header">
+              <ng-template #header>
                 <tr>
                   <th class="ticket-action-column">Ver</th>
-                  <th class="ticket-id-column" pSortableColumn="id">Id <p-columnFilter type="numeric" field="id" display="menu" matchMode="equals" /></th>
-                   <th class="ticket-subject-column" pSortableColumn="subject">Asunto <p-sortIcon field="subject"></p-sortIcon><p-columnFilter type="text" field="subject" display="menu" matchMode="contains" /></th>
-                    <th class="ticket-client-column" pSortableColumn="clientName">Cliente <p-sortIcon field="clientName"></p-sortIcon><p-columnFilter type="text" field="client" display="menu" matchMode="contains" /></th>
-                        <th class="ticket-status-column" pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon><p-columnFilter field="status" display="menu" matchMode="in"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><p-multiSelect [options]="states" [ngModel]="value" optionLabel="label" optionValue="value" placeholder="Todos los estados" [showToggleAll]="true" [showClear]="true" selectedItemsLabel="{0} estados" (onChange)="filter($event.value)" /></ng-template></p-columnFilter></th>
-                       <th class="ticket-priority-column" pSortableColumn="priority">Prioridad <p-sortIcon field="priority"></p-sortIcon><p-columnFilter field="priority" display="menu" matchMode="equals"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por prioridad" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todas</option>@for (priority of priorities; track priority.value) { <option [value]="priority.value">{{ priority.label }}</option> }</select></ng-template></p-columnFilter></th><th class="ticket-type-column" pSortableColumn="type">Tipo <p-sortIcon field="type"></p-sortIcon><p-columnFilter field="type" display="menu" matchMode="equals"><ng-template pTemplate="filter" let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por tipo" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todos</option>@for (type of types; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></ng-template></p-columnFilter></th>
-                   <th class="ticket-reference-column">Referencia externa <p-columnFilter type="text" field="externalReference" display="menu" matchMode="contains" /></th>
-                     <th class="ticket-events-column">Eventos <p-columnFilter type="text" field="events" display="menu" matchMode="contains" /></th>
-                     <th class="ticket-assigned-column">Usuario asignado <p-columnFilter type="text" field="assignedUser" display="menu" matchMode="contains" /></th>
-                      <th class="ticket-created-column" pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt"></p-sortIcon><p-columnFilter type="date" field="createdFrom" display="menu" matchMode="dateIs" /></th>
+                  <th class="ticket-id-column" pSortableColumn="id">Id <p-columnfilter type="numeric" field="id" display="menu" matchMode="equals" /></th>
+                   <th class="ticket-subject-column" pSortableColumn="subject">Asunto <p-sorticon field="subject"></p-sorticon><p-columnfilter type="text" field="subject" display="menu" matchMode="contains" /></th>
+                    <th class="ticket-client-column" pSortableColumn="clientName">Cliente <p-sorticon field="clientName"></p-sorticon><p-columnfilter type="text" field="client" display="menu" matchMode="contains" /></th>
+                        <th class="ticket-status-column" pSortableColumn="status">Estado <p-sorticon field="status"></p-sorticon><p-columnfilter field="status" display="menu" matchMode="in"><ng-template #filter let-value let-filter="filterCallback"><p-multiselect [options]="states" [ngModel]="value" optionLabel="label" optionValue="value" placeholder="Todos los estados" [showToggleAll]="true" [showClear]="true" selectedItemsLabel="{0} estados" (onChange)="filter($any($event).value)" /></ng-template></p-columnfilter></th>
+                       <th class="ticket-priority-column" pSortableColumn="priority">Prioridad <p-sorticon field="priority"></p-sorticon><p-columnfilter field="priority" display="menu" matchMode="equals"><ng-template #filter let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por prioridad" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todas</option>@for (priority of priorities; track priority.value) { <option [value]="priority.value">{{ priority.label }}</option> }</select></ng-template></p-columnfilter></th><th class="ticket-type-column" pSortableColumn="type">Tipo <p-sorticon field="type"></p-sorticon><p-columnfilter field="type" display="menu" matchMode="equals"><ng-template #filter let-value let-filter="filterCallback"><select class="form-select" aria-label="Filtrar por tipo" [ngModel]="value" (ngModelChange)="filter($event)"><option value="">Todos</option>@for (type of types; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></ng-template></p-columnfilter></th>
+                   <th class="ticket-reference-column">Referencia externa <p-columnfilter type="text" field="externalReference" display="menu" matchMode="contains" /></th>
+                     <th class="ticket-events-column">Eventos <p-columnfilter type="text" field="events" display="menu" matchMode="contains" /></th>
+                     <th class="ticket-assigned-column">Usuario asignado <p-columnfilter type="text" field="assignedUser" display="menu" matchMode="contains" /></th>
+                      <th class="ticket-created-column" pSortableColumn="createdAt">Alta <p-sorticon field="createdAt"></p-sorticon><p-columnfilter type="date" field="createdFrom" display="menu" matchMode="dateIs" /></th>
                  <th class="ticket-actions-column">Acciones</th>
               </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-ticket>
+            <ng-template #body let-ticket>
                <tr [pContextMenuRow]="ticket">
                  <td class="ticket-action-column">
                    @if (canRead()) {
@@ -99,12 +99,12 @@
                 </div></td>
               </tr>
             </ng-template>
-            <ng-template pTemplate="emptymessage">
+            <ng-template #emptymessage>
               <tr>
                    <td colspan="11" class="text-muted">No hay tickets.</td>
              </tr>
              </ng-template>
-             <ng-template pTemplate="summary">
+             <ng-template #summary>
                 <div class="flex align-items-center justify-content-between">En total hay {{ total }} Tickets.</div>
              </ng-template>
            </p-table>

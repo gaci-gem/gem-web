@@ -193,7 +193,7 @@
       dataKey="id"
       styleClass="p-datatable-sm"
     >
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
           <th>Ambiente</th>
           <th>Cliente</th>
@@ -206,7 +206,7 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-deploy>
+      <ng-template #body let-deploy>
         <tr>
           <td>
             <span class="badge text-bg-primary">{{ deploy.ambiente }}</span>
@@ -256,7 +256,7 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="emptymessage">
+      <ng-template #emptymessage>
         <tr>
           <td colspan="7" class="text-center text-muted py-4">
             <i class="pi pi-inbox" style="font-size: 2rem;"></i>
@@ -265,7 +265,7 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="summary">
+      <ng-template #summary>
         <div class="text-muted">
           Total: {{ deploysFiltrados.length }} deploy(s)
           @if (deploysFiltrados.length !== deploys.length) {

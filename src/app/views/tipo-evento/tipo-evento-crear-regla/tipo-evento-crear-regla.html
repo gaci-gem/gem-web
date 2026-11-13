@@ -25,7 +25,7 @@
     <ng-template #body let-regla let-editing="editing" let-ri="rowIndex">
       <tr [pEditableRow]="regla">
         <td>
-          <p-cellEditor>
+          <p-celleditor>
             <ng-template #input>
               <p-select
                 [options]="prioridadContexto"
@@ -37,10 +37,10 @@
             <ng-template #output>
               {{regla.contexto}}
             </ng-template>
-          </p-cellEditor>
+          </p-celleditor>
         </td>
         <td>
-          <p-cellEditor>
+          <p-celleditor>
             <ng-template #input>
               <p-select
                 [options]="prioridadOperadores"
@@ -52,27 +52,27 @@
             <ng-template #output>
               {{regla.operador}}
             </ng-template>
-          </p-cellEditor>
+          </p-celleditor>
         </td>
         <td>
-          <p-cellEditor>
+          <p-celleditor>
             <ng-template #input>
               <input pInputText type="text" [(ngModel)]="regla.valor" />
             </ng-template>
             <ng-template #output>
               {{regla.valor}}
             </ng-template>
-          </p-cellEditor>
+          </p-celleditor>
         </td>
         <td>
-          <p-cellEditor>
+          <p-celleditor>
             <ng-template #input>
               <input pInputText type="number" [(ngModel)]="regla.peso" min="1"/>
             </ng-template>
             <ng-template #output>
               {{regla.peso}}
             </ng-template>
-          </p-cellEditor>
+          </p-celleditor>
         </td>
         <td>
           <div class="flex items-center justify-center gap-2">

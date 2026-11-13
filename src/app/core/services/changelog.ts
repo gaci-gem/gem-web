@@ -16,6 +16,26 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.6.0',
+    date: '2026-11-13',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Los registros de horas se muestran agrupados por día y usuario, con resúmenes del período y comparación entre meses.',
+        link: '/hora/horas',
+      },
+      {
+        type: 'feature',
+        text: 'Las grillas de eventos permiten elegir y reordenar columnas, incluyendo etapa anterior, horas estimadas y horas reales.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'fix',
+        text: 'Mejoramos la compatibilidad de los componentes de carga y descarga de archivos para conservar una experiencia consistente.',
+      },
+    ],
+  },
+  {
     version: '0.5.7',
     date: '2026-11-03',
     changes: [

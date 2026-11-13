@@ -115,7 +115,7 @@ export class Clientes extends TrabajarCon<Cliente> {
   }
 
   private resetPaginator(): void {
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
   }
 
   protected loadItems(first = 0, rows = 10): void {

@@ -79,6 +79,37 @@ describe('HorasUsuario', () => {
     expect(registroHoraService.getByUsuario.calls.mostRecent().args[1].usuario).toBeUndefined();
   });
 
+  it('should sort each day hours by earliest start time', () => {
+    const registroHoraService = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getCategorias', 'getByUsuario']);
+    registroHoraService.getCategorias.and.returnValue(of([]));
+    const horas = [
+      { id: 1, inicio: '2026-02-01T15:00:00', fin: '2026-02-01T16:00:00' },
+      { id: 2, inicio: '2026-02-01T08:00:00', fin: '2026-02-01T09:00:00' },
+      { id: 3, inicio: '2026-02-01T11:00:00', fin: '2026-02-01T12:00:00' },
+    ];
+    const registros = [{ id: 10, fecha: '2026-02-01', usuarioId: 'u-1', horas }];
+    registroHoraService.getByUsuario.and.returnValue(of({ data: registros, pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }) as any);
+
+    TestBed.configureTestingModule({
+      imports: [HorasUsuario],
+      providers: [
+        { provide: RegistroHoraService, useValue: registroHoraService },
+        { provide: UserStorageService, useValue: { getUsuario: () => ({ id: 'u-1' }) } },
+        { provide: LoadingService, useValue: { show: () => undefined, hide: () => undefined } },
+        { provide: PermisosService, useValue: { can: () => true } },
+        { provide: FiltroPresetService, useValue: { list: () => of([]) } },
+        { provide: ViewportService, useValue: { isMobile: signal(true) } },
+        DialogService, MessageService, ConfirmationService, provideZonelessChangeDetection(),
+      ],
+    });
+
+    const component = TestBed.createComponent(HorasUsuario).componentInstance;
+    component.consultarRegistros(new Date(2026, 1, 1));
+
+    expect(component.registrosHoras[0].horas?.map(h => h.id)).toEqual([2, 3, 1]);
+    expect(horas.map(h => h.id)).toEqual([1, 2, 3]);
+  });
+
   it('should reset the paginator when the period changes', () => {
     const registroHoraService = jasmine.createSpyObj<RegistroHoraService>('RegistroHoraService', ['getCategorias', 'getByUsuario']);
     registroHoraService.getCategorias.and.returnValue(of([]));

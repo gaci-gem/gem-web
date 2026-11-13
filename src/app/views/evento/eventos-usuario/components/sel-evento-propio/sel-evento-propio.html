@@ -15,7 +15,7 @@
         [showCurrentPageReport]="true"
         size="small"
     >
-        <ng-template pTemplate="caption">
+        <ng-template #caption>
             <div class="flex align-items-center justify-content-between" style="display: flex;">
                 <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
@@ -23,7 +23,7 @@
                 </span>
             </div>
         </ng-template>
-        <ng-template pTemplate="header">
+        <ng-template #header>
             <tr>
                 <th style="width: 4rem">
                 </th>
@@ -33,36 +33,36 @@
                 <th pSortableColumn="tipo.codigo" style="min-width: 110px;">
                     <div class="flex align-items-center" style="justify-content: space-around;">
                         Evento
-                        <p-columnFilter type="text" field="eventoSearch" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
+                        <p-columnfilter type="text" field="eventoSearch" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter>
                     </div>
                 </th>
                 <th pSortableColumn="titulo">
                     <div class="flex align-items-center" style="justify-content: space-around;">
                         Titulo
-                        <p-columnFilter type="text" field="titulo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>  
+                        <p-columnfilter type="text" field="titulo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter>
                     </div>
                 </th>
                 <th pSortableColumn="cliente.nombre" filterField="cliente.nombre">
                     <div class="flex align-items-center" style="justify-content: space-around;">
                         Cliente
-                        <p-columnFilter type="text" field="cliente.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
+                        <p-columnfilter type="text" field="cliente.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter>
                     </div>
                 </th>
                 <th pSortableColumn="producto.nombre" filterField="producto.nombre">
                     <div class="flex align-items-center" style="justify-content: space-around;">
                         Producto
-                        <p-columnFilter type="text" field="producto.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
+                        <p-columnfilter type="text" field="producto.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter>
                     </div>
                 </th>
                 <th pSortableColumn="modulo.nombre" filterField="modulo.nombre">
                     <div class="flex align-items-center" style="justify-content: space-around;">
                         Modulo
-                        <p-columnFilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter>
+                        <p-columnfilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter>
                     </div>
                 </th>
             </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-evento>
+        <ng-template #body let-evento>
             <tr style="min-height: 55px;">
                 <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                     <button
@@ -91,7 +91,7 @@
                 <td>{{ evento?.modulo ? evento.modulo.codigo + " - " + evento.modulo.nombre : "-" }}</td>
             </tr>
         </ng-template>
-        <ng-template pTemplate="summary">
+        <ng-template #summary>
             <div class="flex align-items-center justify-content-between">En total hay {{ eventos ? eventos.length : 0 }} Eventos.</div>
         </ng-template>
     </p-table>

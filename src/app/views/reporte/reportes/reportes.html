@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,10 +6,10 @@
             <app-ui-card title="Reportes">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
+                        <ng-template #start>
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
-                        <ng-template pTemplate="right">
+                        <ng-template #end>
                             @if (can(PermisoAccion.CREAR)) {
                                 <button
                                     class="btn btn-ghost-success btn-md"
@@ -23,7 +23,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff" /></button></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><button class="btn btn-ghost-gray" placement="top" ngbTooltip="Limpiar Filtros" (click)="clear(dt)"><ng-icon name="tablerFilterOff" /></button></div>
                     <p-table
                         #dt
                         [value]="reportes"
@@ -41,25 +41,25 @@
                          (onFilter)="onTableFilter($event)" (onPage)="onTablePage($event)" (onSort)="onTableSort($event)"
                         size="small"
                     >
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
                                 <!-- <th style="width: 4rem">
-                                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    <p-tableheadercheckbox></p-tableheadercheckbox>
                                 </th> -->
-                                <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" ></p-sortIcon><p-columnFilter type="text" field="tipo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                 <th>Parametros <p-columnFilter type="text" field="parametros" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="usuario">Usuario <p-sortIcon field="usuario" ></p-sortIcon><p-columnFilter type="text" field="usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="solicitadoEn">Solicitado En <p-sortIcon field="solicitadoEn" ></p-sortIcon><p-columnFilter type="text" field="solicitadoEn" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="generadoEn">Generado En <p-sortIcon field="generadoEn" ></p-sortIcon><p-columnFilter type="text" field="generadoEn" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="estado">Estado <p-sortIcon field="estado" ></p-sortIcon><p-columnFilter type="text" field="estado" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="errorDescripcion">Error <p-sortIcon field="errorDescripcion" ></p-sortIcon><p-columnFilter type="text" field="errorDescripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
+                                <th pSortableColumn="tipo">Tipo <p-sorticon field="tipo" ></p-sorticon><p-columnfilter type="text" field="tipo" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                 <th>Parametros <p-columnfilter type="text" field="parametros" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="usuario">Usuario <p-sorticon field="usuario" ></p-sorticon><p-columnfilter type="text" field="usuario" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="solicitadoEn">Solicitado En <p-sorticon field="solicitadoEn" ></p-sorticon><p-columnfilter type="text" field="solicitadoEn" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="generadoEn">Generado En <p-sorticon field="generadoEn" ></p-sorticon><p-columnfilter type="text" field="generadoEn" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="estado">Estado <p-sorticon field="estado" ></p-sorticon><p-columnfilter type="text" field="estado" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="errorDescripcion">Error <p-sorticon field="errorDescripcion" ></p-sorticon><p-columnfilter type="text" field="errorDescripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-reporte>
+                        <ng-template #body let-reporte>
                             <tr>
                                 <!-- <td>
-                                    <p-tableCheckbox [value]="reporte"></p-tableCheckbox>
+                                    <p-tablecheckbox [value]="reporte"></p-tablecheckbox>
                                 </td> -->
                                 <td>{{ reporte.tipo }}</td>
                                 <td>{{ reporte.parametros | json }}</td>
@@ -83,7 +83,7 @@
                                 </div></td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="summary">
+                        <ng-template #summary>
                             <div class="flex align-items-center justify-content-between">En total hay {{ reportes ? reportes.length : 0 }} Reportes.</div>
                         </ng-template>
                     </p-table>

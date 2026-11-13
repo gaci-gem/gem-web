@@ -80,10 +80,10 @@ export class Productos extends TrabajarCon<Producto> {
   override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
   private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.loadingService.show();
     this.productoService.getAll(this.filtroActivo, { globalSearch: this.globalFilter.trim(), sigla: this.getColumnFilter('sigla'), nombre: this.getColumnFilter('nombre'), entornoCodigo: this.getColumnFilter('entornoCodigo'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())
