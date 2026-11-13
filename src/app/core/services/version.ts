@@ -12,6 +12,7 @@ export interface AppVersion {
 
 export interface RuntimeConfig {
   environment?: 'test' | 'prod' | string;
+  license?: string;
 }
 
 interface SimpleSemver {

@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,74 +6,42 @@
             <app-ui-card title="Registros de Horas">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
-                            <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
-                        </ng-template>
-                        <ng-template pTemplate="right">
-                            <app-control-trabajar-con [mostrarNuevo]="false" (plantilla)="getPlantilla()" (exportarExcel)="exportarExcel()" (importar)="importarExcel($event)"></app-control-trabajar-con>
-                        </ng-template>
+                        <ng-template #start><app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" /></ng-template>
+                        <ng-template #end><p-button label="Comparar meses" icon="pi pi-chart-bar" severity="secondary" [outlined]="true" (onClick)="abrirComparativaMeses()" /><app-control-trabajar-con [mostrarNuevo]="false" (plantilla)="getPlantilla()" (exportarExcel)="exportarExcel()" (importar)="importarExcel($event)"></app-control-trabajar-con></ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap">
                         <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..." /></span>
                         <p-datepicker id="filtroFechas" [(ngModel)]="dateRangeFilter" selectionMode="range" [iconDisplay]="'input'" [showIcon]="true" [showButtonBar]="true" inputId="filtroFechas" (ngModelChange)="onFechaChange()" (onClearClick)="onClearFecha()"></p-datepicker>
                         <p-select [options]="tiposTrabajo" optionLabel="descripcion" optionValue="codigo" placeholder="Filtrar por categoría" [(ngModel)]="categoriaFiltro" (onChange)="filtrarPorCategoria($event.value)" [showClear]="true"></p-select>
                     </div>
-                    <p-table #dt [value]="registrosHorasGeneralesFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="id" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
-                        <ng-template pTemplate="header">
+                    <div class="row g-2 mb-3" aria-label="Resumen del período">
+                        <div class="col-md-4"><div class="border rounded p-2"><small class="text-muted d-block">Total de horas</small><strong>{{ resumenPeriodo.totalHorasFormateadas }}</strong></div></div>
+                        <div class="col-md-4"><div class="border rounded p-2"><small class="text-muted d-block">Días con carga</small><strong>{{ resumenPeriodo.diasConCarga }}</strong></div></div>
+                        <div class="col-md-4"><div class="border rounded p-2"><small class="text-muted d-block">Usuarios activos</small><strong>{{ resumenPeriodo.usuariosActivos }}</strong></div></div>
+                    </div>
+                    <p-table #dt [value]="registrosHorasPorDia" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="clave" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
+                        <ng-template #header><tr><th style="width: 4rem"></th><th pSortableColumn="fecha">Fecha <p-sorticon field="fecha"></p-sorticon></th><th>Usuarios</th><th>Total Día</th></tr></ng-template>
+                        <ng-template #body let-dia>
                             <tr>
-                                <th style="width: 4rem"></th>
-                                <th pSortableColumn="fecha">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
-                                <th pSortableColumn="createdAt">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
-                                <th>Usuario</th>
-                                <th>Total Día</th>
-                                <th>Acciones</th>
+                                <td><p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expandedDias[dia.clave] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" (click)="alternarDia(dia)" [attr.aria-expanded]="!!expandedDias[dia.clave]" aria-label="Mostrar usuarios del día" /></td>
+                                <td>{{ dia.fecha | date:'fullDate' }}</td><td>{{ dia.usuarios.length }}</td><td>{{ dia.totalHorasFormateadas }} hs.</td>
                             </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-registro>
-                            <tr>
-                                <td>
-                                    <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true"
-                                        [icon]="isRegistroExpandido(registro) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-                                        (click)="toggleRegistro(registro)"
-                                        [attr.aria-expanded]="isRegistroExpandido(registro)"
-                                        [attr.aria-controls]="'detalle-' + registroKey(registro)"
-                                        [attr.aria-label]="isRegistroExpandido(registro) ? 'Ocultar detalle del día' : 'Mostrar detalle del día'" />
-                                </td>
-                                <td>{{ registro.fecha | date:'fullDate' }}</td>
-                                <td>{{ registro.createdAt | date:'short' }}</td>
-                                <td>{{ registro.usuario?.usuario || (registro.usuario?.nombre + ' ' + registro.usuario?.apellido) }}</td>
-                                <td>{{ registro.horasTotalesFormateadas }} hs.</td>
-                                <td></td>
-                            </tr>
-                            @if (isRegistroExpandido(registro)) {
-                                <tr>
-                                    <td colspan="6" [id]="'detalle-' + registroKey(registro)">
-                                        <p-table [value]="registro.horas ?? []" dataKey="id" size="small">
-                                            <ng-template pTemplate="header">
-                                                <tr><th>Inicio</th><th>Final</th><th>Evento</th><th>Detalle</th><th>Categoría</th><th>Diferencia</th></tr>
-                                            </ng-template>
-                                            <ng-template pTemplate="body" let-hora>
-                                                <tr>
-                                                    <td>{{ hora.inicio | date:'HH:mm' }}</td>
-                                                    <td>{{ hora.fin | date:'HH:mm' }}</td>
-                                                    <td>{{ eventoLabel(hora) }}</td>
-                                                    <td>{{ hora.detalle }}</td>
-                                                    <td>
-                                                        <span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span>
-                                                        <span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span>
-                                                    </td>
-                                                    <td>{{ hora.diferenciaFormateada }} hs.</td>
-                                                </tr>
-                                            </ng-template>
-                                        </p-table>
-                                    </td>
-                                </tr>
+                            @if (expandedDias[dia.clave]) {
+                                <tr><td colspan="4">
+                                    <p-table [value]="dia.usuarios" dataKey="id" size="small">
+                                        <ng-template #header><tr><th style="width: 4rem"></th><th>Usuario</th><th>Registros</th><th>Total usuario</th></tr></ng-template>
+                                        <ng-template #body let-usuario>
+                                            <tr><td><p-button type="button" [text]="true" [rounded]="true" [icon]="usuarioExpandido(dia, usuario) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" (click)="alternarUsuario(dia, usuario)" aria-label="Mostrar cargas del usuario" /></td><td>{{ usuario.usuario || (usuario.nombre + ' ' + usuario.apellido) }}</td><td>{{ usuario.registros.length }}</td><td>{{ usuario.totalHorasFormateadas }} hs.</td></tr>
+                                            @if (usuarioExpandido(dia, usuario)) {
+                                                <tr><td colspan="4"><p-table [value]="cargasUsuario(usuario)" dataKey="id" size="small"><ng-template #header><tr><th>Inicio</th><th>Final</th><th>Evento</th><th>Detalle</th><th>Categoría</th><th>Diferencia</th></tr></ng-template><ng-template #body let-hora><tr><td>{{ hora.inicio | date:'HH:mm' }}</td><td>{{ hora.fin | date:'HH:mm' }}</td><td>{{ eventoLabel(hora) }}</td><td>{{ hora.detalle }}</td><td><span *ngIf="getCategoriaInfo(hora.categoriaCodigo) as cat" class="categoria-badge"><span class="categoria-dot" [style.background]="cat.color"></span>{{ cat.descripcion }}</span><span *ngIf="!getCategoriaInfo(hora.categoriaCodigo)" class="text-muted">Sin categoría</span></td><td>{{ hora.diferenciaFormateada }} hs.</td></tr></ng-template></p-table></td></tr>
+                                            }
+                                        </ng-template>
+                                    </p-table>
+                                </td></tr>
                             }
                         </ng-template>
-                        <ng-template pTemplate="emptymessage">
-                            <tr><td colspan="5" class="text-center py-4">No se encontraron registros de hora.</td></tr>
-                        </ng-template>
-                        <ng-template pTemplate="summary"><div>En total hay {{ totalRecords }} Registros de Hora.</div></ng-template>
+                        <ng-template #emptymessage><tr><td colspan="4" class="text-center py-4">No se encontraron registros de hora.</td></tr></ng-template>
+                        <ng-template #summary><div>En total hay {{ totalRecords }} Registros de Hora.</div></ng-template>
                     </p-table>
                 </div>
             </app-ui-card>

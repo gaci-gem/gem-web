@@ -8,11 +8,11 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TipoEventoCrud } from '../tipo-evento-crud/tipo-evento-crud';
 import { modalConfig } from '@/app/types/modals';
 import { UiCard } from '@app/components/ui-card';
-import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
+import { ColumnFilter, SortIcon, Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon } from '@ng-icons/core';
 import { ToolbarModule } from 'primeng/toolbar';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
@@ -30,6 +30,9 @@ import { BadgeClickComponent } from "@app/components/badge-click";
 @Component({
   selector: 'app-tipo-evento',
   imports: [
+    ConfirmDialog,
+    ColumnFilter,
+    SortIcon,
     UiCard,
     TableModule,
     InputTextModule,
@@ -80,10 +83,10 @@ export class TiposEvento extends TrabajarCon<TipoEvento> {
   onTableSort(event: { field?: string; order?: number }): void { this.sortField = event.field as typeof this.sortField; this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
   private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.loadingService.show();
     this.tipoEventoService.getAll({ globalSearch: this.globalFilter.trim(), codigo: this.getColumnFilter('codigo'), descripcion: this.getColumnFilter('descripcion'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())

@@ -48,7 +48,7 @@
 
     <div class="col-md-4">
       <label for="proyectoIds" class="form-label">Proyectos</label>
-      <p-multiSelect
+      <p-multiselect
         id="proyectoIds"
         formControlName="proyectoIds"
         [options]="proyectos"
@@ -61,12 +61,12 @@
         styleClass="w-100"
         appendTo="body"
       >
-        <ng-template let-proyecto pTemplate="item">
+        <ng-template let-proyecto #item>
           <div class="flex align-items-center gap-2">
             <span><strong>{{ proyecto.sigla }}</strong> - {{ proyecto.nombre }}</span>
           </div>
         </ng-template>
-      </p-multiSelect>
+      </p-multiselect>
       <!-- El campo proyectos ya no es obligatorio -->
     </div>
 

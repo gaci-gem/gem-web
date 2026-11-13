@@ -1,5 +1,5 @@
 <div class="card">
-    <p-fileUpload
+    <p-fileupload
         name="archivos"
         [url]="url"
         [multiple]="true"
@@ -11,7 +11,7 @@
         uploadLabel="Subir"
         cancelLabel="Cancelar"
     >
-        <ng-template pTemplate="content" let-files let-removeFileCallback="removeFileCallback">
+        <ng-template #content let-files let-removeFileCallback="removeFileCallback">
             @if (files?.length) {
                 <div class="file-list">
                     @for (file of files; track file.name + file.size; let i = $index) {
@@ -35,8 +35,8 @@
                 </div>
             }
         </ng-template>
-        <ng-template pTemplate="empty">
+        <ng-template #empty>
             <div>Arrastrar y soltar archivos aquí para subir.</div>
         </ng-template>
-    </p-fileUpload>
+    </p-fileupload>
 </div>

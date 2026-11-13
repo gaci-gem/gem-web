@@ -66,7 +66,7 @@ import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
                 <div class="d-flex align-items-center gap-2">
                   <span class="fs-5 fw-bold text-warning font-monospace">{{ tiempoTranscurrido }}</span>
                 </div>
-                <p-splitButton 
+                <p-splitbutton
                   label="{{ loading ? 'Liberando...' : 'Liberar' }}"
                   icon="pi pi-stop"
                   severity="danger"
@@ -75,7 +75,7 @@ import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
                   (onClick)="liberarEvento()"
                   [model]="menuItems"
                   styleClass="p-button-outlined">
-                </p-splitButton>
+                </p-splitbutton>
               </div>
             </div>
           }
@@ -96,7 +96,7 @@ import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
                 <span class="fw-bold text-warning font-monospace mobile-timer">{{ tiempoTranscurrido }}</span>
               </div>
               <div class="d-flex align-items-center gap-1">
-                <p-splitButton 
+                <p-splitbutton
                   icon="pi pi-stop"
                   severity="danger"
                   size="small"
@@ -104,7 +104,7 @@ import { EventoTrabajoService } from '@core/services/evento-trabajo.service';
                   (onClick)="liberarEvento()"
                   [model]="menuItems"
                   styleClass="p-button-outlined mobile-split-button">
-                </p-splitButton>
+                </p-splitbutton>
               </div>
             </div>
           }

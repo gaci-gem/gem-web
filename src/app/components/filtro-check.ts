@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
     FormsModule
   ],
   template: `
-    <p-selectButton
+    <p-selectbutton
       [options]="options"
       [(ngModel)]="checkedValue"
       (ngModelChange)="onChange($event)"
@@ -31,7 +31,7 @@ import { FormsModule } from '@angular/forms';
           <span [ngClass]="(item.icon && !notIcon ? 'ms-1' : '')">{{ item.label }}</span>
         } -->
       </ng-template>
-    </p-selectButton>
+    </p-selectbutton>
   `
 })
 export class FiltroRadioGroupComponent {

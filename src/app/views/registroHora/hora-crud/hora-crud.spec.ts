@@ -202,6 +202,30 @@ describe('HoraCrud', () => {
     expect(component.horasFormArray.errors?.['overlap']).toBeTrue();
   });
 
+  it('removes the middle interval while preserving the first and last controls', () => {
+    component.addHora();
+    component.addHora();
+    component.addHora();
+
+    const first = component.horasFormArray.at(0);
+    const middle = component.horasFormArray.at(1);
+    const last = component.horasFormArray.at(2);
+    first.get('eventoId')?.setValue('first');
+    middle.get('eventoId')?.setValue('middle');
+    last.get('eventoId')?.setValue('last');
+
+    component.removeHora(1);
+
+    expect(component.horasFormArray.length).toBe(2);
+    expect(component.horasFormArray.at(0)).toBe(first);
+    expect(component.horasFormArray.at(1)).toBe(last);
+    expect(component.horasFormArray.controls).not.toContain(middle);
+    expect(component.horasFormArray.value.map((hora: any) => hora.eventoId)).toEqual([
+      'first',
+      'last',
+    ]);
+  });
+
   it('focuses the new interval event button after adding an interval', async () => {
     mobileSignal.set(true);
     fixture.detectChanges();

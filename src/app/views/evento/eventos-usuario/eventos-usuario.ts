@@ -42,14 +42,14 @@ import {
   UserStorageService,
   UsuarioLogeado,
 } from '@core/services/user-storage';
-import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgIcon } from '@ng-icons/core';
 import { finalize } from 'rxjs';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
+import { ColumnFilter, SortIcon, Table, TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -57,12 +57,28 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { EventoCrud } from '../evento-crud/evento-crud';
 import { ModalSel } from './components/modal-sel/modal-sel';
 import { SelEventoPropio } from './components/sel-evento-propio/sel-evento-propio';
-import { ContextMenuModule } from 'primeng/contextmenu';
+import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation/keyboard-list-navigation';
+import { ButtonModule } from 'primeng/button';
+import { PopoverModule } from 'primeng/popover';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CdkDrag, CdkDragHandle, CdkDropList, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Cog } from '@primeicons/angular/cog';
+import { Refresh } from '@primeicons/angular/refresh';
+import { Bars } from '@primeicons/angular/bars';
+
+interface ColumnaEvento {
+  field: string;
+  header: string;
+}
 
 @Component({
   selector: 'app-eventos-usuario',
   imports: [
+    ConfirmDialog,
+    ContextMenu,
+    ColumnFilter,
+    SortIcon,
     UiCard,
     TableModule,
     InputTextModule,
@@ -73,7 +89,6 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
     BadgeClickComponent,
     DatePipe,
     CommonModule,
-    NgbPopoverModule,
     TooltipModule,
     PrioridadIconComponent,
     NgbTooltipModule,
@@ -83,6 +98,14 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
     FiltroPresetsComponent,
     ContextMenuModule,
     KeyboardListNavigation,
+    ButtonModule,
+    PopoverModule,
+    CheckboxModule,
+    CdkDropList,
+    CdkDrag,
+    Cog,
+    Refresh,
+    Bars,
   ],
   providers: [DialogService, MessageService, ConfirmationService],
   templateUrl: './eventos-usuario.html',
@@ -121,6 +144,57 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   // Simplificar las propiedades del evento en trabajo
   eventoEnTrabajo: EventoCompleto | null = null;
   tiempoInicioTrabajo: Date | null = null;
+
+  private readonly columnasIniciales: ColumnaEvento[] = [
+    { field: 'titulo', header: 'Título' },
+    { field: 'etapa', header: 'Etapa' },
+    { field: 'ultimaEtapa', header: 'Última etapa' },
+    { field: 'cliente', header: 'Cliente' },
+    { field: 'producto', header: 'Producto' },
+    { field: 'modulo', header: 'Módulo' },
+    { field: 'prioridad', header: 'Prioridad' },
+    { field: 'usuario', header: 'Usuario' },
+    { field: 'alta', header: 'Alta' },
+    { field: 'inicio', header: 'Inicio' },
+    { field: 'fin', header: 'Fin' },
+    { field: 'horasEstimadas', header: 'Hs estimadas' },
+    { field: 'horasReales', header: 'Hs reales' },
+  ];
+  columnas: ColumnaEvento[] = [...this.columnasIniciales];
+  columnasSeleccionadas: ColumnaEvento[] = this.columnasIniciales.filter(
+    (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
+  );
+
+  get columnasVisibles(): ColumnaEvento[] {
+    const visibles = new Set(this.columnasSeleccionadas.map((columna) => columna.field));
+    return this.columnas.filter((columna) => visibles.has(columna.field));
+  }
+
+  esColumnaVisible(columna: ColumnaEvento): boolean {
+    return this.columnasSeleccionadas.some((seleccionada) => seleccionada.field === columna.field);
+  }
+
+  alternarColumna(columna: ColumnaEvento, visible: boolean): void {
+    if (visible) {
+      this.columnasSeleccionadas = [...this.columnasSeleccionadas, columna];
+    } else {
+      this.columnasSeleccionadas = this.columnasSeleccionadas.filter(
+        (seleccionada) => seleccionada.field !== columna.field,
+      );
+    }
+  }
+
+  ordenarColumnas(event: CdkDragDrop<ColumnaEvento[]>): void {
+    moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
+    this.columnas = [...this.columnas];
+  }
+
+  restablecerColumnas(): void {
+    this.columnas = [...this.columnasIniciales];
+    this.columnasSeleccionadas = this.columnasIniciales.filter(
+      (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
+    );
+  }
 
   constructor() {
     super(
@@ -306,7 +380,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
 
   onTableSort(event: { field?: string; order?: number }): void {
     const sortField = event.field === 'evento' ? 'numero' : event.field;
-    if (['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(sortField as string)) {
+    if (['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero', 'etapaAnterior', 'totalEstimacionRequisitos', 'totalHorasReales'].includes(sortField as string)) {
       this.sortField = sortField as EventoCompletoSortField;
       this.sortDirection = event.order === 1 ? 'asc' : 'desc';
     }
@@ -326,7 +400,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.filtroFecha = this.normalizeDateRange(eventState.fecha);
     this.globalFilter = eventState.globalFilter ?? '';
     this.searchValue.set(this.globalFilter);
-    if (eventState.sortField && ['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero'].includes(eventState.sortField)) {
+    if (eventState.sortField && ['prioridadFin', 'createdAt', 'fechaInicio', 'fechaFinEst', 'numero', 'etapaAnterior', 'totalEstimacionRequisitos', 'totalHorasReales'].includes(eventState.sortField)) {
       this.sortField = eventState.sortField as EventoCompletoSortField;
       this.sortDirection = eventState.sortOrder === 1 ? 'asc' : 'desc';
     }
@@ -369,7 +443,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     return dates.every((date): date is Date => date instanceof Date && !Number.isNaN(date.getTime())) ? dates : null;
   }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? this.pageSize): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? this.pageSize): void {
     this.loadingService.show();
 
     let params: any = {};
@@ -436,7 +510,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   private resetPaginator(): void {
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
   }
 
   /** Programa un refresco de la grilla con throttle de 2s para evitar múltiples llamadas */
@@ -861,4 +935,16 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       }
     });
   }
+
+
+  reset() {
+    this.columnas = [...this.columnasIniciales];
+    this.columnasSeleccionadas = this.columnasIniciales.filter(
+      (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
+    );
+  }
+  drop(event: CdkDragDrop<ColumnaEvento[]>) {
+      moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
+  }
+
 }

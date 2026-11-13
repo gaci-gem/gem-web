@@ -68,7 +68,7 @@ import { HelpTooltip } from '@app/components/help-tooltip';
         }
 
         <div
-          class="card-body {{ bodyClass }}"
+          class="card-body pt-1 {{ bodyClass }}"
           #collapse="ngbCollapse"
           [(ngbCollapse)]="isCollapsed"
         >

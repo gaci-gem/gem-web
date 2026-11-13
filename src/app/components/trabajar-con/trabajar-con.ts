@@ -110,8 +110,8 @@ export abstract class TrabajarCon<T> {
       columnFilters,
       sortField: table?.sortField ?? null,
       sortOrder: (table?.sortOrder as 1 | -1 | 0) || 0,
-      first: table?.first ?? 0,
-      rows: table?.rows ?? 10,
+      first: table?.first() ?? 0,
+      rows: table?.rows() ?? 10,
     };
   }
 
@@ -123,8 +123,8 @@ export abstract class TrabajarCon<T> {
     Object.entries(tableState.columnFilters ?? {}).forEach(([field, filter]) => {
       table.filter(filter.value, field, filter.matchMode);
     });
-    if (typeof tableState.first === 'number') table.first = tableState.first;
-    if (typeof tableState.rows === 'number') table.rows = tableState.rows;
+    if (typeof tableState.first === 'number') table.first.set(tableState.first);
+    if (typeof tableState.rows === 'number') table.rows.set(tableState.rows);
     if (tableState.sortField) {
       table.sortField = tableState.sortField;
       table.sortOrder = tableState.sortOrder ?? 1;
@@ -346,7 +346,7 @@ export abstract class TrabajarCon<T> {
     table.clear();
     table.sortField = null;
     table.sortOrder = 0;
-    table.first = 0;
+    table.first.set(0);
     this.searchValue.set('');
     this.clearFilterState();
     this.saveFilterSession();

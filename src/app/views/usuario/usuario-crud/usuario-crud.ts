@@ -9,7 +9,7 @@ import { MessageService } from 'primeng/api';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ToastModule } from 'primeng/toast';
 import { Rol } from '@core/interfaces/rol';
-import { MultiSelectModule } from 'primeng/multiselect';
+import { MultiSelect, MultiSelectModule } from 'primeng/multiselect';
 import { UsuarioService } from '@core/services/usuario';
 import { PermisosService } from '@core/services/permisos';
 import { UsuarioPreferencias } from '@/app/constants/preferencias_usuario';
@@ -24,6 +24,7 @@ export const passwordMatchValidator: ValidatorFn = (form: AbstractControl): Vali
 @Component({
   selector: 'app-usuario-crud',
   imports: [
+    MultiSelect,
     ReactiveFormsModule,
     ToastModule,
     NgIcon,

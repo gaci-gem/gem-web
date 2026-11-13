@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 
 <div class="container-fluid">
@@ -9,17 +9,17 @@
         <div card-body>
 
           <p-toolbar styleClass="mb-2 gap-2">
-            <ng-template pTemplate="left">
+            <ng-template #start>
               <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
             </ng-template>
-            <ng-template pTemplate="right">
+            <ng-template #end>
               <button class="btn btn-primary" (click)="nuevaNovedad()">
                 <ng-icon name="lucidePlus" class="me-1" />
                 Nueva novedad
               </button>
             </ng-template>
           </p-toolbar>
-          <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap">
+          <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap">
             <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span>
             <app-filtro-radio-group [options]="estadoFiltroOptions" [checkedValue]="filterEstado" (filtroCambio)="filterEstado = $event; applyFilters()" [notLabel]="true" />
             <p-select [options]="tipoOptions" [(ngModel)]="filterTipo" optionLabel="label" optionValue="value" placeholder="Tipo" styleClass="me-2" style="width: 160px;" />
@@ -44,18 +44,18 @@
             [showCurrentPageReport]="true"
             size="small"
           >
-            <ng-template pTemplate="header">
+            <ng-template #header>
               <tr>
-                 <th style="min-width: 100px;" pSortableColumn="tipo">Tipo <p-sortIcon field="tipo"></p-sortIcon></th>
-                 <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
+                 <th style="min-width: 100px;" pSortableColumn="tipo">Tipo <p-sorticon field="tipo"></p-sorticon></th>
+                 <th pSortableColumn="titulo">Título <p-sorticon field="titulo"></p-sorticon></th>
                 <th style="min-width: 120px;">Creado por</th>
-                 <th style="min-width: 100px;" pSortableColumn="createdAt">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
-                 <th style="min-width: 100px;" pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+                 <th style="min-width: 100px;" pSortableColumn="createdAt">Creado <p-sorticon field="createdAt"></p-sorticon></th>
+                 <th style="min-width: 100px;" pSortableColumn="estado">Estado <p-sorticon field="estado"></p-sorticon></th>
                 <th style="width: 8rem;">Acciones</th>
               </tr>
             </ng-template>
 
-            <ng-template pTemplate="body" let-novedad>
+            <ng-template #body let-novedad>
               <tr>
                 <td>
                   <span class="badge {{ getTipoBadge(novedad.tipo) }}">
@@ -105,7 +105,7 @@
               </tr>
             </ng-template>
 
-            <ng-template pTemplate="emptymessage">
+            <ng-template #emptymessage>
               <tr>
                 <td colspan="6" class="text-center py-4">
                   <ng-icon name="lucideInbox" class="d-block mb-2" style="font-size: 2rem;" />
@@ -114,7 +114,7 @@
               </tr>
             </ng-template>
 
-            <ng-template pTemplate="summary">
+            <ng-template #summary>
               <div class="d-flex align-items-center justify-content-between">
                 En total hay {{ total }} Novedades.
               </div>

@@ -29,7 +29,7 @@
                 <span *ngIf="node.data.size" class="size">• {{ formatSize(node.data.size) }}</span>
             </div>
         </ng-template> -->
-        <ng-template pTemplate="default" let-node>
+        <ng-template #default let-node>
             <div class="node" [pTooltip]="getTooltip(node)" tooltipPosition="right">
 
                 <span class="label" (click)="onNodeSelect(node)">{{ node.label }}</span>

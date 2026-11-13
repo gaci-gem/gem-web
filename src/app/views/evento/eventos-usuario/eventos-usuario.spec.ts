@@ -352,7 +352,7 @@ describe('EventosUsuario - SSE Refresh', () => {
     expect(table.clear).toHaveBeenCalledTimes(1);
     expect(table.sortField).toBeNull();
     expect(table.sortOrder).toBe(0);
-    expect(table.first).toBe(0);
+    expect(table.first()).toBe(0);
     expect(component.filtroFecha).toBeNull();
     expect(component.filtroActivo).toBe('true');
     expect(component.searchValue()).toBe('');
@@ -374,7 +374,7 @@ describe('EventosUsuario - SSE Refresh', () => {
 
     component.onTableFilter({ filters: component.table.filters } as any);
 
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledWith('u-1', jasmine.objectContaining({
       page: 1,
       limit: 10,

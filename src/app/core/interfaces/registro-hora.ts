@@ -68,3 +68,32 @@ export interface UsuarioHorasGenerales {
   totalMesFormateado?: string;
   registrosHora: RegistroHora[];
 }
+
+export interface ResumenHorasPeriodo {
+  totalHoras: number;
+  totalHorasFormateadas: string;
+  diasConCarga: number;
+  usuariosActivos: number;
+}
+
+export interface ComparativaHorasMes extends ResumenHorasPeriodo {
+  mes: string;
+}
+
+export interface RegistroHoraUsuario {
+  id: string;
+  nombre: string;
+  apellido: string;
+  usuario: string;
+  registros: RegistroHora[];
+  totalHoras: number;
+  totalHorasFormateadas: string;
+}
+
+export interface RegistroHoraDia {
+  clave: string;
+  fecha: Date;
+  usuarios: RegistroHoraUsuario[];
+  totalHoras: number;
+  totalHorasFormateadas: string;
+}

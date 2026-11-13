@@ -15,7 +15,7 @@
         [showCurrentPageReport]="true"
         size="small"
     >
-        <ng-template pTemplate="caption">
+        <ng-template #caption>
             <div class="flex align-items-center justify-content-between" style="display: flex;">
                 <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
@@ -23,17 +23,17 @@
                 </span>
             </div>
         </ng-template>
-        <ng-template pTemplate="header">
+        <ng-template #header>
             <tr>
                 <th style="width: 4rem">
                 </th>
                 <th pSortableColumn="id" hidden>Id</th>
-                <th pSortableColumn="sigla">Sigla <p-sortIcon field="sigla"></p-sortIcon><p-columnFilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" ></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                <th pSortableColumn="sigla">Sigla <p-sorticon field="sigla"></p-sorticon><p-columnfilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                <th pSortableColumn="nombre">Nombre <p-sorticon field="nombre" ></p-sorticon><p-columnfilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                <th pSortableColumn="activo">Activo <p-sorticon field="activo"></p-sorticon></th>
             </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-proyecto>
+        <ng-template #body let-proyecto>
             <tr style="min-height: 55px;">
                 <td><div class="d-flex justify-content-end" style="min-height: 55px;">
                     <button class="btn btn-ghost-warning" (click)="select(proyecto)"><ng-icon name="lucideSearchCheck"/></button>
@@ -44,7 +44,7 @@
                 <td><span class="badge " style="min-width: 40%;" [ngClass]="proyecto.activo ? 'text-bg-success' : 'text-bg-danger'">{{ proyecto.activo | booleanLabel }}</span></td>
             </tr>
         </ng-template>
-        <ng-template pTemplate="summary">
+        <ng-template #summary>
             <div class="flex align-items-center justify-content-between">En total hay {{ proyectos ? proyectos.length : 0 }} Proyectos.</div>
         </ng-template>
     </p-table>

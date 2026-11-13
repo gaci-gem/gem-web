@@ -76,6 +76,8 @@ export interface EventoCompleto extends Evento {
   etapaAnterior: EventoEtapa | null;
 
   registroTiempo?: RegistroHora;
+  totalEstimacionRequisitos?: number;
+  totalHorasReales?: number;
 
   categoriaSugerida?: {
     codigo: string;

@@ -10,10 +10,10 @@ import { getFechaLocal, parseIsoAsLocal } from '@/app/utils/datetime-utils';
 import { getTimestamp } from '@/app/utils/time-utils';
 import { ShortcutDirective } from '@core/directive/shortcut';
 import { PermisoClave } from '@core/interfaces/rol';
-import { Categoria, Hora, RegistroHora } from '@core/interfaces/registro-hora';
+import { Categoria, ComparativaHorasMes, Hora, RegistroHora, RegistroHoraDia, RegistroHoraUsuario, ResumenHorasPeriodo, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { RegistroHoraQuery, RegistroHoraService } from '@core/services/registro-hora';
 import { NgIcon } from '@ng-icons/core';
-import { finalize } from 'rxjs';
+import { finalize, map, Observable } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -25,6 +25,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { HoraCrud } from '../hora-crud/hora-crud';
+import { CompararMesesModal } from '../comparar-meses-modal/comparar-meses-modal';
 
 @Component({
   selector: 'app-horas',
@@ -75,6 +76,12 @@ export class Horas extends TrabajarCon<RegistroHora> {
   usuarioFiltro = '';
   readonly tiposTrabajo = TIPOS_TRABAJO;
   private expandedRegistroKeys = new Set<string>();
+  expandedDias: Record<string, boolean> = {};
+  expandedUsuarios: Record<string, boolean> = {};
+  registrosHorasPorDia: RegistroHoraDia[] = [];
+  private todosLosDias: RegistroHoraDia[] = [];
+  resumenPeriodo: ResumenHorasPeriodo = { totalHoras: 0, totalHorasFormateadas: '00:00', diasConCarga: 0, usuariosActivos: 0 };
+  comparativaMensual: ComparativaHorasMes[] = [];
 
   constructor() {
     super(
@@ -184,6 +191,7 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.resetPaginator();
     if (this.dateRangeFilter && this.dateRangeFilter.length === 2 && this.dateRangeFilter[0] && this.dateRangeFilter[1]) {
       this.consultarRegistros(this.dateRangeFilter[0], this.dateRangeFilter[1]);
+      this.cargarResumen(this.dateRangeFilter[0], this.dateRangeFilter[1]);
     }
   }
 
@@ -191,6 +199,7 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.dateRangeFilter = undefined;
     this.resetPaginator();
     this.consultarRegistros();
+    this.resumenPeriodo = { totalHoras: 0, totalHorasFormateadas: '00:00', diasConCarga: 0, usuariosActivos: 0 };
   }
 
   isFiltered(table: Table): boolean {
@@ -216,12 +225,13 @@ export class Horas extends TrabajarCon<RegistroHora> {
     this.categoriaFiltro = codigo;
     this.resetPaginator();
     this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
+    if (this.dateRangeFilter?.[0] && this.dateRangeFilter?.[1]) this.cargarResumen(this.dateRangeFilter[0], this.dateRangeFilter[1]);
   }
 
   onPageChange(event: { first?: number; rows?: number }): void {
     this.first = event.first ?? 0;
     this.rows = event.rows ?? this.rows;
-    this.consultarRegistros(this.dateRangeFilter?.[0], this.dateRangeFilter?.[1]);
+    this.actualizarPaginaDias();
   }
 
   onSort(event: { field?: string; order?: number }): void {
@@ -268,44 +278,156 @@ export class Horas extends TrabajarCon<RegistroHora> {
     }
   }
 
+  claveDia(fecha: Date | string): string {
+    const fechaLocal = fecha instanceof Date ? fecha : parseIsoAsLocal(fecha);
+    return `${fechaLocal.getFullYear()}-${String(fechaLocal.getMonth() + 1).padStart(2, '0')}-${String(fechaLocal.getDate()).padStart(2, '0')}`;
+  }
+
+  alternarDia(dia: RegistroHoraDia): void {
+    this.expandedDias[dia.clave] = !this.expandedDias[dia.clave];
+  }
+
+  alternarUsuario(dia: RegistroHoraDia, usuario: RegistroHoraUsuario): void {
+    const clave = `${dia.clave}|${usuario.id}`;
+    this.expandedUsuarios[clave] = !this.expandedUsuarios[clave];
+  }
+
+  usuarioExpandido(dia: RegistroHoraDia, usuario: RegistroHoraUsuario): boolean {
+    return !!this.expandedUsuarios[`${dia.clave}|${usuario.id}`];
+  }
+
+  cargasUsuario(usuario: RegistroHoraUsuario): Hora[] {
+    return usuario.registros.flatMap(registro => registro.horas ?? []);
+  }
+
+  private construirJerarquia(registros: RegistroHora[]): void {
+    const dias = new Map<string, Map<string, RegistroHoraUsuario>>();
+    registros.forEach(registro => {
+      const claveDia = this.claveDia(registro.fecha);
+      const usuario = registro.usuario ?? { id: registro.usuarioId, nombre: '', apellido: '', usuario: registro.usuarioId };
+      const usuarios = dias.get(claveDia) ?? new Map<string, RegistroHoraUsuario>();
+      const usuarioActual = usuarios.get(usuario.id) ?? { ...usuario, registros: [], totalHoras: 0, totalHorasFormateadas: '00:00' };
+      usuarioActual.registros.push(registro);
+      usuarioActual.totalHoras += registro.horasTotales ?? 0;
+      usuarioActual.totalHorasFormateadas = this.formatearHoras(usuarioActual.totalHoras);
+      usuarios.set(usuario.id, usuarioActual);
+      dias.set(claveDia, usuarios);
+    });
+    this.registrosHorasPorDia = Array.from(dias.entries()).map(([clave, usuarios]) => {
+      const usuariosArray = Array.from(usuarios.values());
+      const totalHoras = usuariosArray.reduce((total, usuario) => total + usuario.totalHoras, 0);
+      return { clave, fecha: parseIsoAsLocal(`${clave}T00:00:00`), usuarios: usuariosArray, totalHoras, totalHorasFormateadas: this.formatearHoras(totalHoras) };
+    });
+  }
+
+  private formatearHoras(total: number): string {
+    const horas = Math.floor(total);
+    const minutos = Math.round((total - horas) * 60);
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+  }
+
   eventoLabel(hora: Hora): string {
     return hora.eventoTxt || hora.evento?.titulo || 'Evento sin título';
   }
 
   consultarRegistros(desde?: Date, hasta?: Date) {
     this.loadingService.show();
-    const query: RegistroHoraQuery = {
-      page: Math.floor(this.first / this.rows) + 1,
-      limit: this.rows,
-      ...(desde && hasta ? {
-        fechaDesde: desde.toISOString().slice(0, 10),
-        fechaHasta: hasta.toISOString().slice(0, 10),
-      } : {}),
-      categoriaCodigo: this.categoriaFiltro || undefined,
-      buscar: this.usuarioFiltro || undefined,
-      orderBy: this.sortField,
-      orderDir: this.sortDirection,
-    };
-    this.registroHoraService.getAll(query).pipe(
+    const inicio = desde ?? this.dateRangeFilter?.[0];
+    const fin = hasta ?? this.dateRangeFilter?.[1];
+    if (!inicio || !fin) {
+      this.todosLosDias = [];
+      this.actualizarPaginaDias();
+      this.loadingService.hide();
+      return;
+    }
+    this.registroHoraService.getHorasGenerales(inicio, fin, this.categoriaFiltro || undefined).pipe(
       finalize(() => this.loadingService.hide())
     ).subscribe({
-      next: (res) => {
-        const registros = res.data.map((reg: any) => ({
-          ...reg,
-          fecha: parseIsoAsLocal(reg.fecha),
-          horas: reg.horas?.map((h: any) => ({
-            ...h,
-            inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined,
-            fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined,
-            categoriaCodigo: h?.categoriaCodigo || null,
-          })),
-        }));
+      next: (usuarios) => {
+        const registros = usuarios
+          .filter(usuario => !this.usuarioFiltro || `${usuario.usuario} ${usuario.nombre} ${usuario.apellido}`.toLowerCase().includes(this.usuarioFiltro.toLowerCase()))
+          .flatMap(usuario => usuario.registrosHora.map(registro => ({
+            ...registro,
+            usuarioId: usuario.id,
+            usuario: { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, usuario: usuario.usuario },
+            fecha: parseIsoAsLocal(registro.fecha),
+            horas: registro.horas?.map((h: any) => ({ ...h, inicio: h?.inicio ? parseIsoAsLocal(h.inicio) : undefined, fin: h?.fin ? parseIsoAsLocal(h.fin) : undefined, categoriaCodigo: h?.categoriaCodigo || null }))
+          })));
         this.registrosHorasGenerales = registros;
         this.registrosHorasGeneralesFiltradas = registros;
-        this.totalRecords = res.pagination.total;
+        this.construirJerarquia(registros);
+        this.todosLosDias = this.registrosHorasPorDia;
+        this.ordenarDias();
+        this.totalRecords = this.todosLosDias.length;
+        this.actualizarPaginaDias();
         this.cdr.detectChanges();
       },
       error: () => this.showError('Error al cargar los registros de Hora.')
     });
+  }
+
+  abrirComparativaMeses(): void {
+    if (!this.dateRangeFilter?.[0]) return;
+    const anio = this.dateRangeFilter[0].getFullYear();
+    this.dialogService.open(CompararMesesModal, {
+      ...modalConfig,
+      header: 'Comparar meses',
+      width: 'min(900px, 95vw)',
+      data: {
+        anio,
+        cargarComparativa: (anioSeleccionado: number) => this.cargarComparativaAnual(anioSeleccionado)
+      }
+    });
+  }
+
+  cargarComparativaAnual(anio: number): Observable<ComparativaHorasMes[]> {
+    const desde = new Date(anio, 0, 1);
+    const hasta = new Date(anio + 1, 0, 0);
+    this.loadingService.show();
+    return this.registroHoraService.getHorasGenerales(desde, hasta, this.categoriaFiltro || undefined).pipe(
+      map(usuarios => Array.from({ length: 12 }, (_, mes) => {
+        const usuariosDelMes = usuarios.map(usuario => {
+          const registrosHora = usuario.registrosHora.filter(registro => {
+            const fecha = new Date(registro.fecha);
+            return fecha.getFullYear() === anio && fecha.getMonth() === mes;
+          });
+          return {
+            ...usuario,
+            registrosHora,
+            totalMes: registrosHora.reduce((total, registro) => total + (registro.horasTotales ?? 0), 0)
+          };
+        }).filter(usuario => usuario.registrosHora.length > 0);
+        return this.crearResumenMensual(new Date(anio, mes, 1), usuariosDelMes);
+      })),
+      finalize(() => this.loadingService.hide())
+    );
+  }
+
+  private actualizarPaginaDias(): void {
+    this.registrosHorasPorDia = this.todosLosDias.slice(this.first, this.first + this.rows);
+  }
+
+  private ordenarDias(): void {
+    const factor = this.sortDirection === 'asc' ? 1 : -1;
+    this.todosLosDias.sort((a, b) => (a.fecha.getTime() - b.fecha.getTime()) * factor);
+  }
+
+  private cargarResumen(desde: Date, hasta: Date): void {
+    this.registroHoraService.getHorasGenerales(desde, hasta, this.categoriaFiltro || undefined).subscribe(usuarios => {
+      this.resumenPeriodo = this.crearResumen(usuarios);
+    });
+  }
+
+  private crearResumenMensual(mes: Date, usuarios: UsuarioHorasGenerales[]): ComparativaHorasMes {
+    return { mes: mes.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }), ...this.crearResumen(usuarios) };
+  }
+
+  private crearResumen(usuarios: UsuarioHorasGenerales[]): ResumenHorasPeriodo {
+    const dias = new Set<string>();
+    const totalHoras = usuarios.reduce((total, usuario) => total + (usuario.totalMes ?? 0), 0);
+    usuarios.forEach(usuario => usuario.registrosHora.forEach(registro => dias.add(new Date(registro.fecha).toISOString().slice(0, 10))));
+    const horas = Math.floor(totalHoras);
+    const minutos = Math.round((totalHoras - horas) * 60);
+    return { totalHoras, totalHorasFormateadas: `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`, diasConCarga: dias.size, usuariosActivos: usuarios.length };
   }
 }

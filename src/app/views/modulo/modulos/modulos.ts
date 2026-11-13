@@ -73,7 +73,7 @@ export class Modulos extends TrabajarCon<Modulo> {
   onTablePage(event: TablePageEvent): void { this.loadItems(event.first, event.rows); }
   onTableSort(event: { field?: string; order?: number }): void { this.sortField = event.field as typeof this.sortField; this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
   override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
   private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
 
   protected loadItems(first = 0, rows = 10): void {
