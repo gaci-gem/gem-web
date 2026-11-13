@@ -82,10 +82,10 @@ export class Parametros extends TrabajarCon<Parametro> {
   onTableSort(event: { field?: string; order?: number }): void { this.sortField = event.field as typeof this.sortField; this.sortDirection = event.order === 1 ? 'asc' : event.order === -1 ? 'desc' : undefined; this.resetPaginator(); this.loadItems(); }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
   private getColumnFilter(field: string): string | undefined { const value = this.table?.filters?.[field]; const filter = Array.isArray(value) ? value[0] : value; return typeof filter?.value === 'string' && filter.value.trim() ? filter.value.trim() : undefined; }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.loadingService.show();
     this.parametroService.getAll({ globalSearch: this.globalFilter.trim(), clave: this.getColumnFilter('clave'), valor: this.getColumnFilter('valor'), tipo: this.getColumnFilter('tipo'), ambito: this.getColumnFilter('ambito'), descripcion: this.getColumnFilter('descripcion'), page: Math.floor(first / rows) + 1, limit: rows, sortField: this.sortField, sortDirection: this.sortDirection }).pipe(
       finalize(() => this.loadingService.hide())

@@ -9,7 +9,7 @@ describe('Usuarios pagination', () => {
 
     component.onGlobalFilter('ana');
 
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.loadItems).toHaveBeenCalledOnceWith();
   });
 
@@ -20,7 +20,7 @@ describe('Usuarios pagination', () => {
 
     component.onTableSort({ field: 'apellido', order: -1 });
 
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.sortField).toBe('apellido');
     expect(component.sortDirection).toBe('desc');
     expect(component.loadItems).toHaveBeenCalledOnceWith();

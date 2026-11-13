@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { MenuItem, MessageService } from 'primeng/api';
-import { ContextMenuModule } from 'primeng/contextmenu';
-import { Table, TableFilterEvent, TableModule } from 'primeng/table';
+import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
+import { ColumnFilter, SortIcon, Table, TableFilterEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -30,13 +30,13 @@ import { BadgeClickComponent } from '@app/components/badge-click';
 import { SseService } from '@core/services/sse.service';
 import { ClienteService } from '@core/services/cliente';
 import { Cliente } from '@core/interfaces/cliente';
-import { MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
+import { MultiSelect, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { withoutCoveredLegacyFilters } from '@core/utils/advanced-filters';
 
 @Component({
   selector: 'app-tickets',
-  imports: [CommonModule, FormsModule, UiCard, TableModule, ContextMenuModule, InputTextModule, MultiSelectModule, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
+  imports: [CommonModule, FormsModule, UiCard, TableModule, ContextMenuModule, ContextMenu, ColumnFilter, SortIcon, InputTextModule, MultiSelectModule, MultiSelect, ToastModule, ToolbarModule, NgIcon, DatePipe, KeyboardListNavigation, FiltroPresetsComponent, RouterLink, BadgeClickComponent],
   providers: [DialogService, MessageService],
   templateUrl: './tickets.html',
   styles: [`
@@ -156,7 +156,7 @@ export class Tickets implements OnInit {
      this.estado = typeof filtros['estado'] === 'string' && filtros['estado'] ? filtros['estado'].split(',') as TicketState[] : [];
     this.selectedPresetId = id;
     this.page = 1;
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
     this.loadItems();
   }
 
@@ -199,14 +199,14 @@ export class Tickets implements OnInit {
     this.advancedFilters = [];
     this.selectedPresetId = '';
     this.page = 1;
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
     this.clearingFilters = false;
     this.loadItems();
   }
 
   onFilterChange(): void {
     this.page = 1;
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
     this.loadItems();
   }
 
@@ -249,7 +249,7 @@ export class Tickets implements OnInit {
   onClientesChange(clientes: Cliente[]): void {
     this.clientesSeleccionados = clientes ?? [];
     this.page = 1;
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
     this.loadItems();
   }
 
@@ -275,7 +275,7 @@ export class Tickets implements OnInit {
     this.sortField = event.field as TicketSortField;
     this.sortDirection = event.order === 1 ? 'asc' : 'desc';
     this.page = 1;
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
     this.loadItems();
   }
 

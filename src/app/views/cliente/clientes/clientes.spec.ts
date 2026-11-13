@@ -9,7 +9,7 @@ describe('Clientes pagination', () => {
 
     component.onGlobalFilter('acme');
 
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.loadItems).toHaveBeenCalledOnceWith();
   });
 
@@ -20,7 +20,7 @@ describe('Clientes pagination', () => {
 
     component.onTableSort({ field: 'nombre', order: 1 });
 
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.sortField).toBe('nombre');
     expect(component.sortDirection).toBe('asc');
     expect(component.loadItems).toHaveBeenCalledOnceWith();

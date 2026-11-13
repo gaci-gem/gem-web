@@ -39,7 +39,10 @@ export type EventoCompletoSortField =
   | 'createdAt'
   | 'fechaInicio'
   | 'fechaFinEst'
-  | 'numero';
+  | 'numero'
+  | 'etapaAnterior'
+  | 'totalEstimacionRequisitos'
+  | 'totalHorasReales';
 
 @Injectable({
   providedIn: 'root'

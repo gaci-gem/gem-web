@@ -190,7 +190,17 @@ export class HorasUsuario extends TrabajarCon<RegistroHora> {
             eventoTxt: h.evento?.tipoCodigo && h.evento?.numero != null
               ? formatEventoNumero(h.evento.tipoCodigo, h.evento.numero)
               : undefined
-          }))
+          })).sort((a: any, b: any) => {
+            const inicioA = a.inicio instanceof Date ? a.inicio.getTime() : Number.NaN;
+            const inicioB = b.inicio instanceof Date ? b.inicio.getTime() : Number.NaN;
+            const validoA = Number.isFinite(inicioA);
+            const validoB = Number.isFinite(inicioB);
+
+            if (validoA && validoB) return inicioA - inicioB;
+            if (validoA) return -1;
+            if (validoB) return 1;
+            return 0;
+          })
         })) as any;
         this.registrosHorasFiltradas = this.registrosHoras;
         this.totalRecords = res.pagination.total;

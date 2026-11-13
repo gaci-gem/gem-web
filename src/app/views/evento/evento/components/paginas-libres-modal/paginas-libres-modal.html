@@ -13,7 +13,7 @@
         <ng-template #header>
             <tr>
                 <th style="width: 4rem">
-                    <p-tableHeaderCheckbox />
+                    <p-tableheadercheckbox />
                 </th>
                 <th hidden>Id</th>
                 <th>Titulo</th>
@@ -24,7 +24,7 @@
         <ng-template #body let-pagina>
             <tr>
                 <td>
-                    <p-tableCheckbox [value]="pagina" />
+                    <p-tablecheckbox [value]="pagina" />
                 </td>
                 <td hidden>{{ pagina.pageId }}</td>
                 <td>{{ pagina.title }}</td>

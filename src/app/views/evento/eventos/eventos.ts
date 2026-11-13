@@ -42,6 +42,18 @@ import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-pr
 import { Table, TableFilterEvent, TablePageEvent } from 'primeng/table';
 import { EventCommandService } from '@core/services/event-command.service';
 import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation/keyboard-list-navigation';
+import { ButtonModule } from 'primeng/button';
+import { PopoverModule } from 'primeng/popover';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Cog } from '@primeicons/angular/cog';
+import { Refresh } from '@primeicons/angular/refresh';
+import { Bars } from '@primeicons/angular/bars';
+
+interface ColumnaEvento {
+  field: string;
+  header: string;
+}
 
 @Component({
   selector: 'app-eventos',
@@ -65,6 +77,14 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
     FormsModule,
     FiltroPresetsComponent,
     KeyboardListNavigation,
+    ButtonModule,
+    PopoverModule,
+    CheckboxModule,
+    CdkDropList,
+    CdkDrag,
+    Cog,
+    Refresh,
+    Bars,
   ],
   providers: [
     DialogService,
@@ -72,7 +92,7 @@ import { KeyboardListNavigation } from '@app/components/keyboard-list-navigation
     ConfirmationService
   ],
   templateUrl: './eventos.html',
-  styleUrl: './eventos.scss'
+  styleUrl: '../eventos-usuario/eventos-usuario.scss'
 })
 export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
   readonly pantalla = 'eventos';
@@ -97,6 +117,53 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
   private readonly pageSize = 10;
   sortField: EventoCompletoSortField = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
+
+  private readonly columnasIniciales: ColumnaEvento[] = [
+    { field: 'titulo', header: 'Título' },
+    { field: 'etapa', header: 'Etapa' },
+    { field: 'ultimaEtapa', header: 'Última etapa' },
+    { field: 'cliente', header: 'Cliente' },
+    { field: 'producto', header: 'Producto' },
+    { field: 'modulo', header: 'Módulo' },
+    { field: 'prioridad', header: 'Prioridad' },
+    { field: 'usuario', header: 'Usuario' },
+    { field: 'alta', header: 'Alta' },
+    { field: 'inicio', header: 'Inicio' },
+    { field: 'fin', header: 'Fin' },
+    { field: 'horasEstimadas', header: 'Hs estimadas' },
+    { field: 'horasReales', header: 'Hs reales' },
+  ];
+  columnas: ColumnaEvento[] = [...this.columnasIniciales];
+  columnasSeleccionadas: ColumnaEvento[] = this.columnasIniciales.filter(
+    (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
+  );
+
+  get columnasVisibles(): ColumnaEvento[] {
+    const visibles = new Set(this.columnasSeleccionadas.map((columna) => columna.field));
+    return this.columnas.filter((columna) => visibles.has(columna.field));
+  }
+
+  esColumnaVisible(columna: ColumnaEvento): boolean {
+    return this.columnasSeleccionadas.some((seleccionada) => seleccionada.field === columna.field);
+  }
+
+  alternarColumna(columna: ColumnaEvento, visible: boolean): void {
+    this.columnasSeleccionadas = visible
+      ? [...this.columnasSeleccionadas, columna]
+      : this.columnasSeleccionadas.filter((seleccionada) => seleccionada.field !== columna.field);
+  }
+
+  ordenarColumnas(event: CdkDragDrop<ColumnaEvento[]>): void {
+    moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
+    this.columnas = [...this.columnas];
+  }
+
+  restablecerColumnas(): void {
+    this.columnas = [...this.columnasIniciales];
+    this.columnasSeleccionadas = this.columnasIniciales.filter(
+      (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
+    );
+  }
 
   override ngOnInit(): void {
     const restored = this.restoreFilterSession() as EventoFilterState | null;
@@ -235,7 +302,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     return dates.every((date): date is Date => date instanceof Date && !Number.isNaN(date.getTime())) ? dates : null;
   }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? this.pageSize): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? this.pageSize): void {
     this.loadingService.show();
     
     let params: any = {};
@@ -296,7 +363,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
   }
 
   private resetPaginator(): void {
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
   }
 
   isFiltered(table: Table): boolean {

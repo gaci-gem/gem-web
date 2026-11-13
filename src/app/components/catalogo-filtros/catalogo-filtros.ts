@@ -66,7 +66,7 @@ import { finalize } from 'rxjs';
             <label [for]="'filtro-' + filtro.paramName">{{ filtro.label }}</label>
             
             @if (filtro.multiple) {
-              <p-multiSelect
+              <p-multiselect
                 [id]="'filtro-' + filtro.paramName"
                 [options]="catalogosMap[filtro.paramName] || []"
                 [(ngModel)]="filtrosState[filtro.paramName]"
@@ -89,7 +89,7 @@ import { finalize } from 'rxjs';
                     <span>{{ filtro.placeholder || 'Seleccionar' }}</span>
                   }
                 </ng-template>
-              </p-multiSelect>
+              </p-multiselect>
             } @else {
               <p-select
                 [id]="'filtro-' + filtro.paramName"

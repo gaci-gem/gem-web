@@ -21,6 +21,9 @@ export const EVENTO_TABLE_FIELD_MAP: Record<string, string> = {
   'producto.nombre': 'producto',
   'modulo.nombre': 'modulo',
   'usuarioActual.usuario': 'usuario',
+  'etapaAnterior.nombre': 'etapaAnterior',
+  totalEstimacionRequisitos: 'totalEstimacionRequisitos',
+  totalHorasReales: 'totalHorasReales',
 };
 
 export const EVENTO_QUERY_FIELD_MAP: Record<string, string> = {
@@ -32,15 +35,21 @@ export const EVENTO_QUERY_FIELD_MAP: Record<string, string> = {
   'producto.nombre': 'producto',
   'modulo.nombre': 'modulo',
   'usuarioActual.usuario': 'usuario',
+  'etapaAnterior.nombre': 'etapaAnterior',
+  totalEstimacionRequisitos: 'totalEstimacionRequisitos',
+  totalHorasReales: 'totalHorasReales',
 };
 
 export function hasAdvancedFilterField(filters: AdvancedFilter[], field: string): boolean {
   return filters.some((filter) => filter.field === field);
 }
 
-export function withoutCoveredLegacyFilters<T extends Record<string, unknown>>(
+export function withoutCoveredLegacyFilters<
+  T extends Record<string, unknown>,
+  F extends { field: string },
+>(
   params: T,
-  filters: Array<{ field: string }>,
+  filters: F[],
   fieldAliases: Record<string, string | string[]>,
 ): T {
   const covered = new Set<string>();

@@ -12,7 +12,7 @@ import { UsuarioCompleto } from '@core/interfaces/usuario';
 import { LoadingSpinnerComponent } from '@app/components/index';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { TabPerfil } from './components/tab-perfil';
 import { TabModificar } from './components/tab-modificar';
@@ -31,6 +31,7 @@ import { getDiscordUserUrl } from '@/app/constants/social-urls';
     selector: 'app-usuario',
     standalone: true,
     imports: [
+         ConfirmDialog,
         CommonModule,
         NgbNavModule, 
         UiCard, 

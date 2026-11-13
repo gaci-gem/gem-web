@@ -124,14 +124,14 @@ export class Kbs extends TrabajarCon<kb> {
     this.permisoClave = PermisoClave.KB;
   }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.cargarKbs(this.catalogos, first, rows);
   }
 
   /**
    * Carga las KBs con los filtros actuales
    */
-  private cargarKbs(catalogos: CatalogoFiltroState = this.catalogos, first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  private cargarKbs(catalogos: CatalogoFiltroState = this.catalogos, first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.loadingService.show();
     const activo = this.filtroActivo === FiltroActivo.ALL ? undefined : this.filtroActivo === FiltroActivo.TRUE;
     
@@ -177,7 +177,7 @@ export class Kbs extends TrabajarCon<kb> {
   override filtroCambio(event: any): void { this.filtroActivo = event; this.resetPaginator(); this.loadItems(); }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; this.catalogos = {}; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
 
   alta(kb: kb): void {
     if (!this.beginAction()) return;

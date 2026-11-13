@@ -60,9 +60,9 @@ export class RegistroHoraService {
     ) : response.pipe(extractData<RegistroHora>())) as Observable<RegistroHora[] | Page<RegistroHora>>;
   }
 
-  getHorasGenerales(desde: Date, hasta: Date): Observable<UsuarioHorasGenerales[]> {
+  getHorasGenerales(desde: Date, hasta: Date, categoriaCodigo?: string): Observable<UsuarioHorasGenerales[]> {
     return this.http.get<UsuarioHorasGenerales[]>(
-      `${this.URL_COMPLETA}/usuario/usuario/horasGenerales?desde=${desde.toISOString()}&hasta=${hasta.toISOString()}`
+      `${this.URL_COMPLETA}/usuario/usuario/horasGenerales?desde=${desde.toISOString()}&hasta=${hasta.toISOString()}${categoriaCodigo ? `&categoriaCodigo=${encodeURIComponent(categoriaCodigo)}` : ''}`
     );
   }
 

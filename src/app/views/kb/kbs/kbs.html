@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,10 +6,10 @@
             <app-ui-card title="Knowledge Base">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
+                        <ng-template #start>
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
-                        <ng-template pTemplate="right">
+                        <ng-template #end>
                             @if (can(PermisoAccion.CREAR)) {
                                 <app-control-trabajar-con
                                     (nuevo)="mostrarModalCrud(null, 'A')"
@@ -20,7 +20,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
 
                     <!-- Filtros de Catálogo -->
                     <p-panel header="Filtros" [toggleable]="true" [collapsed]="true" styleClass="mb-3">
@@ -50,22 +50,22 @@
                          (onSort)="onTableSort($event)"
                         size="small"
                     >
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
-                                <th pSortableColumn="id" hidden>Id <p-sortIcon field="id"></p-sortIcon></th>
-                                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
-                                <th pSortableColumn="plataforma">Plataforma <p-sortIcon field="plataforma"></p-sortIcon></th>
-                                <th pSortableColumn="tecnologia">Tecnología <p-sortIcon field="tecnologia"></p-sortIcon></th>
-                                <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo"></p-sortIcon></th>
-                                <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-                                <th pSortableColumn="uso_actual">Uso Actual <p-sortIcon field="uso_actual"></p-sortIcon></th>
+                                <th pSortableColumn="id" hidden>Id <p-sorticon field="id"></p-sorticon></th>
+                                <th pSortableColumn="nombre">Nombre <p-sorticon field="nombre"></p-sorticon></th>
+                                <th pSortableColumn="plataforma">Plataforma <p-sorticon field="plataforma"></p-sorticon></th>
+                                <th pSortableColumn="tecnologia">Tecnología <p-sorticon field="tecnologia"></p-sorticon></th>
+                                <th pSortableColumn="tipo">Tipo <p-sorticon field="tipo"></p-sorticon></th>
+                                <th pSortableColumn="estado">Estado <p-sorticon field="estado"></p-sorticon></th>
+                                <th pSortableColumn="uso_actual">Uso Actual <p-sorticon field="uso_actual"></p-sorticon></th>
                                 <th title="Total / Activos / Inactivos">Deploys</th>
-                                <th pSortableColumn="migrada">Migrada <p-sortIcon field="migrada"></p-sortIcon></th>
-                                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                                <th pSortableColumn="migrada">Migrada <p-sorticon field="migrada"></p-sorticon></th>
+                                <th pSortableColumn="activo">Activo <p-sorticon field="activo"></p-sorticon></th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-kb>
+                        <ng-template #body let-kb>
                             <tr>
                                 <td hidden>{{ kb.id }}</td>
                                 <td>{{ kb.nombre }}</td>
@@ -104,7 +104,7 @@
                                 </div></td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="summary">
+                        <ng-template #summary>
                             <div class="flex align-items-center justify-content-between">
                                 En total hay {{ kbs ? kbs.length : 0 }} KB(s).
                             </div>

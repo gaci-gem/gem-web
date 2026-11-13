@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,10 +6,10 @@
             <app-ui-card title="Proyectos">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
+                        <ng-template #start>
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
-                        <ng-template pTemplate="right">
+                        <ng-template #end>
                             @if (can(PermisoAccion.CREAR)) {
                                 <app-control-trabajar-con
                                     (nuevo)="mostrarModalCrud(null, 'A')"
@@ -20,7 +20,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" [value]="globalFilter" (input)="onGlobalFilter(getEventValue($event))" placeholder="Buscar..." /></span><app-filtro-radio-group [options]="FiltroActivoOptions" [checkedValue]="filtroActivo" (filtroCambio)="filtroCambio($event)" [notLabel]="true"></app-filtro-radio-group></div>
                     <p-table
                         #dt
                          [value]="proyectos"
@@ -40,22 +40,22 @@
                         (onSort)="onTableSort($event)"
                         size="small"
                     >
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
                                 <!-- <th style="width: 4rem">
-                                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    <p-tableheadercheckbox></p-tableheadercheckbox>
                                 </th> -->
-                                <th pSortableColumn="id" hidden>Id <p-sortIcon field="id" ></p-sortIcon></th>
-                                <th pSortableColumn="sigla">Sigla <p-sortIcon field="sigla"></p-sortIcon><p-columnFilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" ></p-sortIcon><p-columnFilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                                <th pSortableColumn="id" hidden>Id <p-sorticon field="id" ></p-sorticon></th>
+                                <th pSortableColumn="sigla">Sigla <p-sorticon field="sigla"></p-sorticon><p-columnfilter type="text" field="sigla" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="nombre">Nombre <p-sorticon field="nombre" ></p-sorticon><p-columnfilter type="text" field="nombre" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="activo">Activo <p-sorticon field="activo"></p-sorticon></th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-proyecto>
+                        <ng-template #body let-proyecto>
                             <tr>
                                 <!-- <td>
-                                    <p-tableCheckbox [value]="proyecto"></p-tableCheckbox>
+                                    <p-tablecheckbox [value]="proyecto"></p-tablecheckbox>
                                 </td> -->
                                 <td hidden>{{ proyecto.id }}</td>
                                 <td>{{ proyecto.sigla }}</td>
@@ -71,7 +71,7 @@
                                 </div></td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="emptymessage">
+                        <ng-template #emptymessage>
                             <tr>
                                 <td colspan="5" class="text-center py-4">
                                     @if (isFiltered(dt)) {
@@ -86,7 +86,7 @@
                                 </td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="summary">
+                        <ng-template #summary>
                             <div class="flex align-items-center justify-content-between">En total hay {{ totalProyectos }} Proyectos.</div>
                         </ng-template>
                     </p-table>

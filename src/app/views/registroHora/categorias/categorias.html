@@ -1,4 +1,4 @@
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 <p-toast></p-toast>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -6,10 +6,10 @@
             <app-ui-card title="Tipos de Trabajo">
                 <div card-body>
                     <p-toolbar styleClass="mb-2 gap-2">
-                        <ng-template pTemplate="left">
+                        <ng-template #start>
                             <app-filtro-presets [presets]="presets()" [selectedPresetId]="selectedPresetId" (selectedPresetIdChange)="selectedPresetId = $event" (apply)="applyPreset($event)" (save)="savePreset($event.name)" (remove)="removePreset($event)" (setDefault)="setPresetDefault($event)" (clearFilters)="clear(dt)" />
                         </ng-template>
-                        <ng-template pTemplate="right">
+                        <ng-template #end>
                             @if (can(PermisoAccion.CREAR)) {
                                 <button
                                     class="btn btn-ghost-success btn-md"
@@ -22,7 +22,7 @@
                             }
                         </ng-template>
                     </p-toolbar>
-                    <div class="app-filter-row d-flex align-items-center gap-3 mb-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span></div>
+                     <div class="app-filter-row d-flex align-items-center gap-3 mb-1 mt-1 flex-wrap"><span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="dt.filterGlobal(getEventValue($event), 'contains')" placeholder="Buscar..." /></span></div>
                     <p-table
                         #dt
                         [value]="categorias"
@@ -36,16 +36,16 @@
                         [showCurrentPageReport]="true"
                         size="small"
                     >
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
-                                <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
-                                <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon><p-columnFilter type="text" field="descripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnFilter></th>
-                                <th pSortableColumn="color">Color <p-sortIcon field="color"></p-sortIcon></th>
-                                <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                                <th pSortableColumn="codigo">Código <p-sorticon field="codigo"></p-sorticon></th>
+                                <th pSortableColumn="descripcion">Descripción <p-sorticon field="descripcion"></p-sorticon><p-columnfilter type="text" field="descripcion" display="menu" matchMode="contains" style="margin-left: 2px;"></p-columnfilter></th>
+                                <th pSortableColumn="color">Color <p-sorticon field="color"></p-sorticon></th>
+                                <th pSortableColumn="activo">Activo <p-sorticon field="activo"></p-sorticon></th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-categoria>
+                        <ng-template #body let-categoria>
                             <tr>
                                 <td>
                                     <strong>{{ categoria.codigo }}</strong>
@@ -72,7 +72,7 @@
                                 </div></td>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="summary">
+                        <ng-template #summary>
                             <div class="flex align-items-center justify-content-between">En total hay {{ categorias ? categorias.length : 0 }} tipos de trabajo.</div>
                         </ng-template>
                     </p-table>

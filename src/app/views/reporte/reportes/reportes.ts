@@ -81,7 +81,7 @@ export class Reportes extends TrabajarCon<Reporte> {
     this.permisoClave = PermisoClave.REPORTE;
   }
 
-  protected loadItems(first = this.table?.first ?? 0, rows = this.table?.rows ?? 10): void {
+  protected loadItems(first = this.table?.first() ?? 0, rows = this.table?.rows() ?? 10): void {
     this.loadingService.show();
     this.reporteService.getAll(this.filtroActivo, {
       globalSearch: this.globalFilter.trim(),
@@ -120,7 +120,7 @@ export class Reportes extends TrabajarCon<Reporte> {
   }
   override clear(table: Table): void { super.clear(table); this.globalFilter = ''; }
   override applyPreset(id: string): void { this.resetPaginator(); super.applyPreset(id); }
-  private resetPaginator(): void { if (this.table) this.table.first = 0; }
+  private resetPaginator(): void { if (this.table) this.table.first.set(0); }
   private getColumnFilter(field: string): string | undefined {
     const value = this.table?.filters?.[field];
     const filter = Array.isArray(value) ? value[0] : value;

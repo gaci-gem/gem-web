@@ -63,7 +63,7 @@ describe('Tickets', () => {
     component.onFilterChange();
 
     expect(component.page).toBe(1);
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.loadItems).toHaveBeenCalled();
   });
 
@@ -78,7 +78,7 @@ describe('Tickets', () => {
 
     expect(component.clientesSeleccionados).toEqual([cliente]);
     expect(component.page).toBe(1);
-    expect(component.table.first).toBe(0);
+    expect(component.table.first()).toBe(0);
     expect(component.loadItems).toHaveBeenCalledOnceWith();
   });
 

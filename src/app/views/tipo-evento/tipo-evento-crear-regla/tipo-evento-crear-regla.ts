@@ -5,7 +5,7 @@ import { TipoEvento } from '@core/interfaces/tipo-evento';
 import { PrioridadRegla, PrioridadOperadores, PrioridadContexto } from '@core/interfaces/prioridad-reglas';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { TableModule } from 'primeng/table';
+import { CellEditor, TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -18,6 +18,7 @@ import { finalize } from 'rxjs';
 @Component({
   selector: 'app-tipo-evento-crear-regla',
   imports: [
+    CellEditor,
     ReactiveFormsModule,
     ToastModule,
     FormsModule,

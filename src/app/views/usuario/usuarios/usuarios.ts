@@ -5,7 +5,7 @@ import { Usuario } from '@core/interfaces/usuario';
 import { UsuarioPage, UsuarioService } from '@core/services/usuario';
 import { NgIcon } from '@ng-icons/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Table, TableModule } from 'primeng/table';
+import { ColumnFilter, SortIcon, Table, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { UsuarioCrud } from '../usuario-crud/usuario-crud';
 import { modalConfig } from '@/app/types/modals';
@@ -13,7 +13,7 @@ import { TrabajarCon } from '@app/components/trabajar-con/trabajar-con';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { SHORTCUTS } from 'src/app/constants/shortcut';
 import { ShortcutDirective } from '@core/directive/shortcut';
@@ -35,6 +35,9 @@ type TableSortEvent = { field?: string | null; order?: number | null };
 @Component({
   selector: 'app-usuarios',
   imports: [
+    ConfirmDialog,
+    ColumnFilter,
+    SortIcon,
     UiCard,
     TableModule,
     InputTextModule,
@@ -145,7 +148,7 @@ export class Usuarios extends TrabajarCon<Usuario> {
   }
 
   private resetPaginator(): void {
-    if (this.table) this.table.first = 0;
+    if (this.table) this.table.first.set(0);
   }
 
   protected loadItems(first = 0, rows = 10): void {
