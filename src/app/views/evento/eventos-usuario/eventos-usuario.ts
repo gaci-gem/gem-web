@@ -249,7 +249,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   buildContextMenu(e: EventoCompleto | null): void {
     this.selectedEvento = e;
     if (!e) {
-      this.menuItems.splice(0, this.menuItems.length);
+      this.menuItems = [];
       return;
     }
 
@@ -314,7 +314,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       );
     }
 
-    this.menuItems.splice(0, this.menuItems.length, ...items);
+    this.menuItems = items;
   }
 
   esEtapaDeAutorizacion(valor: unknown): boolean {

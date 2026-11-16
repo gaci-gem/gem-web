@@ -65,6 +65,7 @@ export class ActividadReciente implements OnInit{
     .pipe(finalize(() => {
       this.loading = false;
       this.cdr.markForCheck();
+      this.cdr.detectChanges();
     }))
     .subscribe({
       next: (data) => {

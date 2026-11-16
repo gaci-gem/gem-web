@@ -7,6 +7,7 @@ import {
   ViewChild,
   AfterViewInit,
   HostListener,
+  ChangeDetectorRef,
 } from '@angular/core'
 import {
   BaseChartDirective,
@@ -42,7 +43,10 @@ export class Chartjs implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.chart?.chart?.resize(), 200)
+    setTimeout(() => {
+      this.refresh()
+      this.chart?.chart?.resize()
+    }, 200)
   }
 
   @HostListener('window:resize')
@@ -52,6 +56,7 @@ export class Chartjs implements OnInit, OnDestroy, AfterViewInit {
 
   options!: ChartConfiguration
   private layoutSub!: Subscription
+  private cdr = inject(ChangeDetectorRef)
 
   get bodyFont() {
     return getComputedStyle(document.body).fontFamily.trim()
@@ -150,6 +155,11 @@ export class Chartjs implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.options = userConfig
+    this.cdr.detectChanges()
+    setTimeout(() => {
+      this.chart?.update()
+      this.chart?.chart?.resize()
+    }, 0)
     setTimeout(() => this.chart?.chart?.resize(), 200)
     // If the chart already exists, update it so changes animate
     try {
