@@ -265,7 +265,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       const accionItems: MenuItem[] = [];
 
       if (e.etapaSiguiente) {
-        if (e.etapaActualData?.deAutoriza) {
+        if (this.esEtapaDeAutorizacion(e.etapaActualData?.deAutoriza)) {
           accionItems.push({
             label: 'Autorizar',
             icon: 'pi pi-check-circle',
@@ -280,20 +280,18 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         }
       }
 
-      if (e.etapaAnterior) {
-        if (e.etapaActualData?.deAutoriza) {
-          accionItems.push({
-            label: 'Rechazar',
-            icon: 'pi pi-ban',
-            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'REC')),
-          });
-        } else {
-          accionItems.push({
-            label: 'Retroceder',
-            icon: 'pi pi-backward',
-            command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'RTO')),
-          });
-        }
+      if (this.esEtapaDeAutorizacion(e.etapaActualData?.deAutoriza)) {
+        accionItems.push({
+          label: 'Rechazar',
+          icon: 'pi pi-ban',
+          command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'REC')),
+        });
+      } else if (this.puedeRetroceder(e)) {
+        accionItems.push({
+          label: 'Retroceder',
+          icon: 'pi pi-backward',
+          command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.mostrarModalCrud(evento, 'RTO')),
+        });
       }
 
       accionItems.push({
@@ -317,6 +315,18 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     }
 
     this.menuItems.splice(0, this.menuItems.length, ...items);
+  }
+
+  esEtapaDeAutorizacion(valor: unknown): boolean {
+    return valor === true || valor === 'true';
+  }
+
+  puedeRetroceder(evento: EventoCompleto): boolean {
+    return (
+      !this.esEtapaDeAutorizacion(evento.etapaActualData?.deAutoriza) &&
+      evento.etapaActualData?.rollbackSec !== null &&
+      evento.etapaActualData?.rollbackSec !== undefined
+    );
   }
 
   private ejecutarSobreEventoSeleccionado(action: (evento: EventoCompleto) => void): void {

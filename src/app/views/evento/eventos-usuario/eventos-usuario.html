@@ -225,7 +225,7 @@
                                     <div class="d-flex justify-content-end" style="min-height: 55px;">
                                         @if (!evento.cerrado && !evento.tipo.propio) {
                                         @if (evento.etapaSiguiente) {
-                                        @if (evento.etapaActualData.deAutoriza) {
+                                         @if (esEtapaDeAutorizacion(evento.etapaActualData?.deAutoriza)) {
                                         <button class="btn btn-ghost-warning" placement="top" ngbTooltip="Autorizar"
                                             (click)="mostrarModalCrud(evento, 'AUT')"><ng-icon
                                                 name="lucideCircleCheckBig" /></button>
@@ -256,18 +256,18 @@
                                                 }     -->
                                         }
                                         }
-                                        @if (evento.etapaAnterior) {
-                                        @if (evento.etapaActualData.deAutoriza) {
+                                         @if (esEtapaDeAutorizacion(evento.etapaActualData?.deAutoriza) || puedeRetroceder(evento)) {
+                                         @if (esEtapaDeAutorizacion(evento.etapaActualData?.deAutoriza)) {
                                         <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Rechazar"
                                             (click)="mostrarModalCrud(evento, 'REC')"><ng-icon
                                                 name="lucideCircleSlash" /></button>
-                                        } @else {
+                                         } @else if (puedeRetroceder(evento)) {
                                         <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Retroceder"
-                                            (click)="mostrarModalCrud(evento, 'RTO')"><ng-icon
-                                                name="lucideRewind" /></button>
-                                        }
-                                        }
-                                        <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Reasignar"
+                                          (click)="mostrarModalCrud(evento, 'RTO')"><ng-icon
+                                             name="lucideRewind" /></button>
+                                          }
+                                         }
+                                         <button class="btn btn-ghost-danger" placement="top" ngbTooltip="Reasignar"
                                             (click)="mostrarModalCrud(evento, 'RAS')"><ng-icon
                                                 name="lucideRotateCcw" /></button>
                                         }

@@ -18,15 +18,15 @@ export class ItemAdjuntoComponent {
 
   // Mapeo de tipos a iconos Lucide
   iconosTipo: Record<string, string> = {
-    pdf: 'lucideFile-text',
+    pdf: 'lucideFileText',
     png: 'lucideImage',
     svg: 'lucideImage',
     jpg: 'lucideImage',
     jpeg: 'lucideImage',
-    xlsx: 'lucideFile-spreadsheet',
-    doc: 'lucideFile-text',
-    docx: 'lucideFile-text',
-    txt: 'lucideFile-text',
+    xlsx: 'lucideFileSpreadsheet',
+    doc: 'lucideFileText',
+    docx: 'lucideFileText',
+    txt: 'lucideFileText',
     default: 'lucideFile'
   };
 

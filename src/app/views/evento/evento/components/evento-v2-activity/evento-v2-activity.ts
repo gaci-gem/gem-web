@@ -8,6 +8,7 @@ import {
   inject,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { NgIcon } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { ItemActividadComponent } from '../item-actividad/item-actividad';
 import { EventoUsuario, VidaEvento } from '@core/interfaces/evento';
@@ -33,6 +34,7 @@ import {
   standalone: true,
   imports: [
     ButtonModule,
+    NgIcon,
     FormsModule,
     ItemActividadComponent,
     ComentarioTextoComponent,

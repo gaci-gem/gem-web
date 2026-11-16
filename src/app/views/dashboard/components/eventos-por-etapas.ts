@@ -11,7 +11,6 @@ import { ChartConfiguration } from 'chart.js'
 import { getColor } from '@/app/utils/color-utils'
 import { CountUpModule } from 'ngx-countup'
 import { DashboardService } from '@core/services/dashboard'
-import { finalize } from 'rxjs'
 
 @Component({
   selector: 'app-eventos-por-etapa',
@@ -71,12 +70,12 @@ export class EventosPorEtapa implements OnInit {
 
   ngOnInit(): void {
     this.dashboardService.getEventosPorEtapa()
-    .pipe(finalize(() => this.cdr.detectChanges()))
     .subscribe({
     next: (res) => {
       this.etapas = res.map(e => e.etapaNombre)
       this.ticketsPorEtapa = res.map(e => e.cantidad)
 
+      this.cdr.detectChanges()
       setTimeout(() => this.chartComp?.refresh(), 60)
     },
     error: (err) => console.error(err),

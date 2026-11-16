@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Evento } from '../evento/evento';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
   selector: 'app-evento-drawer',
@@ -38,10 +39,13 @@ import { ButtonModule } from 'primeng/button';
             <button
               pButton
               type="button"
-              icon="pi pi-times"
               class="p-button-text p-button-rounded p-button-sm"
+              aria-label="Cerrar evento"
+              title="Cerrar evento"
               (click)="drawerRef.close($event)"
-            ></button>
+            >
+              <ng-icon name="lucideX" aria-hidden="true" />
+            </button>
           </div>
           <div class="flex-grow-1 overflow-auto">
             @if (visible && eventoId) {
@@ -64,7 +68,7 @@ import { ButtonModule } from 'primeng/button';
       }
     }
   `,
-  imports: [DrawerModule, ButtonModule, Evento],
+  imports: [DrawerModule, ButtonModule, NgIcon, Evento],
 })
 export class EventoDrawerComponent {
   @Input() visible: boolean = false;

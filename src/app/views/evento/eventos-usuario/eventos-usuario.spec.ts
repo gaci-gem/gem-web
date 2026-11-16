@@ -329,7 +329,87 @@ describe('EventosUsuario - SSE Refresh', () => {
     expect(drawerServiceSpy.abrirEventoDrawer).toHaveBeenCalledWith('CUS-003');
   });
 
-  it('11. clearing filters resets date, table order, page and persists clean state once', async () => {
+  it('11. authorization stages show authorization actions and commands', () => {
+    const evento = {
+      id: 'AUT-001',
+      cerrado: false,
+      tipo: { propio: false },
+      etapaActualData: { deAutoriza: 'true', rollbackSec: null },
+      etapaSiguiente: {},
+      etapaAnterior: {},
+    } as any;
+    const mostrarModalCrudSpy = spyOn(component as any, 'mostrarModalCrud');
+
+    component.buildContextMenu(evento);
+
+    expect(component.menuItems.map((item) => item.label)).toContain('Autorizar');
+    expect(component.menuItems.map((item) => item.label)).toContain('Rechazar');
+    component.menuItems.find((item) => item.label === 'Autorizar')?.command?.({} as any);
+    component.menuItems.find((item) => item.label === 'Rechazar')?.command?.({} as any);
+    expect(mostrarModalCrudSpy).toHaveBeenCalledWith(evento, 'AUT');
+    expect(mostrarModalCrudSpy).toHaveBeenCalledWith(evento, 'REC');
+  });
+
+  it('12. non-authorization stages show advance actions, including serialized false', () => {
+    const evento = {
+      id: 'AVZ-001',
+      cerrado: false,
+      tipo: { propio: false },
+      etapaActualData: { deAutoriza: 'false', rollbackSec: 1 },
+      etapaSiguiente: {},
+      etapaAnterior: {},
+    } as any;
+    const mostrarModalCrudSpy = spyOn(component as any, 'mostrarModalCrud');
+
+    component.buildContextMenu(evento);
+
+    expect(component.menuItems.map((item) => item.label)).toContain('Avanzar');
+    expect(component.menuItems.map((item) => item.label)).toContain('Retroceder');
+    expect(component.menuItems.map((item) => item.label)).not.toContain('Autorizar');
+    expect(component.menuItems.map((item) => item.label)).not.toContain('Rechazar');
+    component.menuItems.find((item) => item.label === 'Avanzar')?.command?.({} as any);
+    component.menuItems.find((item) => item.label === 'Retroceder')?.command?.({} as any);
+    expect(mostrarModalCrudSpy).toHaveBeenCalledWith(evento, 'AVZ');
+    expect(mostrarModalCrudSpy).toHaveBeenCalledWith(evento, 'RTO');
+  });
+
+  it('13. no muestra retroceder en etapa normal sin rollback aunque exista historial', () => {
+    const evento = {
+      id: 'AVZ-002',
+      cerrado: false,
+      tipo: { propio: false },
+      etapaActualData: { deAutoriza: false, rollbackSec: null },
+      etapaSiguiente: {},
+      etapaAnterior: {},
+    } as any;
+
+    component.buildContextMenu(evento);
+
+    expect(component.menuItems.map((item) => item.label)).toContain('Avanzar');
+    expect(component.menuItems.map((item) => item.label)).not.toContain('Retroceder');
+  });
+
+  it('16. comparte las reglas de autorización y retroceso entre presentación y menú', () => {
+    const autorizacion = {
+      etapaActualData: { deAutoriza: true, rollbackSec: 1 },
+    } as any;
+    const conRollback = {
+      etapaActualData: { deAutoriza: 'false', rollbackSec: 2 },
+    } as any;
+    const sinRollback = {
+      etapaAnterior: {},
+      etapaActualData: { deAutoriza: false, rollbackSec: null },
+    } as any;
+
+    expect(component.esEtapaDeAutorizacion(true)).toBeTrue();
+    expect(component.esEtapaDeAutorizacion('true')).toBeTrue();
+    expect(component.esEtapaDeAutorizacion('1')).toBeFalse();
+    expect(component.puedeRetroceder(autorizacion)).toBeFalse();
+    expect(component.puedeRetroceder(conRollback)).toBeTrue();
+    expect(component.puedeRetroceder(sinRollback)).toBeFalse();
+  });
+
+  it('14. clearing filters resets date, table order, page and persists clean state once', async () => {
     await initComponent();
     eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
 
@@ -367,7 +447,7 @@ describe('EventosUsuario - SSE Refresh', () => {
     expect(eventoServiceSpy.getAllCompleteByUsuario).toHaveBeenCalledTimes(1);
   });
 
-  it('12. table filters reset the paginator and reload the server page', async () => {
+  it('14. table filters reset the paginator and reload the server page', async () => {
     await initComponent();
     eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
     component.table = { first: 20, rows: 10, filters: { titulo: [{ value: 'incident', matchMode: 'contains' }] } } as any;
@@ -382,7 +462,7 @@ describe('EventosUsuario - SSE Refresh', () => {
     }));
   });
 
-  it('13. paginator changes request the selected server page and preserve totals', async () => {
+  it('15. paginator changes request the selected server page and preserve totals', async () => {
     await initComponent();
     eventoServiceSpy.getAllCompleteByUsuario.calls.reset();
     eventoServiceSpy.getAllCompleteByUsuario.and.returnValue(of({

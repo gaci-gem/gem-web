@@ -5,19 +5,21 @@
       <button
         pButton
         type="button"
-        icon="pi pi-filter"
         class="p-button-text p-button-sm"
-        label="Filtrar"
         (click)="toggleFiltros()"
-      ></button>
+      >
+        <ng-icon name="lucideFilter"></ng-icon>
+        <span>Filtrar</span>
+      </button>
       <button
         pButton
         type="button"
-        icon="pi pi-refresh"
         class="p-button-text p-button-sm"
-        label="Refrescar"
         (click)="refreshActividad.emit()"
-      ></button>
+      >
+        <ng-icon name="lucideRefreshCw"></ng-icon>
+        <span>Refrescar</span>
+      </button>
     </div>
   </div>
 
@@ -29,9 +31,8 @@
           pButton
           type="button"
           class="p-button-text p-button-sm"
-          label="Limpiar"
           (click)="limpiarFiltros()"
-        ></button>
+        >Limpiar</button>
       </div>
 
       <div class="d-flex flex-wrap gap-2">
@@ -66,11 +67,13 @@
         <button
           pButton
           type="button"
-          label="Publicar"
           class="p-button-sm"
           [disabled]="loading || !comentario.trim()"
           (click)="onPublicar()"
-        ></button>
+        >
+          <ng-icon name="lucideSend"></ng-icon>
+          <span>Publicar</span>
+        </button>
       </div>
     </div>
   </div>

@@ -9,7 +9,7 @@
 				<div class="card border p-3 text-danger">{{ errorEvento || 'No se pudo cargar el evento.' }}</div>
 			}
 
-			@if (etapas && etapas.length > 0) {
+			@if (!evento?.tipo?.propio && etapas && etapas.length > 0) {
 				<app-evento-v2-stages [etapas]="etapas" [etapaActualSecuencia]="etapaActualSecuencia" />
 			}
 		</div>

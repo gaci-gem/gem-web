@@ -207,6 +207,7 @@ export interface EventoEtapa {
   deAutoriza?: boolean;
   puedeContinuar?: boolean;
   etapaFinal?: boolean;
+  rollbackSec?: number | null;
   requisitosFaltantes?: Requisito[];
   requisitos?: Requisito[];
 }

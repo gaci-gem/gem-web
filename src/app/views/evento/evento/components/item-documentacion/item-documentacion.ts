@@ -19,7 +19,7 @@ export class ItemDocumentacion {
 
   getIcon(): string {
     if (this.documento.esPrincipal) return 'lucideStar';
-    return 'lucideFile-text';
+    return 'lucideFileText';
   }
 
   
