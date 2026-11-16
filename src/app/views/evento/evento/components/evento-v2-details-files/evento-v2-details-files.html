@@ -25,7 +25,10 @@
     <button card-actions class="btn btn-icon btn-outline-info" (click)="onUploadAdjunto()" title="Subir adjunto">
       <ng-icon name="lucideCloudUpload"></ng-icon>
     </button>
-    <button card-actions pButton type="button" label="Refrescar" icon="pi pi-refresh" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshAdjuntos.emit()"></button>
+    <button card-actions pButton type="button" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshAdjuntos.emit()">
+      <ng-icon name="lucideRefreshCw"></ng-icon>
+      <span>Refrescar</span>
+    </button>
     <div card-body>
       @if (loadingAdjuntos) {
         <div class="border rounded p-3 bg-body-tertiary text-center small text-body-secondary">
@@ -51,7 +54,10 @@
 
   
   <app-ui-card title="Requisitos" [isTogglable]="true" [initialCollapsed]="false">
-    <button card-actions pButton type="button" label="Refrescar" icon="pi pi-refresh" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshRequisitos.emit()"></button>
+    <button card-actions pButton type="button" class="p-button-sm" severity="secondary" [outlined]="true" (click)="refreshRequisitos.emit()">
+      <ng-icon name="lucideRefreshCw"></ng-icon>
+      <span>Refrescar</span>
+    </button>
     <div card-body>
       @if (loadingRequisitos) {
         <div class="border rounded p-3 bg-body-tertiary text-center small text-body-secondary">
