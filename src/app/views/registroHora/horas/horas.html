@@ -19,12 +19,12 @@
                         <div class="col-md-4"><div class="border rounded p-2"><small class="text-muted d-block">Días con carga</small><strong>{{ resumenPeriodo.diasConCarga }}</strong></div></div>
                         <div class="col-md-4"><div class="border rounded p-2"><small class="text-muted d-block">Usuarios activos</small><strong>{{ resumenPeriodo.usuariosActivos }}</strong></div></div>
                     </div>
-                    <p-table #dt [value]="registrosHorasPorDia" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [tableStyle]="{ 'min-width': '75rem' }" dataKey="clave" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
-                        <ng-template #header><tr><th style="width: 4rem"></th><th pSortableColumn="fecha">Fecha <p-sorticon field="fecha"></p-sorticon></th><th>Usuarios</th><th>Total Día</th></tr></ng-template>
+                    <p-table #dt [value]="registrosHorasPorDia" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [scrollable]="true" [tableStyle]="{ 'min-width': '75rem' }" dataKey="clave" currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros" [showCurrentPageReport]="true" size="small">
+                        <ng-template #header><tr><th pFrozenColumn style="width: 4rem"></th><th pFrozenColumn pSortableColumn="fecha" style="min-width: 16rem">Fecha <p-sorticon field="fecha"></p-sorticon></th><th>Usuarios</th><th>Total Día</th></tr></ng-template>
                         <ng-template #body let-dia>
                             <tr>
-                                <td><p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expandedDias[dia.clave] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" (click)="alternarDia(dia)" [attr.aria-expanded]="!!expandedDias[dia.clave]" aria-label="Mostrar usuarios del día" /></td>
-                                <td>{{ dia.fecha | date:'fullDate' }}</td><td>{{ dia.usuarios.length }}</td><td>{{ dia.totalHorasFormateadas }} hs.</td>
+                                 <td pFrozenColumn><p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expandedDias[dia.clave] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" (click)="alternarDia(dia)" [attr.aria-expanded]="!!expandedDias[dia.clave]" aria-label="Mostrar usuarios del día" /></td>
+                                 <td pFrozenColumn style="min-width: 16rem">{{ dia.fecha | date:'fullDate' }}</td><td>{{ dia.usuarios.length }}</td><td>{{ dia.totalHorasFormateadas }} hs.</td>
                             </tr>
                             @if (expandedDias[dia.clave]) {
                                 <tr><td colspan="4">

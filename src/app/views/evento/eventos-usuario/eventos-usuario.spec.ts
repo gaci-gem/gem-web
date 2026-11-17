@@ -476,4 +476,33 @@ describe('EventosUsuario - SSE Refresh', () => {
     expect(component.totalEventos).toBe(27);
   });
 
+  it('16. preserves array and scalar table filter values when capturing and restoring state', () => {
+    const etapa = ['etapa-1', 'etapa-2'];
+    const table = {
+      filters: {
+        etapa: [{ value: etapa, matchMode: 'in' }],
+        titulo: [{ value: 'incident', matchMode: 'contains' }],
+      },
+      first: () => 0,
+      rows: () => 10,
+    } as any;
+
+    const state = (component as any).captureTableState(table);
+    expect(state.columnFilters.etapa.value).toEqual(etapa);
+    expect(state.columnFilters.etapa.value).not.toBe(etapa);
+    expect(state.columnFilters.titulo.value).toBe('incident');
+
+    const restoredTable = {
+      clear: jasmine.createSpy('clear'),
+      filter: jasmine.createSpy('filter'),
+      first: { set: jasmine.createSpy('set') },
+      rows: { set: jasmine.createSpy('set') },
+    } as any;
+    (component as any).restoreTableState(state, restoredTable);
+
+    expect(restoredTable.filter).toHaveBeenCalledWith(etapa, 'etapa', 'in');
+    expect(restoredTable.filter).toHaveBeenCalledWith('incident', 'titulo', 'contains');
+    expect(restoredTable.filter.calls.argsFor(0)[0]).not.toBe(etapa);
+  });
+
 });
