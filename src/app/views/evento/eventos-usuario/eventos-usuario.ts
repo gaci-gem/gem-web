@@ -66,6 +66,7 @@ import { CdkDrag, CdkDragHandle, CdkDropList, CdkDragDrop, moveItemInArray } fro
 import { Cog } from '@primeicons/angular/cog';
 import { Refresh } from '@primeicons/angular/refresh';
 import { Bars } from '@primeicons/angular/bars';
+import { PreferenciasColumnasService } from '@core/services/preferencias-columnas.service';
 
 interface ColumnaEvento {
   field: string;
@@ -118,6 +119,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
   private userStorageService = inject(UserStorageService);
+  private preferenciasColumnasService = inject(PreferenciasColumnasService);
   private eventoTrabajoService = inject(EventoTrabajoService);
   private drawerService = inject(DrawerService);
   private sseService = inject(SseService);
@@ -182,11 +184,13 @@ export class EventosUsuario extends TrabajarCon<Evento> {
         (seleccionada) => seleccionada.field !== columna.field,
       );
     }
+    this.guardarPreferenciasColumnas();
   }
 
   ordenarColumnas(event: CdkDragDrop<ColumnaEvento[]>): void {
     moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
     this.columnas = [...this.columnas];
+    this.guardarPreferenciasColumnas();
   }
 
   restablecerColumnas(): void {
@@ -194,6 +198,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.columnasSeleccionadas = this.columnasIniciales.filter(
       (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
     );
+    this.guardarPreferenciasColumnas();
   }
 
   constructor() {
@@ -216,6 +221,7 @@ export class EventosUsuario extends TrabajarCon<Evento> {
   }
 
   override ngOnInit(): void {
+    this.restaurarPreferenciasColumnas();
     const restored = this.restoreFilterSession() as EventoFilterState | null;
     this.filtroActivo = restored?.filtroActivo as FiltroActivo ?? this.filtroActivo;
     if (restored && Object.prototype.hasOwnProperty.call(restored, 'fecha')) {
@@ -315,6 +321,28 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     }
 
     this.menuItems = items;
+  }
+
+  private restaurarPreferenciasColumnas(): void {
+    const estado = this.preferenciasColumnasService.restaurar(
+      this.pantalla,
+      this.usuarioActivo?.id,
+      this.columnasIniciales.map((columna) => columna.field),
+      this.columnasIniciales
+        .filter((columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field))
+        .map((columna) => columna.field),
+    );
+    const porCampo = new Map(this.columnasIniciales.map((columna) => [columna.field, columna]));
+    this.columnas = estado.orden.map((campo) => porCampo.get(campo)).filter((columna): columna is ColumnaEvento => !!columna);
+    const visibles = new Set(estado.visibles);
+    this.columnasSeleccionadas = this.columnas.filter((columna) => visibles.has(columna.field));
+  }
+
+  private guardarPreferenciasColumnas(): void {
+    this.preferenciasColumnasService.guardar(this.pantalla, this.usuarioActivo?.id, {
+      orden: this.columnas.map((columna) => columna.field),
+      visibles: this.columnasSeleccionadas.map((columna) => columna.field),
+    });
   }
 
   esEtapaDeAutorizacion(valor: unknown): boolean {
@@ -952,9 +980,12 @@ export class EventosUsuario extends TrabajarCon<Evento> {
     this.columnasSeleccionadas = this.columnasIniciales.filter(
       (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
     );
+    this.guardarPreferenciasColumnas();
   }
   drop(event: CdkDragDrop<ColumnaEvento[]>) {
       moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
+      this.columnas = [...this.columnas];
+      this.guardarPreferenciasColumnas();
   }
 
 }

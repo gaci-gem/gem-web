@@ -81,19 +81,18 @@
                          <span class="p-input-icon-left"><i class="pi pi-search"></i><input pInputText type="text" (input)="onGlobalFilter($event)" placeholder="Buscar..." /></span>
                         <div class="flex align-items-center gap-1"><label for="filtroFechas" class="me-1">Fecha:</label><p-datepicker id="filtroFechas" [(ngModel)]="dateFilter" view="month" dateFormat="mm/yy" [readonlyInput]="true" (onClose)="consultarRegistros(dateFilter)"></p-datepicker></div>
                     </div>
-                        <p-table #dt [value]="registrosHorasFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)"
+                        <p-table #dt [value]="registrosHorasFiltradas" [rows]="rows" [rowsPerPageOptions]="[5, 10, 15, 25, 50]" [first]="first" [totalRecords]="totalRecords" [paginator]="true" [lazy]="true" (onPage)="onPageChange($event)" (onSort)="onSort($event)" [scrollable]="true"
                         [globalFilterFields]="['id', 'fecha', 'usuario.usuario', 'horasTotales']"
                         [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
                         currentPageReportTemplate="Mostrando desde {first} a {last} de {totalRecords} registros"
                          [showCurrentPageReport]="true" size="small">
                         <ng-template #header>
                             <tr>
-                                <th style="width: 4rem">
+                                <th pFrozenColumn style="width: 4rem">
 
                                 </th>
                                 <th pSortableColumn="id" hidden>Id <p-sorticon field="id"></p-sorticon></th>
-                                <th pSortableColumn="fecha">Fecha <p-sorticon field="fecha"></p-sorticon></th>
-                                <th pSortableColumn="createdAt">Creado <p-sorticon field="createdAt"></p-sorticon></th>
+                                <th pFrozenColumn pSortableColumn="fecha" style="min-width: 16rem">Fecha <p-sorticon field="fecha"></p-sorticon></th>
                                 <th>Usuario</th>
                                 <th>Total Dia</th>
                                 <th></th>
@@ -101,15 +100,14 @@
                         </ng-template>
                         <ng-template #body let-registro let-expanded="expanded">
                             <tr style="min-height: 55px;">
-                                <td style="width: 10px">
+                                <td pFrozenColumn style="width: 10px">
                                     <p-button type="button" pRipple [pRowToggler]="registro" [text]="true"
                                         severity="secondary" [rounded]="true"
                                         [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
                                 </td>
                                 <td hidden>{{ registro.id }}</td>
                                 <!-- <td>{{ registro.fecha | date:'EEEE, dd MMMM yy'}}</td> -->
-                                <td>{{ registro.fecha | date:'fullDate'}}</td>
-                                <td>{{ registro.createdAt | date:'short' }}</td>
+                                <td pFrozenColumn style="min-width: 16rem">{{ registro.fecha | date:'fullDate'}}</td>
                                 <td>{{ registro.usuario.usuario }}</td>
                                 <!-- <td>{{ registro.horasTotales | number:'.0-2' }} hs.</td> -->
                                 <td>{{ registro.horasTotalesFormateadas }} hs.</td>
@@ -127,7 +125,7 @@
                         </ng-template>
                         <ng-template #expandedrow let-horas>
                             <tr>
-                                 <td colspan="7">
+                                  <td colspan="6">
                                     <div class="p-3">
                                         <p-table [value]="horas.horas" dataKey="id">
                                             <ng-template #header>

@@ -1,8 +1,15 @@
 export type FiltroState = Record<string, unknown>;
 
+export interface TablaFilterMetadata {
+  value: unknown;
+  matchMode: string;
+  operator?: string;
+  [key: string]: unknown;
+}
+
 export interface TablaFilterState {
   globalFilter: string;
-  columnFilters: Record<string, { value: string; matchMode: string }>;
+  columnFilters: Record<string, TablaFilterMetadata | TablaFilterMetadata[]>;
   sortField: string | null;
   sortOrder: 1 | -1 | 0;
   first: number;

@@ -49,6 +49,7 @@ import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray } from '@angular/cdk
 import { Cog } from '@primeicons/angular/cog';
 import { Refresh } from '@primeicons/angular/refresh';
 import { Bars } from '@primeicons/angular/bars';
+import { PreferenciasColumnasService } from '@core/services/preferencias-columnas.service';
 
 interface ColumnaEvento {
   field: string;
@@ -100,6 +101,7 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
   private dialogService = inject(DialogService);
   ref!: DynamicDialogRef | null;
   private userStorageService = inject(UserStorageService);
+  private preferenciasColumnasService = inject(PreferenciasColumnasService);
   private eventoAccionesService = inject(EventoAccionesService);
   private drawerService = inject(DrawerService);
   private eventCommandService = inject(EventCommandService);
@@ -151,11 +153,13 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     this.columnasSeleccionadas = visible
       ? [...this.columnasSeleccionadas, columna]
       : this.columnasSeleccionadas.filter((seleccionada) => seleccionada.field !== columna.field);
+    this.guardarPreferenciasColumnas();
   }
 
   ordenarColumnas(event: CdkDragDrop<ColumnaEvento[]>): void {
     moveItemInArray(this.columnas, event.previousIndex, event.currentIndex);
     this.columnas = [...this.columnas];
+    this.guardarPreferenciasColumnas();
   }
 
   restablecerColumnas(): void {
@@ -163,9 +167,11 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     this.columnasSeleccionadas = this.columnasIniciales.filter(
       (columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field),
     );
+    this.guardarPreferenciasColumnas();
   }
 
   override ngOnInit(): void {
+    this.restaurarPreferenciasColumnas();
     const restored = this.restoreFilterSession() as EventoFilterState | null;
     this.filtroActivo = restored?.filtroActivo as FiltroActivo ?? FiltroActivo.FALSE;
     if (restored && Object.prototype.hasOwnProperty.call(restored, 'fecha')) {
@@ -177,6 +183,28 @@ export class Eventos extends TrabajarCon<Evento> implements AfterViewInit {
     this.searchValue.set(this.globalFilter);
     this.loadPresets();
     this.loadItems();
+  }
+
+  private restaurarPreferenciasColumnas(): void {
+    const estado = this.preferenciasColumnasService.restaurar(
+      this.pantalla,
+      this.usuarioActivo?.id,
+      this.columnasIniciales.map((columna) => columna.field),
+      this.columnasIniciales
+        .filter((columna) => !['ultimaEtapa', 'horasEstimadas', 'horasReales'].includes(columna.field))
+        .map((columna) => columna.field),
+    );
+    const porCampo = new Map(this.columnasIniciales.map((columna) => [columna.field, columna]));
+    this.columnas = estado.orden.map((campo) => porCampo.get(campo)).filter((columna): columna is ColumnaEvento => !!columna);
+    const visibles = new Set(estado.visibles);
+    this.columnasSeleccionadas = this.columnas.filter((columna) => visibles.has(columna.field));
+  }
+
+  private guardarPreferenciasColumnas(): void {
+    this.preferenciasColumnasService.guardar(this.pantalla, this.usuarioActivo?.id, {
+      orden: this.columnas.map((columna) => columna.field),
+      visibles: this.columnasSeleccionadas.map((columna) => columna.field),
+    });
   }
 
   ngAfterViewInit(): void {

@@ -10,11 +10,29 @@ import { LoadingService } from '@core/services/loading.service';
 import { PermisosService } from '@core/services/permisos';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
-import { FiltroPreset, FiltroState, TablaFilterState } from '@core/interfaces/filtro-preset';
+import { FilterMetadata } from 'primeng/api';
+import { FiltroPreset, FiltroState, TablaFilterMetadata, TablaFilterState } from '@core/interfaces/filtro-preset';
 import { FiltroPresetService } from '@core/services/filtro-preset';
 import { UserStorageService } from '@core/services/user-storage';
 import { ShortcutService } from '@core/services/shortcut';
 import { FiltroPresetsComponent } from '@app/components/filtro-presets/filtro-presets';
+
+type CompatibleTable = Table & {
+  /** El flujo restoreState de PrimeNG usa estos hooks internos de forma atómica. */
+  restoringFilter?: boolean;
+  _filter?: () => void;
+};
+type RestoredFilterMetadata = FilterMetadata & { applyFilter: true };
+
+function cloneFilterMetadata<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(item => cloneFilterMetadata(item)) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [key, cloneFilterMetadata(nestedValue)]),
+    ) as T;
+  }
+  return value;
+}
 
 export type CrudViewAction<T> = (item: T) => void;
 
@@ -96,10 +114,17 @@ export abstract class TrabajarCon<T> {
   protected captureTableState(table?: Table): TablaFilterState {
     const columnFilters = Object.entries(table?.filters ?? {}).reduce(
       (result, [field, value]: [string, any]) => {
-        const filter = Array.isArray(value) ? value[0] : value;
-        if (filter?.value !== null && filter?.value !== undefined && filter.value !== '') {
-          result[field] = { value: String(filter.value), matchMode: filter.matchMode || 'contains' };
-        }
+        const filters = (Array.isArray(value) ? value : [value]).filter(filter =>
+          filter?.value !== null && filter?.value !== undefined && filter.value !== '',
+        );
+        if (!filters.length) return result;
+
+        const metadata = filters.map(filter => ({
+          ...cloneFilterMetadata(filter),
+          value: cloneFilterMetadata(filter.value),
+          matchMode: filter.matchMode || 'contains',
+        })) as TablaFilterMetadata[];
+        result[field] = metadata.length === 1 ? metadata[0] : metadata;
         return result;
       },
       {} as TablaFilterState['columnFilters'],
@@ -118,11 +143,36 @@ export abstract class TrabajarCon<T> {
   protected restoreTableState(state: FiltroState, table?: Table): void {
     if (!table) return;
     const tableState = state as Partial<TablaFilterState>;
-    table.clear();
-    if (tableState.globalFilter) table.filterGlobal(tableState.globalFilter, 'contains');
+    const compatibleTable = table as CompatibleTable;
+    const filters: Record<string, RestoredFilterMetadata | RestoredFilterMetadata[]> = {};
+
+    if (tableState.globalFilter) {
+      filters['global'] = {
+        value: tableState.globalFilter,
+        matchMode: 'contains',
+        applyFilter: true,
+      };
+    }
+
     Object.entries(tableState.columnFilters ?? {}).forEach(([field, filter]) => {
-      table.filter(filter.value, field, filter.matchMode);
+      const metadata = (Array.isArray(filter) ? filter : [filter]).filter(item =>
+        item && typeof item === 'object' && typeof item.matchMode === 'string' &&
+        item.value !== null && item.value !== undefined && item.value !== '',
+      );
+      if (!metadata.length) return;
+      filters[field] = metadata.map(item => ({
+        ...cloneFilterMetadata(item),
+        value: cloneFilterMetadata(item.value),
+        matchMode: item.matchMode,
+        applyFilter: true,
+      }));
     });
+
+    compatibleTable.restoringFilter = true;
+    compatibleTable.filters = filters as Table['filters'];
+    compatibleTable._filter?.();
+    compatibleTable.restoringFilter = false;
+
     if (typeof tableState.first === 'number') table.first.set(tableState.first);
     if (typeof tableState.rows === 'number') table.rows.set(tableState.rows);
     if (tableState.sortField) {
