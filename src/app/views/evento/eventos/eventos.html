@@ -95,7 +95,7 @@
                     <div class="flex align-items-center" style="justify-content: space-around" >
                          Evento
                          <p-sorticon field="numero"></p-sorticon>
-                        <p-columnfilter type="text" field="eventoSearch" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                          <p-columnfilter type="text" field="eventoSearch" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                 </th>
                   @for (columna of columns; track columna.field) {
@@ -103,44 +103,44 @@
                   @case ('titulo') { <th class="columna-titulo">
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Titulo
-                        <p-columnfilter type="text" field="titulo" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="titulo" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('etapa') { <th class="columna-etapa" filterField="etapaActualData.nombre" >
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Etapa
-                        <p-columnfilter type="text" field="etapaActualData.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="etapaActualData.nombre" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('ultimaEtapa') { <th class="columna-etapa" filterField="etapaAnterior.nombre" >
                      <div class="flex align-items-center" style="justify-content: space-around" >
                          Última etapa
-                         <p-columnfilter type="text" field="etapaAnterior.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="etapaAnterior.nombre" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                      </div>
                   </th> }
                    @case ('cliente') { <th class="columna-cliente" filterField="cliente.nombre" >
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Cliente
-                        <p-columnfilter type="text" field="cliente.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="cliente.nombre" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('producto') { <th class="columna-producto" filterField="producto.nombre" >
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Producto
-                        <p-columnfilter type="text" field="producto.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="producto.nombre" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('modulo') { <th class="columna-modulo" filterField="modulo.nombre">
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Modulo
-                        <p-columnfilter type="text" field="modulo.nombre" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="modulo.nombre" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('prioridad') { <th class="columna-prioridad" pSortableColumn="prioridadFin"> Prioridad <p-sorticon field="prioridadFin"></p-sorticon></th> }
                    @case ('usuario') { <th class="columna-usuario" filterField="usuarioActual.usuario" >
                     <div class="flex align-items-center" style="justify-content: space-around" >
                         Usuario
-                        <p-columnfilter type="text" field="usuarioActual.usuario" display="menu" matchMode="contains" style="margin-left: 2px" ></p-columnfilter>
+                         <p-columnfilter type="text" field="usuarioActual.usuario" display="menu" matchMode="contains" filterOn="input" style="margin-left: 2px" ></p-columnfilter>
                     </div>
                  </th> }
                    @case ('alta') { <th class="columna-fecha" pSortableColumn="createdAt">Alta <p-sorticon field="createdAt"></p-sorticon></th> }

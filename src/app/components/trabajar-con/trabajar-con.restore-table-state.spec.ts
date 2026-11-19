@@ -31,7 +31,9 @@ describe('TrabajarCon.restoreTableState', () => {
     const filterCycles: unknown[] = [];
     const etiquetas = ['uno', 'dos'];
     const table = {
-      filters: { obsolete: { value: 'old', matchMode: 'contains' } },
+       filters: {
+         'etapaActualData.nombre': [{ value: null, matchMode: 'contains', operator: 'and' }],
+       },
       _filter: () => filterCycles.push(true),
       first: { set: jasmine.createSpy('first.set') },
       rows: { set: jasmine.createSpy('rows.set') },
@@ -52,12 +54,13 @@ describe('TrabajarCon.restoreTableState', () => {
     }, table);
 
     expect(table.filters as any).toEqual({
-      'cliente.nombre': [{ value: 'gaci', matchMode: 'contains', applyFilter: true }],
-      etiquetas: [{ value: ['uno', 'dos'], matchMode: 'in', applyFilter: true }],
+      'etapaActualData.nombre': [{ value: null, matchMode: 'contains', operator: 'and' }],
+      'cliente.nombre': [{ value: 'gaci', matchMode: 'contains', operator: 'and', applyFilter: true }],
+      etiquetas: [{ value: ['uno', 'dos'], matchMode: 'in', operator: 'and', applyFilter: true }],
     });
     expect(filterCycles).toHaveSize(1);
     expect((table.filters as any)['cliente.nombre']).toEqual([
-      { value: 'gaci', matchMode: 'contains', applyFilter: true },
+      { value: 'gaci', matchMode: 'contains', operator: 'and', applyFilter: true },
     ]);
     expect((table.filters as any).etiquetas[0].value).toEqual(['uno', 'dos']);
     expect((table.filters as any).etiquetas[0].value).not.toBe(etiquetas);

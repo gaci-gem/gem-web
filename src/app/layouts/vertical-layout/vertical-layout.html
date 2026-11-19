@@ -7,6 +7,15 @@
 }
 
 <div class="wrapper">
+  @if (updateAvailable) {
+    <div class="alert alert-warning alert-dismissible mb-0 rounded-0 text-center" role="alert">
+      Hay una nueva versión disponible. Actualizá la aplicación para continuar con los últimos cambios.
+      <button type="button" class="btn btn-warning btn-sm ms-2" (click)="reloadApplication()">
+        Actualizar ahora
+      </button>
+    </div>
+  }
+
   <app-topbar />
 
   <app-sidenav />

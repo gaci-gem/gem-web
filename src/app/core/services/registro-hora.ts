@@ -1,7 +1,7 @@
 import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Categoria, HorasPorCategoriaResponse, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
+import { Categoria, Hora, HorasPorCategoriaResponse, RegistroHora, UsuarioHorasGenerales } from '@core/interfaces/registro-hora';
 import { Page, PaginatedResponse } from '@core/interfaces/paginated-response';
 import { extractData } from '@core/operators/extract-data.operator';
 import { map, Observable } from 'rxjs';
@@ -84,6 +84,14 @@ export class RegistroHoraService {
 
   create(registro:RegistroHora): Observable<RegistroHora> {
     return this.http.post<RegistroHora>(`${this.URL_COMPLETA}/registro-hora`, registro);
+  }
+
+  cargarHoraHoy(fecha: string, hora: Pick<Hora, 'eventoId' | 'inicio' | 'fin' | 'categoriaCodigo' | 'detalle'>): Observable<Hora> {
+    return this.http.post<Hora>(`${this.URL_COMPLETA}/registro-hora/hoy`, { fecha, ...hora });
+  }
+
+  obtenerHorasDelDia(fecha: string): Observable<{ fecha: string; horas: Hora[] }> {
+    return this.http.get<{ fecha: string; horas: Hora[] }>(`${this.URL_COMPLETA}/registro-hora/hoy?fecha=${encodeURIComponent(fecha)}`);
   }
 
   update(registroId:number, registro:RegistroHora): Observable<RegistroHora> {

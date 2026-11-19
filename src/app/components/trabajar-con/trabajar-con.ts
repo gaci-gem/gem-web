@@ -144,7 +144,9 @@ export abstract class TrabajarCon<T> {
     if (!table) return;
     const tableState = state as Partial<TablaFilterState>;
     const compatibleTable = table as CompatibleTable;
-    const filters: Record<string, RestoredFilterMetadata | RestoredFilterMetadata[]> = {};
+    const filters: Record<string, RestoredFilterMetadata | RestoredFilterMetadata[]> = {
+      ...(compatibleTable.filters as Record<string, RestoredFilterMetadata | RestoredFilterMetadata[]>),
+    };
 
     if (tableState.globalFilter) {
       filters['global'] = {
@@ -160,12 +162,14 @@ export abstract class TrabajarCon<T> {
         item.value !== null && item.value !== undefined && item.value !== '',
       );
       if (!metadata.length) return;
-      filters[field] = metadata.map(item => ({
+      const restoredMetadata = metadata.map(item => ({
         ...cloneFilterMetadata(item),
         value: cloneFilterMetadata(item.value),
         matchMode: item.matchMode,
-        applyFilter: true,
+        operator: item.operator || 'and',
+        applyFilter: true as const,
       }));
+      filters[field] = restoredMetadata;
     });
 
     compatibleTable.restoringFilter = true;

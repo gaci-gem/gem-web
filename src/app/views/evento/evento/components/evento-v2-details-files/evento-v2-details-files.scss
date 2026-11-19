@@ -38,6 +38,7 @@
 }
 
 .requisitos-table .requisito-valor-row td {
+  width: 100%;
   padding-top: 0.35rem;
   padding-bottom: 0.75rem;
 }
@@ -65,6 +66,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.35rem;
+  width: 100%;
   min-width: 0;
 }
 
@@ -79,8 +81,77 @@
   min-height: 2rem;
 }
 
-.requisito-copiar {
+.requisito-valor-acciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
   flex: 0 0 auto;
+}
+
+.requisito-editar,
+.requisito-copiar {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+}
+
+.requisito-edicion-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.requisito-edicion-fila > .form-control,
+.requisito-edicion-fila > .form-select {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.requisito-edicion-acciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.requisito-edicion-accion {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.requisito-edicion-guardar {
+  border: 1px solid var(--ins-border-color);
+  background: transparent;
+  color: var(--ins-heading-color);
+}
+
+.requisito-edicion-guardar:hover {
+  border-color: var(--ins-primary-border-subtle, var(--bs-primary));
+  background: var(--ins-primary-bg-subtle, var(--bs-tertiary-bg));
+  color: var(--ins-primary-text-emphasis, var(--bs-primary));
+}
+
+.requisito-edicion-cancelar {
+  border: 1px solid transparent;
+  color: var(--bs-secondary-color);
+}
+
+.requisito-edicion-cancelar:hover {
+  border-color: var(--ins-border-color);
+  background: var(--ins-secondary-bg);
+  color: var(--ins-heading-color);
+}
+
+.requisito-edicion-accion:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 
 .req-status {

@@ -16,6 +16,22 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.6.4',
+    date: '2026-11-19',
+    changes: [
+      {
+        type: 'feature',
+        text: 'La administración de eventos permite editar los valores de sus requisitos cuando corresponde.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'improvement',
+        text: 'Ajustamos la presentación de los formularios de eventos y carga de horas para mejorar la lectura y el uso en distintas pantallas.',
+        link: '/evento/eventos',
+      },
+    ],
+  },
+  {
     version: '0.6.0',
     date: '2026-11-13',
     changes: [

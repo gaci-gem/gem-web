@@ -67,6 +67,9 @@ import { Cog } from '@primeicons/angular/cog';
 import { Refresh } from '@primeicons/angular/refresh';
 import { Bars } from '@primeicons/angular/bars';
 import { PreferenciasColumnasService } from '@core/services/preferencias-columnas.service';
+import { buildPermiso } from '@/app/utils/permiso-utils';
+import { PermisoAccion } from '@/app/types/permisos';
+import { HoraCrud } from '../../registroHora/hora-crud/hora-crud';
 
 interface ColumnaEvento {
   field: string;
@@ -320,7 +323,38 @@ export class EventosUsuario extends TrabajarCon<Evento> {
       );
     }
 
+    if (!e.cerrado && this.puedeCargarHora()) {
+      items.push({
+        label: 'Cargar registro Hora',
+        icon: 'pi pi-clock',
+        command: () => this.ejecutarSobreEventoSeleccionado((evento) => this.abrirCargaHora(evento)),
+      });
+    }
+
     this.menuItems = items;
+  }
+
+  private puedeCargarHora(): boolean {
+    return this.permisosService.can(buildPermiso(PermisoClave.EVENTO, PermisoAccion.MODIFICAR));
+  }
+
+  private abrirCargaHora(evento: EventoCompleto): void {
+    const ref = this.dialogService.open(HoraCrud, {
+      ...modalConfig,
+      header: 'Cargar registro Hora',
+      data: {
+        item: null,
+        modo: 'A',
+        modoCargaDesdeEvento: true,
+        eventoIdPreseleccionado: evento.id,
+        evento,
+        eventoTitulo: evento.titulo,
+        categoriaSugerida: evento.categoriaSugerida || null,
+      },
+    });
+    ref?.onClose.subscribe((result: unknown) => {
+      if (result) this.loadItems();
+    });
   }
 
   private restaurarPreferenciasColumnas(): void {
