@@ -10,14 +10,25 @@ import { FileUploader } from '@app/components/file-uploader/file-uploader';
 import { PaginasLibresModal } from '../paginas-libres-modal/paginas-libres-modal';
 import { modalConfig } from '@/app/types/modals';
 import { UserStorageService } from '@core/services/user-storage';
-import { NgIcon } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideCopy, lucidePencil, lucideX } from '@ng-icons/lucide';
 import { HorasPorCategoriaResponse } from '@core/interfaces/registro-hora';
+import { PermisosService } from '@core/services/permisos';
+import { Tipo_requisito } from '@core/interfaces/etapa';
+import { FormsModule } from '@angular/forms';
 
 export interface EventoV2Requisito {
+  requisitoId?: number;
+  tipo?: Tipo_requisito;
   cumplido: boolean;
   requisito: string;
   etapa: string;
   valor: string;
+  valorTexto?: string;
+  valorNumero?: number;
+  valorFecha?: Date | string;
+  valorBooleano?: boolean;
+  url?: string;
 }
 
 export interface EstimacionDetalle {
@@ -51,16 +62,25 @@ export interface EstimacionDetalle {
     ItemDocumentacion,
     ItemAdjuntoComponent,
     NgIcon,
+    FormsModule,
   ],
   templateUrl: './evento-v2-details-files.html',
   styleUrl: './evento-v2-details-files.scss',
-  providers: [DialogService],
+  providers: [
+    DialogService,
+    provideIcons({ lucideCheck, lucideCopy, lucidePencil, lucideX }),
+  ],
 })
 export class EventoV2DetailsFilesComponent {
   private eventoService = inject(EventoService);
   private dialogService = inject(DialogService);
   private userStorageService = inject(UserStorageService);
+  private permisosService = inject(PermisosService);
   private usuarioActivo = this.userStorageService.getUsuario();
+  readonly puedeEditarRequisitos = this.permisosService.getPermisos().includes('SYS.ADMIN');
+  requisitoEditando: number | null = null;
+  valorEdicion: string | boolean | number = '';
+  guardandoRequisito = false;
 
   @Input({ required: true }) requisitos!: EventoV2Requisito[];
   @Input({ required: true }) documentacion!: EventoDocumentacion[];
@@ -148,5 +168,49 @@ export class EventoV2DetailsFilesComponent {
   copiarValor(valor: string): void {
     if (!valor || !navigator.clipboard) return;
     void navigator.clipboard.writeText(valor);
+  }
+
+  editarRequisito(req: EventoV2Requisito): void {
+    if (!this.puedeEditarRequisitos) return;
+    if (req.requisitoId === undefined) return;
+    this.requisitoEditando = req.requisitoId;
+    this.valorEdicion = this.valorOriginal(req);
+  }
+
+  cancelarEdicion(): void {
+    this.requisitoEditando = null;
+  }
+
+  guardarRequisito(req: EventoV2Requisito): void {
+    if (!this.puedeEditarRequisitos || !this.eventoId || this.guardandoRequisito || req.requisitoId === undefined || !req.tipo) return;
+    const dto = this.valorDto(req);
+    this.guardandoRequisito = true;
+    this.eventoService.updateEventoRequisito(this.eventoId, String(req.requisitoId), dto).subscribe({
+      next: () => {
+        this.guardandoRequisito = false;
+        this.requisitoEditando = null;
+        this.refreshRequisitos.emit();
+      },
+      error: (err) => {
+        this.guardandoRequisito = false;
+        console.error('Error al actualizar requisito:', err);
+      },
+    });
+  }
+
+  private valorOriginal(req: EventoV2Requisito): string | boolean | number {
+    if (req.tipo === Tipo_requisito.boolean) return req.valorBooleano ?? false;
+    if (req.tipo === Tipo_requisito.numeric) return req.valorNumero ?? '';
+    if (req.tipo === Tipo_requisito.date && req.valorFecha) {
+      return String(req.valorFecha).slice(0, 10);
+    }
+    return req.valorTexto ?? '';
+  }
+
+  private valorDto(req: EventoV2Requisito): Record<string, unknown> {
+    if (req.tipo === Tipo_requisito.boolean) return { valorBooleano: Boolean(this.valorEdicion) };
+    if (req.tipo === Tipo_requisito.numeric) return { valorNumero: Number(this.valorEdicion) };
+    if (req.tipo === Tipo_requisito.date) return { valorFecha: String(this.valorEdicion) };
+    return { valorTexto: String(this.valorEdicion) };
   }
 }

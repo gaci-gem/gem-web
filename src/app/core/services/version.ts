@@ -10,6 +10,14 @@ export interface AppVersion {
   build?: string;
 }
 
+export function hasPublishedVersionChanged(current: AppVersion, published: AppVersion): boolean {
+  if (current.commitHash && published.commitHash) {
+    return current.commitHash !== published.commitHash;
+  }
+
+  return current.version !== published.version || current.buildTime !== published.buildTime;
+}
+
 export interface RuntimeConfig {
   environment?: 'test' | 'prod' | string;
   license?: string;
@@ -58,6 +66,13 @@ export class VersionService {
         .get<AppVersion>('assets/version.json?nocache=' + Date.now())
         .pipe(shareReplay(1));
     }
+    return this.version$;
+  }
+
+  refreshVersion(): Observable<AppVersion> {
+    this.version$ = this.http
+      .get<AppVersion>('assets/version.json?nocache=' + Date.now())
+      .pipe(shareReplay(1));
     return this.version$;
   }
 

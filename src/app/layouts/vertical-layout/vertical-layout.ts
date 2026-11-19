@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import { SidenavComponent } from '@layouts/components/sidenav/sidenav.component'
 import { Topbar } from '@layouts/components/topbar/topbar'
-import { debounceTime, fromEvent, Subscription } from 'rxjs'
+import { debounceTime, fromEvent, interval, Subscription, switchMap } from 'rxjs'
 import { LayoutStoreService } from '@core/services/layout-store.service'
 import { EventoCronometroComponent } from '@app/components/evento-cronometro';
 import { Footer } from '@layouts/components/footer/footer'
@@ -11,7 +11,7 @@ import { GreetingBannerComponent } from '@app/components/greeting-banner/greetin
 import { DialogService } from 'primeng/dynamicdialog'
 import { CHANGELOG } from '@core/services/changelog'
 import { ChangelogModalComponent } from '@views/changelog/changelog-modal'
-import { shouldShowChangelog } from '@core/services/version'
+import { hasPublishedVersionChanged, shouldShowChangelog, VersionService } from '@core/services/version'
 
 @Component({
   selector: 'app-vertical-layout',
@@ -36,6 +36,9 @@ export class VerticalLayout implements OnInit, OnDestroy {
   @ViewChild(EventoCronometroComponent) cronometroComponent!: EventoCronometroComponent;
 
   private dialogService = inject(DialogService);
+  private versionService = inject(VersionService);
+  private versionSubscription?: Subscription;
+  updateAvailable = false;
 
   constructor(public layout: LayoutStoreService) { }
   resizeSubscription!: Subscription
@@ -43,6 +46,7 @@ export class VerticalLayout implements OnInit, OnDestroy {
   ngOnInit() {
     this.onResize()
     this.checkAndShowChangelog()
+    this.startVersionMonitor()
 
     this.resizeSubscription = fromEvent(window, 'resize')
       .pipe(debounceTime(200))
@@ -79,7 +83,23 @@ export class VerticalLayout implements OnInit, OnDestroy {
     }
   }
 
+  private startVersionMonitor(): void {
+    this.versionSubscription = this.versionService.getVersion().subscribe(currentVersion => {
+      this.versionSubscription?.unsubscribe()
+      this.versionSubscription = interval(5 * 60 * 1000)
+        .pipe(switchMap(() => this.versionService.refreshVersion()))
+        .subscribe(publishedVersion => {
+          this.updateAvailable = hasPublishedVersionChanged(currentVersion, publishedVersion)
+        })
+    })
+  }
+
+  reloadApplication(): void {
+    window.location.reload()
+  }
+
   ngOnDestroy(): void {
     this.resizeSubscription?.unsubscribe()
+    this.versionSubscription?.unsubscribe()
   }
 }

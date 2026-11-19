@@ -78,7 +78,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (req of requisitos; track req.requisito + req.etapa) {
+              @for (req of requisitos; track req.requisitoId) {
                 <tr class="requisito-resumen-row">
                   <td class="requisito-estado-col">
                     <span class="req-status" [class.req-status--ok]="req.cumplido">{{ req.cumplido ? 'OK' : 'NO' }}</span>
@@ -88,26 +88,65 @@
                 </tr>
                 <tr class="requisito-valor-row">
                   <td colspan="3">
-                    <div class="requisito-valor-header">
-                      <span class="requisito-valor-label">Valor</span>
-                      @if (req.valor) {
-                        <button
-                          pButton
-                          type="button"
-                          icon="pi pi-copy"
-                          severity="secondary"
+                     <div class="requisito-valor-header">
+                       <span class="requisito-valor-label">Valor</span>
+                       <div class="requisito-valor-acciones">
+                         @if (puedeEditarRequisitos && requisitoEditando !== req.requisitoId) {
+                            <button
+                              pButton
+                              type="button"
+                              severity="secondary"
+                             [text]="true"
+                             [rounded]="true"
+                             class="requisito-editar"
+                             title="Editar valor"
+                              aria-label="Editar valor"
+                              (click)="editarRequisito(req)"
+                            >
+                              <ng-icon name="lucidePencil" aria-hidden="true"></ng-icon>
+                            </button>
+                         }
+                        @if (req.valor && requisitoEditando !== req.requisitoId) {
+                           <button
+                           pButton
+                           type="button"
+                           severity="secondary"
                           [text]="true"
                           [rounded]="true"
                           class="requisito-copiar"
                           title="Copiar valor"
                           aria-label="Copiar valor"
-                          (click)="copiarValor(req.valor)"
-                        ></button>
-                      }
-                    </div>
-                    <div class="requisito-valor-container">
-                      <span class="requisito-valor">{{ req.valor || '-' }}</span>
-                    </div>
+                            (click)="copiarValor(req.valor)"
+                          >
+                            <ng-icon name="lucideCopy" aria-hidden="true"></ng-icon>
+                          </button>
+                        }
+                       </div>
+                     </div>
+                     <div class="requisito-valor-container">
+                       @if (requisitoEditando === req.requisitoId) {
+                          <div class="requisito-edicion-fila">
+                            @if (req.tipo === 'boolean') {
+                              <select class="form-select form-select-sm" [(ngModel)]="valorEdicion">
+                                <option [ngValue]="true">Sí</option>
+                                <option [ngValue]="false">No</option>
+                              </select>
+                            } @else {
+                              <input class="form-control form-control-sm" [type]="req.tipo === 'numeric' ? 'number' : req.tipo === 'date' ? 'date' : 'text'" [(ngModel)]="valorEdicion" />
+                            }
+                            <div class="requisito-edicion-acciones">
+                              <button pButton type="button" size="small" class="requisito-edicion-accion requisito-edicion-guardar" [loading]="guardandoRequisito" title="Guardar" aria-label="Guardar" (click)="guardarRequisito(req)">
+                                <ng-icon name="lucideCheck" aria-hidden="true"></ng-icon>
+                              </button>
+                             <button pButton type="button" severity="secondary" [text]="true" size="small" class="requisito-edicion-accion requisito-edicion-cancelar" title="Cancelar" aria-label="Cancelar" (click)="cancelarEdicion()">
+                                <ng-icon name="lucideX" aria-hidden="true"></ng-icon>
+                              </button>
+                            </div>
+                          </div>
+                       } @else {
+                         <span class="requisito-valor">{{ req.valor || '-' }}</span>
+                       }
+                     </div>
                   </td>
                 </tr>
               }

@@ -27,7 +27,7 @@ import { EventoSelect } from '../../evento/evento-select/evento-select';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FiltroActivo } from '@/app/constants/filtros_activo';
 import { SelectModule } from 'primeng/select';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 @Component({
   selector: 'app-hora-crud',
@@ -62,9 +62,18 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
 
   loading = true;
   readonly isMobile = this.viewportService.isMobile;
+  readonly esCargaContextual = !!this.config.data?.modoCargaDesdeEvento;
+  intervalosExistentes: Hora[] = [];
+  private categoriasSugeridasEnCarga = new Set<string>();
 
   override ngOnInit(): void {
     super.ngOnInit();
+
+    if (this.esCargaContextual) {
+      // La fecha contextual viene determinada por el evento y debe viajar al guardar.
+      this.form.get('fecha')?.disable({ emitEvent: false });
+      this.actualizarTituloContextual();
+    }
 
     // Categorías sugerida desde el config (evento)
     if (this.config.data?.categoriaSugerida) {
@@ -96,6 +105,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       }
 
       this.loading = false;
+      if (this.esCargaContextual) {
+        this.form.get('fecha')?.valueChanges.subscribe((fecha) => {
+          if (fecha) this.cargarIntervalosDelDia(fecha);
+        });
+        this.cargarIntervalosDelDia(this.form.get('fecha')?.value);
+      }
       this.cdr.markForCheck();
     });
   }
@@ -108,7 +123,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         return;
       }
 
-      this.focusEventInput(0);
+       this.focusEventInput(0);
     });
   }
 
@@ -119,6 +134,16 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       fecha: new FormControl(today, [Validators.required]),
       usuarioId: new FormControl(this.usuarioActivo?.id, [Validators.required]),
       horas: new FormArray([], this.noOverlapValidator.bind(this)),
+    });
+  }
+
+  private cargarIntervalosDelDia(fecha: string): void {
+    this.registroHoraService.obtenerHorasDelDia(fecha).subscribe({
+      next: (respuesta) => {
+        this.intervalosExistentes = respuesta.horas ?? [];
+        this.cdr.markForCheck();
+      },
+      error: () => this.showError('Error', 'No se pudieron cargar los intervalos de la fecha seleccionada.'),
     });
   }
 
@@ -178,6 +203,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   protected override save(model: RegistroHora) {
+    if (this.config.data?.modoCargaDesdeEvento) {
+      const hora = model.horas?.[0];
+      if (!hora) return of(model);
+      return this.registroHoraService.cargarHoraHoy(String(model.fecha), hora).pipe(map(() => model));
+    }
     return this.modo === 'M'
       ? this.registroHoraService.update(model.id ?? 0, model)
       : this.registroHoraService.create(({ ...model, id: undefined }));
@@ -205,11 +235,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
           [Validators.required],
         ),
         inicio: new FormControl<Date | null>(
-          this.coerceTimeControlValue(hora?.inicio),
+          this.coerceTimeControlValue(hora?.inicio, true),
           [Validators.required],
         ),
         fin: new FormControl<Date | null>(
-          this.coerceTimeControlValue(hora?.fin),
+          this.coerceTimeControlValue(hora?.fin, true),
           [Validators.required],
         ),
         detalle: new FormControl<string | null>(
@@ -292,7 +322,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     }
   }
 
-  private normalizeTimeValue(value: unknown): string | null {
+  private normalizeTimeValue(value: unknown, fromBackend = false): string | null {
     if (value == null) {
       return null;
     }
@@ -300,12 +330,17 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     if (value instanceof Date) {
       return Number.isNaN(value.getTime())
         ? null
-        : this.formatDateAsTime(value);
+        : this.formatDateAsTime(value, fromBackend);
     }
 
     const raw = String(value).trim();
     if (!raw) {
       return null;
+    }
+
+    if (raw.includes('T')) {
+      const parsed = new Date(raw);
+      return Number.isNaN(parsed.getTime()) ? raw : this.formatDateAsTime(parsed, fromBackend);
     }
 
     if (/^\d{3}$/.test(raw)) {
@@ -380,8 +415,8 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return target?.value?.trim() || null;
   }
 
-  private coerceTimeControlValue(value: unknown): Date | null {
-    const normalized = this.normalizeTimeValue(value);
+  private coerceTimeControlValue(value: unknown, fromBackend = false): Date | null {
+    const normalized = this.normalizeTimeValue(value, fromBackend);
     if (!normalized) {
       return null;
     }
@@ -396,13 +431,71 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
     return date;
   }
 
-  private formatControlTime(value: unknown): string | null {
+  formatControlTime(value: unknown): string | null {
     const normalized = this.normalizeTimeValue(value);
     return normalized ? normalized : null;
   }
 
-  private formatDateAsTime(value: Date): string {
-    return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+  formatBackendTime(value: unknown): string | null {
+    const normalized = this.normalizeTimeValue(value, true);
+    return normalized ? normalized : null;
+  }
+
+  formatEventoLabel(evento: Partial<{ tipoCodigo: string; tipo: { codigo?: string }; numero: number; titulo: string }> | null | undefined, fallback?: string | null): string {
+    if (!evento) return fallback || 'Evento sin título';
+    const tipo = evento.tipoCodigo || evento.tipo?.codigo || '';
+    const numero = evento.numero != null ? String(evento.numero).padStart(3, '0') : '';
+    const identificador = tipo && numero ? `${tipo}-${numero}` : tipo || numero;
+    return identificador && evento.titulo
+      ? `${identificador} | ${evento.titulo}`
+      : evento.titulo || identificador || fallback || 'Evento sin título';
+  }
+
+  eventoLabel(hora: Partial<Hora>): string {
+    return this.formatEventoLabel(hora.evento, hora.eventoTxt || hora.eventoId);
+  }
+
+  categoriaInfo(hora: Partial<Hora>): Categoria | null {
+    const categoria = hora.categoria;
+    if (categoria?.codigo && categoria.descripcion && categoria.color) {
+      return { ...categoria, activo: true };
+    }
+
+    return hora.categoriaCodigo
+      ? this.categorias.find((item) => item.codigo === hora.categoriaCodigo) ?? null
+      : null;
+  }
+
+  contextualEventoLabel(): string {
+    return this.formatEventoLabel(this.config.data?.evento, this.config.data?.eventoTitulo || this.config.data?.eventoIdPreseleccionado);
+  }
+
+  formatDuration(inicio: unknown, fin: unknown): string {
+    const inicioTotal = this.timeToMinutes(inicio);
+    const finTotal = this.timeToMinutes(fin);
+    if (inicioTotal == null || finTotal == null || finTotal <= inicioTotal) return '—';
+    const minutos = finTotal - inicioTotal;
+    return `${Math.floor(minutos / 60)}h ${String(minutos % 60).padStart(2, '0')}m`;
+  }
+
+  formatControlDate(value: unknown): string {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(String(value));
+    return Number.isNaN(date.getTime()) ? String(value).split('T')[0] : date.toISOString().slice(0, 10);
+  }
+
+  private actualizarTituloContextual(): void {
+    const fecha = String(this.form.get('fecha')?.value ?? '');
+    const [anio, mes, dia] = fecha.split('-');
+    if (anio && mes && dia) {
+      this.config.header = `Cargar registro Hora — ${dia}-${mes}-${anio}`;
+    }
+  }
+
+  private formatDateAsTime(value: Date, fromBackend = false): string {
+    const hours = fromBackend ? value.getUTCHours() : value.getHours();
+    const minutes = fromBackend ? value.getUTCMinutes() : value.getMinutes();
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   }
 
   private areDatesEqual(left: unknown, right: Date): boolean {
@@ -415,6 +508,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   addHora() {
+    if (this.esCargaContextual && this.horasFormArray.length >= 1) return;
     const isFirstNewInterval = this.horasFormArray.length === 0 && this.modo === 'A';
     const eventoIdPreseleccionado = this.config.data?.eventoIdPreseleccionado;
     const horaData = isFirstNewInterval
@@ -424,6 +518,10 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
         }
       : undefined;
     this.horasFormArray.push(this.createHoraForm(horaData as any));
+    if (horaData?.eventoId) {
+      this.cargarCategoriaSugeridaDeEvento(String(horaData.eventoId));
+    }
+    this.aplicarCategoriaSugeridaAlPrimerIntervalo();
     const newIndex = this.horasFormArray.length - 1;
     setTimeout(() => this.focusEventSearchButton(newIndex));
   }
@@ -445,6 +543,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   removeHora(index: number) {
+    if (this.esCargaContextual) return;
     this.horasFormArray.removeAt(index);
     this.horasFormArray.updateValueAndValidity();
   }
@@ -582,29 +681,48 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
    * y la aplica a las filas de hora que no tengan categoría asignada.
    */
   private cargarCategoriaSugeridaDeEvento(eventoId: string): void {
+    if (typeof (this.eventoService as any).getByIdCompleto !== 'function') return;
+    if (this.categoriasSugeridasEnCarga.has(eventoId)) return;
+    this.categoriasSugeridasEnCarga.add(eventoId);
     this.eventoService.getByIdCompleto(eventoId).subscribe({
       next: (evento) => {
-        if (evento.categoriaSugerida) {
-          this.categoriaSugerida = {
-            codigo: evento.categoriaSugerida.codigo,
-            descripcion: evento.categoriaSugerida.descripcion,
-            color: evento.categoriaSugerida.color,
-            activo: evento.categoriaSugerida.activo ?? true,
-          };
+        const sugerencia = this.obtenerCategoriaSugerida(evento);
+        if (sugerencia) {
+          this.categoriaSugerida = sugerencia;
 
-          // Aplicar a todas las filas que no tengan categoría
-          this.horasFormArray.controls.forEach((horaControl) => {
-            const catControl = horaControl.get('categoriaCodigo');
-            if (catControl && !catControl.value) {
-              catControl.setValue(this.categoriaSugerida!.codigo);
-            }
-          });
+          this.aplicarCategoriaSugeridaAlPrimerIntervalo();
         }
       },
       error: () => {
         // Silently fail — no es crítico
       },
     });
+  }
+
+  private obtenerCategoriaSugerida(evento: any): Categoria | null {
+    const categoria =
+      evento?.categoriaSugerida ??
+      evento?.etapaActualData?.etapa?.categoriaSugerida ??
+      evento?.etapaActualData?.categoriaSugerida;
+
+    if (!categoria?.codigo || !categoria.descripcion || !categoria.color) {
+      return null;
+    }
+
+    return {
+      codigo: String(categoria.codigo),
+      descripcion: String(categoria.descripcion),
+      color: String(categoria.color),
+      activo: categoria.activo ?? true,
+    };
+  }
+
+  private aplicarCategoriaSugeridaAlPrimerIntervalo(): void {
+    if (!this.esCargaContextual || !this.categoriaSugerida) return;
+    const categoriaControl = this.horasFormArray.at(0)?.get('categoriaCodigo');
+    if (categoriaControl && !categoriaControl.value) {
+      categoriaControl.setValue(this.categoriaSugerida.codigo);
+    }
   }
 
 }

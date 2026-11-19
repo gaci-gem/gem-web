@@ -464,6 +464,13 @@ export class Evento {
         req.requisito?.codigo ??
         'Sin descripción',
       etapa: req.etapa?.nombre ?? '-',
+      requisitoId: req.requisito.id ?? req.cumplimiento?.requisitoId ?? 0,
+      tipo: req.requisito.tipo,
+      valorTexto: req.cumplimiento?.valorTexto,
+      valorNumero: req.cumplimiento?.valorNumero,
+      valorFecha: req.cumplimiento?.valorFecha,
+      valorBooleano: req.cumplimiento?.valorBooleano,
+      url: req.cumplimiento?.url,
       valor: this.resolveRequisitoValor(req),
     }));
   }
