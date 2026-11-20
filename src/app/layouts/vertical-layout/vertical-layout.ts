@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core'
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import { SidenavComponent } from '@layouts/components/sidenav/sidenav.component'
 import { Topbar } from '@layouts/components/topbar/topbar'
@@ -37,6 +37,7 @@ export class VerticalLayout implements OnInit, OnDestroy {
 
   private dialogService = inject(DialogService);
   private versionService = inject(VersionService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
   private versionSubscription?: Subscription;
   updateAvailable = false;
 
@@ -90,6 +91,7 @@ export class VerticalLayout implements OnInit, OnDestroy {
         .pipe(switchMap(() => this.versionService.refreshVersion()))
         .subscribe(publishedVersion => {
           this.updateAvailable = hasPublishedVersionChanged(currentVersion, publishedVersion)
+          this.changeDetectorRef.detectChanges()
         })
     })
   }
