@@ -32,10 +32,10 @@
         <div [formGroupName]="$index" class="row g-3 mb-2 mobile-hour-card">
           <div class="col-12 col-md-3">
             @if (esCargaContextual) { <label>Evento</label><div class="form-control-plaintext">{{ contextualEventoLabel() }}</div> }
-            @else { <label [for]="getEventInputId($index)">Evento</label><select class="form-control" [id]="getEventInputId($index)" formControlName="eventoId"><option [ngValue]="null">-- Seleccionar --</option>@for (e of eventos; track e.id) { <option [ngValue]="e.id">{{ formatEventoLabel(e) }}</option> }</select><button type="button" [id]="getEventSearchButtonId($index)" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento">Buscar</button> }
+          @else { <label [for]="getEventSearchButtonId($index)">Evento</label><div class="d-flex gap-1 align-items-center"><div class="form-control evento-seleccionado" [id]="getEventInputId($index)" [title]="eventoSeleccionadoLabel(hora) || '-- Seleccionar --'" aria-hidden="true">{{ eventoSeleccionadoLabel(hora) || '-- Seleccionar --' }}</div><button type="button" class="btn btn-ghost-warning boton-buscar-evento flex-shrink-0" [id]="getEventSearchButtonId($index)" (click)="modalSelEvento(hora, $event)" aria-label="Buscar evento" title="Buscar evento"><ng-icon name="lucideSearch" aria-hidden="true" /></button></div> }
           </div>
-          <div class="col-6 col-md-2"><label [for]="getTimeInputId($index, 'inicio')">Inicio</label><p-datepicker [inputId]="getTimeInputId($index, 'inicio')" formControlName="inicio" [timeOnly]="true" hourFormat="24" [showIcon]="true" [iconDisplay]="'input'" (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"></p-datepicker></div>
-          <div class="col-6 col-md-2"><label [for]="getTimeInputId($index, 'fin')">Fin</label><p-datepicker [inputId]="getTimeInputId($index, 'fin')" formControlName="fin" [timeOnly]="true" hourFormat="24" [showIcon]="true" [iconDisplay]="'input'" (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"></p-datepicker></div>
+           <div class="col-6 col-md-1"><label [for]="getTimeInputId($index, 'inicio')">Inicio</label><p-datepicker [inputId]="getTimeInputId($index, 'inicio')" formControlName="inicio" [timeOnly]="true" hourFormat="24" [showIcon]="true" [iconDisplay]="'input'" (onBlur)="onPrimeTimeBlur(hora, 'inicio', $event)"></p-datepicker></div>
+           <div class="col-6 col-md-1"><label [for]="getTimeInputId($index, 'fin')">Fin</label><p-datepicker [inputId]="getTimeInputId($index, 'fin')" formControlName="fin" [timeOnly]="true" hourFormat="24" [showIcon]="true" [iconDisplay]="'input'" (onBlur)="onPrimeTimeBlur(hora, 'fin', $event)"></p-datepicker></div>
           <div class="col-12 col-md-2"><label>Categoría</label><p-select [options]="categorias" formControlName="categoriaCodigo" optionLabel="descripcion" optionValue="codigo" placeholder="Seleccionar categoría" appendTo="body">
             <ng-template #item let-categoria>
               <span class="categoria-dot" [style.background]="categoria.color"></span>{{ categoria.descripcion }}
@@ -44,9 +44,9 @@
               @if (categoria) { <span class="categoria-dot" [style.background]="categoria.color"></span>{{ categoria.descripcion }} }
             </ng-template>
           </p-select></div>
-          <div class="col-12 col-md-2"><label>Detalle</label><input type="text" class="form-control" formControlName="detalle" placeholder="Detalle (opcional)" /></div>
+           <div class="col-12 col-md-3"><label>Detalle</label><input type="text" class="form-control" formControlName="detalle" placeholder="Detalle (opcional)" /></div>
           <div class="col-12 col-md-1"><label>Duración</label><div class="form-control-plaintext" data-testid="duracion-nuevo">{{ formatDuration(hora.get('inicio')?.value, hora.get('fin')?.value) }}</div></div>
-          @if (!esCargaContextual) { <div class="col-12 col-md-1"><button type="button" class="btn btn-danger" (click)="removeHora($index)" aria-label="Eliminar intervalo {{ $index + 1 }}">Eliminar</button></div> }
+          @if (!esCargaContextual) { <div class="col-12 col-md-auto d-flex align-items-end"><button type="button" class="btn btn-ghost-danger boton-eliminar-intervalo" (click)="removeHora($index)" aria-label="Eliminar intervalo {{ $index + 1 }}" title="Eliminar intervalo {{ $index + 1 }}"><ng-icon name="lucideTrash2" aria-hidden="true" /></button></div> }
           @if (hora.errors?.['overlap']) { <div class="invalid-feedback d-block" role="alert">Este horario se superpone con otro intervalo.</div> }
           @if (hora.errors?.['invalidTimeRange']) { <div class="invalid-feedback d-block" role="alert">El final debe ser mayor que el inicio.</div> }
         </div>

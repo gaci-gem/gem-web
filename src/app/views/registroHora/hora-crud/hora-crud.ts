@@ -451,6 +451,12 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       : evento.titulo || identificador || fallback || 'Evento sin título';
   }
 
+  eventoSeleccionadoLabel(hora: AbstractControl): string {
+    const eventoId = hora.get('eventoId')?.value;
+    const evento = this.eventos?.find((item) => String(item.id) === String(eventoId));
+    return evento ? this.formatEventoLabel(evento) : String(eventoId ?? '');
+  }
+
   eventoLabel(hora: Partial<Hora>): string {
     return this.formatEventoLabel(hora.evento, hora.eventoTxt || hora.eventoId);
   }
@@ -527,7 +533,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   private focusEventInput(index: number): void {
-    document.getElementById(this.getEventInputId(index))?.focus();
+    document.getElementById(this.getEventSearchButtonId(index))?.focus();
   }
 
   private focusEventSearchButton(index: number): void {
@@ -671,6 +677,7 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
           };
         }
         hora.patchValue(newHora);
+        this.cdr.detectChanges();
       }
       setTimeout(() => opener?.focus());
     });
