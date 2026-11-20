@@ -45,6 +45,35 @@
   flex-basis: 100%;
 }
 
+.boton-buscar-evento {
+  width: 2.375rem;
+  height: 2.375rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.evento-seleccionado {
+  color: var(--bs-secondary-color);
+  background-color: var(--bs-secondary-bg);
+  cursor: default;
+  user-select: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boton-eliminar-intervalo {
+  width: 2.375rem;
+  height: 2.375rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 767px) {
   .hora-form {
     padding-inline: .25rem;
