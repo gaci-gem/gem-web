@@ -37,7 +37,7 @@ import { finalize } from "rxjs";
             <app-ui-card title="Eventos" [isTogglable]="true" [initialCollapsed]="false">
                 <div card-body>
                     <p-table [value]="eventosActuales" size="small">
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
                                 <th hidden>Id</th>
                                 <th hidden>Tipo</th>
@@ -48,7 +48,7 @@ import { finalize } from "rxjs";
                                 <th>Cliente</th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-evento>
+                        <ng-template #body let-evento>
                             <tr>
                                 <td hidden>{{ evento.id }}</td>
                                 <td hidden>{{ evento.tipo.id }}</td>
