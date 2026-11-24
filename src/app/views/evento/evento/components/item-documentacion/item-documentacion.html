@@ -1,19 +1,23 @@
-<div class="d-flex align-items-center rounded-3 border mb-1 px-3 py-2">
-  <span class="me-3 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+<div class="item-documentacion-container d-flex align-items-center rounded-3 border mb-1 px-3 py-2">
+  <span class="item-documentacion-icon me-3 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
     <ng-icon [name]="getIcon()" class="text-secondary fs-4" size="24"></ng-icon>
   </span>
-  <div class="flex-grow-1 min-width-0">
-    <span class="fw-medium text-truncate text-decoration-underline text-dark" style="cursor:pointer;" (click)="abrirAdjunto()">{{documento.titulo}}</span>
+  <div class="item-documentacion-info flex-grow-1 min-width-0">
+    <span
+      class="item-documentacion-nombre fw-medium text-decoration-underline text-dark"
+      (click)="abrirAdjunto()"
+      [attr.title]="documento.titulo"
+    >{{ documento.titulo }}</span>
     <div class="small text-muted mt-1 d-flex gap-2">
       <span>{{getFecha()}}</span>
       <span>{{getTipo()}}</span>
     </div>
   </div>
   @if (puedeEliminar) {
-    <button type="button" class="btn btn-link p-0 ms-3" (click)="onEliminar()" title="Eliminar documento">
+    <button type="button" class="item-documentacion-accion btn btn-link p-0 ms-3" (click)="onEliminar()" title="Eliminar documento" aria-label="Eliminar documento">
       <ng-icon name="lucideUnlink" class="text-danger fs-5" size="20"></ng-icon>
     </button>
-    <button type="button" class="btn btn-link p-0 ms-3" (click)="onTogglePrincipal()" title="Marcar como principal">
+    <button type="button" class="item-documentacion-accion btn btn-link p-0 ms-3" (click)="onTogglePrincipal()" title="Marcar como principal" aria-label="Marcar como principal">
       <ng-icon [name]="!documento.esPrincipal ? 'lucideStar' : 'lucideStarOff'" [className]="!documento.esPrincipal ? 'text-primary' : 'text-danger'" class=" fs-5" size="20"></ng-icon>
     </button>
   }

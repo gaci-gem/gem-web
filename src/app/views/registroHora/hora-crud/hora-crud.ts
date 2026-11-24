@@ -416,6 +416,13 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
   }
 
   private coerceTimeControlValue(value: unknown, fromBackend = false): Date | null {
+    if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) {
+        return null;
+      }
+      return this.buildTimeDate(this.formatDateAsTime(value));
+    }
+
     const normalized = this.normalizeTimeValue(value, fromBackend);
     if (!normalized) {
       return null;
@@ -426,6 +433,11 @@ export class HoraCrud extends CrudFormModal<RegistroHora> {
       return null;
     }
 
+    return this.buildTimeDate(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+  }
+
+  private buildTimeDate(time: string): Date {
+    const [hours, minutes] = time.split(':').map(Number);
     const date = new Date();
     date.setHours(hours, minutes, 0, 0);
     return date;

@@ -16,6 +16,27 @@ export interface ChangelogChange {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.6.7',
+    date: '2026-11-24',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Corregimos la edición de registros de hora para conservar correctamente los horarios.',
+        link: '/registroHora/horas',
+      },
+      {
+        type: 'improvement',
+        text: 'Mejoramos la visualización de adjuntos y documentación, manteniendo visibles sus acciones con nombres largos.',
+        link: '/evento/eventos',
+      },
+      {
+        type: 'improvement',
+        text: 'Ajustamos el ancho de los campos horarios para facilitar su lectura en pantallas angostas.',
+        link: '/registroHora/horas',
+      },
+    ],
+  },
+  {
     version: '0.6.4',
     date: '2026-11-19',
     changes: [

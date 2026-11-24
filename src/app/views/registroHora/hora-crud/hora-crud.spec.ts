@@ -228,6 +228,24 @@ describe('HoraCrud', () => {
     expect(horaForm.get('categoriaCodigo')?.value).toBeNull();
   });
 
+  it('preserves local time when an edit row already contains a normalized Date', () => {
+    (component as any).buildForm();
+    (component as any).populateForm({
+      id: 1,
+      fecha: new Date('2026-11-20'),
+      usuarioId: 'u-1',
+      horas: [{
+        eventoId: 'evt-1',
+        inicio: new Date(2026, 10, 20, 10, 24),
+        fin: new Date(2026, 10, 20, 11, 24),
+      }],
+    });
+
+    const horaForm = component.horasFormArray.at(0);
+    expect(component.formatControlTime(horaForm.get('inicio')?.value)).toBe('10:24');
+    expect(component.formatControlTime(horaForm.get('fin')?.value)).toBe('11:24');
+  });
+
   it('should select the explicit mobile composition from the viewport state', () => {
     mobileSignal.set(true);
     fixture.detectChanges();

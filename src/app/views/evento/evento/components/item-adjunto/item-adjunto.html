@@ -1,16 +1,26 @@
-<div class="d-flex align-items-center rounded-3 border mb-1 px-3 py-2">
-  <span class="me-3 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+<div class="item-adjunto-container d-flex align-items-center rounded-3 border mb-1 px-3 py-2">
+  <span class="item-adjunto-icon me-3 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
     <ng-icon [name]="getIcon()" class="text-secondary fs-4" size="24"></ng-icon>
   </span>
-  <div class="flex-grow-1 min-width-0">
-    <span class="fw-medium text-truncate text-decoration-underline text-dark" style="cursor:pointer;" (click)="abrirAdjunto()">{{adjunto.archivo.name}}</span>
+  <div class="item-adjunto-info flex-grow-1 min-width-0">
+    <span
+      class="item-adjunto-nombre fw-medium text-decoration-underline text-dark"
+      (click)="abrirAdjunto()"
+      [attr.title]="adjunto.archivo.name"
+    >{{ adjunto.archivo.name }}</span>
     <div class="small text-muted mt-1 d-flex gap-2">
       <span>{{getFecha()}}</span>
       <span>{{getTipo()}}</span>
     </div>
   </div>
   @if (puedeEliminar) {
-      <button type="button" class="btn btn-link p-0 ms-3" (click)="onEliminar()" title="Eliminar adjunto">
+      <button
+        type="button"
+        class="item-adjunto-delete btn btn-link p-0 ms-3"
+        (click)="onEliminar()"
+        title="Eliminar adjunto"
+        aria-label="Eliminar adjunto"
+      >
         <ng-icon name="lucideTrash2" class="text-danger fs-5" size="20"></ng-icon>
       </button>
   }
